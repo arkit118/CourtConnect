@@ -28,6 +28,26 @@ function formatTime(iso: string): string {
   return format(new Date(iso), 'h:mm a');
 }
 
+const MAX_BOOKING_DURATION_MS = 2 * 60 * 60 * 1000;
+
+// Guarantees a Supabase call always settles, even if the network/client
+// hangs, so the UI can never get stuck on "Saving...".
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, timeoutMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(timeoutMessage)), ms);
+    Promise.resolve(promise).then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 export function SchedulingPage() {
   const { user, profile, isAuthenticated } = useAuth();
   const { addToast } = useToastStore();
@@ -44,6 +64,7 @@ export function SchedulingPage() {
   const [selectedCourtId, setSelectedCourtId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     player_name: '',
@@ -114,24 +135,41 @@ export function SchedulingPage() {
 
   const handleOpenForm = () => {
     if (!isAuthenticated) {
+      addToast({ type: 'error', message: 'Please sign in to schedule court time.' });
       navigate('/auth/login', { state: { from: { pathname: '/schedule' } } });
       return;
     }
+    setFormError(null);
     setShowForm(true);
   };
 
   const handleCloseForm = () => {
+    if (submitting) return;
     setShowForm(false);
+    setFormError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    // Validate everything up front, before touching Supabase.
     if (!user) {
+      const msg = 'Please sign in to schedule court time.';
+      addToast({ type: 'error', message: msg });
       navigate('/auth/login', { state: { from: { pathname: '/schedule' } } });
       return;
     }
     if (!selectedCourtId) {
       addToast({ type: 'error', message: 'Please select a court' });
+      return;
+    }
+    if (!selectedDate) {
+      addToast({ type: 'error', message: 'Please select a date' });
+      return;
+    }
+    if (!form.player_name.trim() || !form.opponent_name.trim()) {
+      addToast({ type: 'error', message: 'Please enter both player names' });
       return;
     }
     if (!form.start_time || !form.end_time) {
@@ -141,27 +179,41 @@ export function SchedulingPage() {
 
     const startISO = toISO(selectedDate, form.start_time);
     const endISO = toISO(selectedDate, form.end_time);
+    const newStart = new Date(startISO).getTime();
+    const newEnd = new Date(endISO).getTime();
+    const durationMs = newEnd - newStart;
 
-    if (new Date(endISO).getTime() <= new Date(startISO).getTime()) {
-      addToast({ type: 'error', message: 'End time must be after start time.' });
+    if (durationMs <= 0) {
+      const msg = 'End time must be after start time.';
+      setFormError(msg);
+      addToast({ type: 'error', message: msg });
+      return;
+    }
+    if (durationMs > MAX_BOOKING_DURATION_MS) {
+      const msg = 'Bookings can be at most 2 hours long.';
+      setFormError(msg);
+      addToast({ type: 'error', message: msg });
       return;
     }
 
     setSubmitting(true);
     try {
-      // Check for overlapping bookings
-      const { data: existing, error: fetchErr } = await supabase
-        .from('court_bookings')
-        .select('start_time, end_time, court_number')
-        .eq('court_id', selectedCourtId)
-        .eq('booking_date', selectedDate)
-        .eq('status', 'Scheduled');
+      // Check for overlapping bookings. Wrapped with a timeout so a hung
+      // request can never leave the button stuck on "Saving...".
+      const { data: existing, error: fetchErr } = await withTimeout(
+        supabase
+          .from('court_bookings')
+          .select('start_time, end_time, court_number')
+          .eq('court_id', selectedCourtId)
+          .eq('booking_date', selectedDate)
+          .eq('status', 'Scheduled'),
+        15000,
+        'Checking for scheduling conflicts timed out. Please try again.'
+      );
 
       if (fetchErr) throw fetchErr;
 
       const courtNumber = form.court_number.trim() || null;
-      const newStart = new Date(startISO).getTime();
-      const newEnd = new Date(endISO).getTime();
 
       const conflict = (existing || []).some((b: any) => {
         // If both specify a court_number, only conflict if same number.
@@ -175,30 +227,39 @@ export function SchedulingPage() {
       });
 
       if (conflict) {
-        addToast({
-          type: 'error',
-          message: 'That time slot is already scheduled. Please choose another time.',
-        });
+        const msg = 'That time slot is already scheduled. Please choose another time.';
+        setFormError(msg);
+        addToast({ type: 'error', message: msg });
         return;
       }
 
-      const { error: insertErr } = await supabase.from('court_bookings').insert({
-        court_id: selectedCourtId,
-        user_id: user.id,
-        player_name: form.player_name,
-        opponent_name: form.opponent_name,
-        match_type: form.match_type,
-        court_number: courtNumber,
-        booking_date: selectedDate,
-        start_time: startISO,
-        end_time: endISO,
-        notes: form.notes.trim() || null,
-        status: 'Scheduled',
-      });
+      if (!user.id) {
+        throw new Error('Please sign in to schedule court time.');
+      }
+
+      const { error: insertErr } = await withTimeout(
+        supabase.from('court_bookings').insert({
+          court_id: selectedCourtId,
+          user_id: user.id,
+          player_name: form.player_name.trim(),
+          opponent_name: form.opponent_name.trim(),
+          match_type: form.match_type,
+          court_number: courtNumber,
+          booking_date: selectedDate,
+          start_time: startISO,
+          end_time: endISO,
+          notes: form.notes.trim() || null,
+          status: 'Scheduled',
+        }),
+        15000,
+        'Saving your booking timed out. Please try again.'
+      );
 
       if (insertErr) throw insertErr;
 
+      // Only close/reset the form once the insert has actually succeeded.
       addToast({ type: 'success', message: 'Booking created!' });
+      setFormError(null);
       setShowForm(false);
       setForm((f) => ({
         ...f,
@@ -208,9 +269,17 @@ export function SchedulingPage() {
         end_time: '',
         notes: '',
       }));
-      fetchBookings();
+
+      try {
+        await fetchBookings();
+      } catch (refreshErr) {
+        console.error('Error refreshing bookings after save:', refreshErr);
+      }
     } catch (e: any) {
-      addToast({ type: 'error', message: e.message || 'Failed to create booking' });
+      const message = e?.message || 'Failed to create booking';
+      console.error('Error creating booking:', e);
+      setFormError(message);
+      addToast({ type: 'error', message });
     } finally {
       setSubmitting(false);
     }
@@ -456,11 +525,20 @@ export function SchedulingPage() {
       {/* Booking modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleCloseForm} />
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              if (!submitting) handleCloseForm();
+            }}
+          />
           <div className="relative bg-white rounded-2xl shadow-elevated w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="sticky top-0 bg-white border-b border-secondary-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h3 className="text-xl font-bold text-secondary-900">Add a Court Time</h3>
-              <button onClick={handleCloseForm} className="p-1.5 rounded-lg hover:bg-secondary-100">
+              <button
+                onClick={handleCloseForm}
+                className="p-1.5 rounded-lg hover:bg-secondary-100 disabled:opacity-50"
+                disabled={submitting}
+              >
                 <X className="w-5 h-5 text-secondary-500" />
               </button>
             </div>
@@ -470,6 +548,13 @@ export function SchedulingPage() {
                 <Calendar className="w-4 h-4 inline mr-1" />
                 {selectedCourt?.name} · {format(parseISO(selectedDate), 'MMM d, yyyy')}
               </div>
+
+              {formError && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -555,7 +640,7 @@ export function SchedulingPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handleCloseForm} className="btn-ghost flex-1">
+                <button type="button" onClick={handleCloseForm} className="btn-ghost flex-1" disabled={submitting}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary flex-1" disabled={submitting}>
