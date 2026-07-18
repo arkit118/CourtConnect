@@ -28,6 +28,7 @@ export function CourtsPage() {
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rawData, setRawData] = useState<any>(null);
   const [search, setSearch] = useState('');
   const [selectedTown, setSelectedTown] = useState('');
   const [selectedSurface, setSelectedSurface] = useState('');
@@ -45,6 +46,7 @@ export function CourtsPage() {
         .select('*')
         .order('name', { ascending: true });
 
+      setRawData(data);
       if (error) throw error;
       setCourts(data || []);
     } catch (err: any) {
@@ -75,6 +77,16 @@ export function CourtsPage() {
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Tennis Courts</h1>
           <p className="text-secondary-600">Find courts near you in Livingston</p>
+        </div>
+
+        {/* Debug box */}
+        <div className="card p-4 mb-6 bg-secondary-50 border border-secondary-200 text-xs font-mono whitespace-pre-wrap break-all">
+          <div><strong>Supabase URL:</strong> vzswxcvkmewpisxlhzhh.supabase.co</div>
+          <div><strong>Courts loading:</strong> {String(loading)}</div>
+          <div><strong>Courts error:</strong> {error || 'none'}</div>
+          <div><strong>Courts count:</strong> {courts.length}</div>
+          <div className="mt-2"><strong>Raw courts JSON:</strong></div>
+          <pre className="mt-1 p-2 bg-white rounded border border-secondary-200 overflow-auto max-h-80">{JSON.stringify(rawData, null, 2)}</pre>
         </div>
 
         {/* Filters */}

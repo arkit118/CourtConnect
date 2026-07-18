@@ -195,22 +195,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    setError(null);
     const { error } = await supabase.auth.signOut();
-
-    // Always clear local auth state so the UI reflects being logged out
-    // immediately, even if the server-side signOut call itself errored
-    // (e.g. an already-expired session) - the user's intent is to be
-    // logged out locally regardless.
-    setUser(null);
-    setProfile(null);
-    setSession(null);
-
     if (error) {
-      console.error('Sign out error:', error);
       setError(error.message);
       throw error;
     }
+    setUser(null);
+    setProfile(null);
+    setSession(null);
   };
 
   const signInWithGoogle = async () => {
