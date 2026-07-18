@@ -20,9 +20,12 @@ const statusColors: Record<string, string> = {
   Cancelled: 'bg-red-50 text-red-700 border-red-200',
 };
 
-function toMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
+function toISO(dateStr: string, timeStr: string): string {
+  return new Date(`${dateStr}T${timeStr}:00`).toISOString();
+}
+
+function formatTime(iso: string): string {
+  return format(new Date(iso), 'h:mm a');
 }
 
 export function SchedulingPage() {
@@ -135,8 +138,12 @@ export function SchedulingPage() {
       addToast({ type: 'error', message: 'Please select start and end times' });
       return;
     }
-    if (toMinutes(form.end_time) <= toMinutes(form.start_time)) {
-      addToast({ type: 'error', message: 'End time must be after start time' });
+
+    const startISO = toISO(selectedDate, form.start_time);
+    const endISO = toISO(selectedDate, form.end_time);
+
+    if (new Date(endISO).getTime() <= new Date(startISO).getTime()) {
+      addToast({ type: 'error', message: 'End time must be after start time.' });
       return;
     }
 
@@ -153,8 +160,8 @@ export function SchedulingPage() {
       if (fetchErr) throw fetchErr;
 
       const courtNumber = form.court_number.trim() || null;
-      const newStart = toMinutes(form.start_time);
-      const newEnd = toMinutes(form.end_time);
+      const newStart = new Date(startISO).getTime();
+      const newEnd = new Date(endISO).getTime();
 
       const conflict = (existing || []).some((b: any) => {
         // If both specify a court_number, only conflict if same number.
@@ -162,8 +169,8 @@ export function SchedulingPage() {
         if (courtNumber && b.court_number && b.court_number !== courtNumber) {
           return false;
         }
-        const exStart = toMinutes(b.start_time);
-        const exEnd = toMinutes(b.end_time);
+        const exStart = new Date(b.start_time).getTime();
+        const exEnd = new Date(b.end_time).getTime();
         return exStart < newEnd && exEnd > newStart;
       });
 
@@ -183,8 +190,8 @@ export function SchedulingPage() {
         match_type: form.match_type,
         court_number: courtNumber,
         booking_date: selectedDate,
-        start_time: form.start_time,
-        end_time: form.end_time,
+        start_time: startISO,
+        end_time: endISO,
         notes: form.notes.trim() || null,
         status: 'Scheduled',
       });
@@ -405,7 +412,7 @@ export function SchedulingPage() {
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-secondary-500">
                             <span className="inline-flex items-center gap-1">
                               <Clock className="w-4 h-4" />
-                              {b.start_time} – {b.end_time}
+                              {formatTime(b.start_time)} – {formatTime(b.end_time)}
                             </span>
                             <span className="badge-primary">{b.match_type}</span>
                             {b.court_number && (
