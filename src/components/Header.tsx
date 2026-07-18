@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, ChevronDown, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, Settings, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToastStore } from '../hooks/useToast';
 
 const navLinks = [
   { to: '/events', label: 'Events' },
@@ -15,13 +16,27 @@ const navLinks = [
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const { user, profile, isAuthenticated, signOut } = useAuth();
+  const { addToast } = useToastStore();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+    } catch (err: any) {
+      console.error('Error signing out:', err);
+      addToast({ type: 'error', message: err?.message || 'Failed to sign out. Please try again.' });
+    } finally {
+      // Local auth state is always cleared by signOut() regardless of
+      // whether the server call errored, so it's safe to always navigate
+      // away and update the UI here too.
+      setSigningOut(false);
+      navigate('/');
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -111,10 +126,15 @@ export function Header() {
                             setIsProfileOpen(false);
                             handleSignOut();
                           }}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          disabled={signingOut}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
                         >
-                          <LogOut className="w-4 h-4" />
-                          Sign Out
+                          {signingOut ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <LogOut className="w-4 h-4" />
+                          )}
+                          {signingOut ? 'Signing out...' : 'Sign Out'}
                         </button>
                       </div>
                     </div>
@@ -183,9 +203,10 @@ export function Header() {
                         setIsMenuOpen(false);
                         handleSignOut();
                       }}
-                      className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50"
+                      disabled={signingOut}
+                      className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
-                      Sign Out
+                      {signingOut ? 'Signing out...' : 'Sign Out'}
                     </button>
                   </div>
                 </>
