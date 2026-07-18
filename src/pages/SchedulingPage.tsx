@@ -20,19 +20,6 @@ const statusColors: Record<string, string> = {
   Cancelled: 'bg-red-50 text-red-700 border-red-200',
 };
 
-function DebugBox({ loading, error, courts, rawData }: { loading: boolean; error: string | null; courts: Court[]; rawData: any }) {
-  return (
-    <div className="card p-4 mb-6 bg-secondary-50 border border-secondary-200 text-xs font-mono whitespace-pre-wrap break-all">
-      <div><strong>Supabase URL:</strong> vzswxcvkmewpisxlhzhh.supabase.co</div>
-      <div><strong>Courts loading:</strong> {String(loading)}</div>
-      <div><strong>Courts error:</strong> {error || 'none'}</div>
-      <div><strong>Courts count:</strong> {courts.length}</div>
-      <div className="mt-2"><strong>Raw courts JSON:</strong></div>
-      <pre className="mt-1 p-2 bg-white rounded border border-secondary-200 overflow-auto max-h-80">{JSON.stringify(rawData, null, 2)}</pre>
-    </div>
-  );
-}
-
 function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
@@ -48,7 +35,6 @@ export function SchedulingPage() {
   const [loadingCourts, setLoadingCourts] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rawData, setRawData] = useState<any>(null);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -99,7 +85,6 @@ export function SchedulingPage() {
         .select('*')
         .order('name', { ascending: true });
 
-      setRawData(data);
       if (error) throw error;
       setCourts(data || []);
       if (data && data.length > 0 && !selectedCourtId) {
@@ -250,7 +235,6 @@ export function SchedulingPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
             <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
           </div>
-          <DebugBox loading={loadingCourts} error={error} courts={courts} rawData={rawData} />
           <NoticeBanner />
           <div className="card p-12 text-center mt-6">
             <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-4" />
@@ -270,7 +254,6 @@ export function SchedulingPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
             <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
           </div>
-          <DebugBox loading={loadingCourts} error={error} courts={courts} rawData={rawData} />
           <NoticeBanner />
           <div className="card p-12 text-center mt-6">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
@@ -290,7 +273,6 @@ export function SchedulingPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
             <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
           </div>
-          <DebugBox loading={loadingCourts} error={error} courts={courts} rawData={rawData} />
           <NoticeBanner />
           <div className="card p-12 text-center mt-6">
             <MapPin className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
@@ -311,8 +293,6 @@ export function SchedulingPage() {
         </div>
 
         <NoticeBanner />
-
-        <DebugBox loading={loadingCourts} error={error} courts={courts} rawData={rawData} />
 
         {/* Selectors */}
         <div className="card p-4 md:p-6 mt-6">
