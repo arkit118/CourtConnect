@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { MapPin, Lightbulb, ExternalLink, Search, AlertCircle } from 'lucide-react';
 import { supabase, Court } from '../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 
 const surfaceLabels: Record<string, string> = {
   hard: 'Hard',
@@ -40,14 +41,16 @@ export function CourtsPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
-        .from('courts')
-        .select('*')
-        .order('name', { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase.from('courts').select('*').order('name', { ascending: true }),
+        15000,
+        'Loading courts timed out. Please check your connection and try again.'
+      );
 
       if (error) throw error;
       setCourts(data || []);
     } catch (err: any) {
+      console.error('Error fetching courts:', err);
       setError(err.message || 'Failed to load courts');
     } finally {
       setLoading(false);
@@ -263,11 +266,11 @@ export function CourtDetailPage() {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('courts')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error: fetchError } = await withTimeout(
+        supabase.from('courts').select('*').eq('id', id).single(),
+        15000,
+        'Loading court details timed out. Please try again.'
+      );
 
       if (fetchError) throw fetchError;
       setCourt(data);

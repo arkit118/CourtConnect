@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Users, Package, MapPin, ArrowRight, Star } from 'lucide-react';
 import { supabase, Event } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
+import { withTimeout } from '../lib/withTimeout';
 
 export function LandingPage() {
   return (
@@ -175,7 +176,11 @@ function ImpactSection() {
 
   const fetchMetrics = async () => {
     try {
-      const { data } = await supabase.from('impact_metrics').select('*');
+      const { data } = await withTimeout(
+        supabase.from('impact_metrics').select('*'),
+        15000,
+        'Loading impact metrics timed out'
+      );
       if (data && data.length > 0) {
         const metricMap = data.reduce((acc, m) => {
           acc[m.metric_type] = m.value;
@@ -255,12 +260,16 @@ function EventsPreviewSection() {
 
   const fetchEvents = async () => {
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'open')
-        .order('date', { ascending: true })
-        .limit(3);
+      const { data, error } = await withTimeout(
+        supabase
+          .from('events')
+          .select('*')
+          .eq('status', 'open')
+          .order('date', { ascending: true })
+          .limit(3),
+        15000,
+        'Loading upcoming events timed out'
+      );
 
       if (error) throw error;
       setEvents(data || []);

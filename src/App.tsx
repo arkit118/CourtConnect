@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, AlertOctagon } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -82,10 +82,25 @@ function BannedBanner() {
   );
 }
 
+function ProfileErrorBanner() {
+  const { profileError } = useAuth();
+  if (!profileError) return null;
+
+  return (
+    <div className="bg-amber-500 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-start gap-3 text-sm">
+        <AlertOctagon className="w-5 h-5 shrink-0 mt-0.5" />
+        <p>{profileError}</p>
+      </div>
+    </div>
+  );
+}
+
 function AppRoutes() {
   return (
     <>
       <Header />
+      <ProfileErrorBanner />
       <BannedBanner />
       <main className="flex-1">
         <Routes>

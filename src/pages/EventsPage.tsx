@@ -7,6 +7,7 @@ import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Event, Profile, Registration } from '../lib/supabase';
 import { ReportButton } from '../components/ReportButton';
+import { withTimeout } from '../lib/withTimeout';
 
 function EventsNoticeBanner() {
   return (
@@ -43,10 +44,14 @@ export function EventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*, organizer:profiles!events_organizer_id_fkey(*)')
-        .order('date', { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase
+          .from('events')
+          .select('*, organizer:profiles!events_organizer_id_fkey(*)')
+          .order('date', { ascending: true }),
+        15000,
+        'Loading events timed out. Please check your connection and try again.'
+      );
 
       if (error) throw error;
       setEvents(data || []);

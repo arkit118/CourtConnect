@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Package, Settings, User, Check, X } from 'lucide-react';
+import { Calendar, Users, Package, Settings, User, Check, X, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { supabase, PartnerRequest, GearListing, Registration, ImpactMetric } from '../lib/supabase';

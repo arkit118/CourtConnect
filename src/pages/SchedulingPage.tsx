@@ -7,6 +7,7 @@ import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Court, CourtBooking } from '../lib/supabase';
 import { ReportButton } from '../components/ReportButton';
+import { withTimeout } from '../lib/withTimeout';
 
 const matchTypes = ['Singles', 'Doubles', 'Practice', 'Hitting'] as const;
 
@@ -31,24 +32,6 @@ function formatTime(iso: string): string {
 }
 
 const MAX_BOOKING_DURATION_MS = 2 * 60 * 60 * 1000;
-
-// Guarantees a Supabase call always settles, even if the network/client
-// hangs, so the UI can never get stuck on "Saving...".
-function withTimeout<T>(promise: PromiseLike<T>, ms: number, timeoutMessage: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(timeoutMessage)), ms);
-    Promise.resolve(promise).then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (err) => {
-        clearTimeout(timer);
-        reject(err);
-      }
-    );
-  });
-}
 
 export function SchedulingPage() {
   const { user, profile, isAuthenticated } = useAuth();
@@ -83,15 +66,20 @@ export function SchedulingPage() {
     if (!selectedCourtId || !selectedDate) return;
     setLoadingBookings(true);
     try {
-      const { data, error: err } = await supabase
-        .from('court_bookings')
-        .select('*, court:courts(*)')
-        .eq('court_id', selectedCourtId)
-        .eq('booking_date', selectedDate)
-        .order('start_time', { ascending: true });
+      const { data, error: err } = await withTimeout(
+        supabase
+          .from('court_bookings')
+          .select('*, court:courts(*)')
+          .eq('court_id', selectedCourtId)
+          .eq('booking_date', selectedDate)
+          .order('start_time', { ascending: true }),
+        15000,
+        'Loading bookings timed out. Please try refreshing.'
+      );
       if (err) throw err;
       setBookings(data || []);
     } catch (e: any) {
+      console.error('Error fetching bookings:', e);
       setError(e.message || 'Failed to load bookings');
     } finally {
       setLoadingBookings(false);
@@ -107,10 +95,11 @@ export function SchedulingPage() {
     setLoadingCourts(true);
     setError(null);
     try {
-      const { data, error } = await supabase
-        .from('courts')
-        .select('*')
-        .order('name', { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase.from('courts').select('*').order('name', { ascending: true }),
+        15000,
+        'Loading courts timed out. Please check your connection and try again.'
+      );
 
       if (error) throw error;
       setCourts(data || []);
