@@ -28,6 +28,16 @@ export type Profile = {
   availability: string[];
   favorite_courts: string[];
   years_playing: number | null;
+  date_of_birth: string | null;
+  age_band: 'minor' | 'adult' | null;
+  tos_accepted_at: string | null;
+  tos_version: string | null;
+  privacy_accepted_at: string | null;
+  privacy_version: string | null;
+  safety_acknowledged_at: string | null;
+  is_banned: boolean;
+  banned_at: string | null;
+  ban_reason: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -147,5 +157,23 @@ export type ImpactMetric = {
   id: string;
   metric_type: 'players' | 'events' | 'matches' | 'savings' | 'donations' | 'gear_exchanges';
   value: number;
+  updated_at: string;
+};
+
+export type ReportType = 'user' | 'gear_listing' | 'court_booking' | 'event' | 'court' | 'general';
+
+export type ReportStatus = 'open' | 'reviewed' | 'actioned' | 'dismissed';
+
+export type Report = {
+  id: string;
+  reporter_id: string | null;
+  reported_user_id: string | null;
+  report_type: ReportType;
+  target_id: string | null;
+  reason: string;
+  details: string | null;
+  status: ReportStatus;
+  admin_notes: string | null;
+  created_at: string;
   updated_at: string;
 };

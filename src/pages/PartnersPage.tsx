@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { User, Calendar, MapPin, Clock, Mail, Check, X, Send, ArrowLeft } from 'lucide-react';
+import { User, Calendar, MapPin, Clock, Mail, Check, X, Send, ArrowLeft, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { supabase, PartnerRequest, Profile } from '../lib/supabase';
 
 const statusColors = {
@@ -11,25 +12,6 @@ const statusColors = {
   accepted: 'bg-green-50 text-green-700 border-green-200',
   declined: 'bg-red-50 text-red-700 border-red-200',
 };
-
-const demoPlayers: Profile[] = [];
-for (let i = 0; i < 10; i++) {
-  demoPlayers.push({
-    id: `demo-${i}`,
-    name: `Player ${i + 1}`,
-    bio: null,
-    avatar_url: null,
-    home_town: 'Montclair',
-    skill_level: 'intermediate',
-    utr_rating: null,
-    preferred_play_style: null,
-    availability: [],
-    favorite_courts: [],
-    years_playing: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
-}
 
 export function PartnersPage() {
   const { user } = useAuth();
@@ -50,6 +32,7 @@ export function PartnersPage() {
         .from('profiles')
         .select('*')
         .neq('id', user?.id || '')
+        .eq('is_banned', false)
         .order('created_at', { ascending: false })
         .limit(20);
       setPlayers(playersData || []);
@@ -86,6 +69,13 @@ export function PartnersPage() {
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Partner Matching</h1>
           <p className="text-secondary-600">Find hitting partners and schedule sessions</p>
+        </div>
+
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">
+            Meet at public courts and use good judgment. Minors should involve a parent or guardian.
+          </p>
         </div>
 
         {/* Tabs */}
@@ -360,6 +350,7 @@ export function PartnerRequestPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [player, setPlayer] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -398,6 +389,7 @@ export function PartnerRequestPage() {
       navigate('/auth/login', { state: { from: { pathname: `/partners/request/${id}` } } });
       return;
     }
+    if (!(await canProceed())) return;
 
     setSubmitting(true);
     try {

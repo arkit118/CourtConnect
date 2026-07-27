@@ -4,7 +4,9 @@ import { MapPin, Trophy, Clock, Edit2, User, ChevronRight, Camera, X, Upload } f
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { uploadImage, validateImageFile } from '../lib/storage';
+import { ReportButton } from '../components/ReportButton';
 
 const skillLevelLabels: Record<string, string> = {
   beginner: 'Beginner',
@@ -26,6 +28,7 @@ export function ProfilePage() {
   const { id } = useParams();
   const { user, profile: currentUser, updateProfile, loading: authLoading } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +119,7 @@ export function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) return;
+    if (!(await canProceed())) return;
     setSaving(true);
 
     try {
@@ -331,6 +335,9 @@ export function ProfilePage() {
                         Request to Hit
                       </Link>
                     )}
+                    {!isOwnProfile && profile && (
+                      <ReportButton reportType="user" targetId={profile.id} reportedUserId={profile.id} />
+                    )}
                   </div>
                 </>
               )}
@@ -400,6 +407,7 @@ export function ProfilePage() {
 export function ProfileEditPage() {
   const { user, profile, updateProfile, loading: authLoading } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -436,6 +444,7 @@ export function ProfileEditPage() {
   };
 
   const handleSave = async () => {
+    if (!(await canProceed())) return;
     setLoading(true);
     try {
       await updateProfile(form);

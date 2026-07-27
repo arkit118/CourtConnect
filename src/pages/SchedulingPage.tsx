@@ -4,7 +4,9 @@ import { Calendar, Clock, MapPin, Info, Plus, X, AlertCircle, Loader2, User, Use
 import { format, parseISO } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Court, CourtBooking } from '../lib/supabase';
+import { ReportButton } from '../components/ReportButton';
 
 const matchTypes = ['Singles', 'Doubles', 'Practice', 'Hitting'] as const;
 
@@ -52,6 +54,7 @@ export function SchedulingPage() {
   const { user, profile, isAuthenticated } = useAuth();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
+  const canProceed = useActionGate();
 
   const [courts, setCourts] = useState<Court[]>([]);
   const [bookings, setBookings] = useState<CourtBooking[]>([]);
@@ -133,12 +136,14 @@ export function SchedulingPage() {
     }
   }, [profile]);
 
-  const handleOpenForm = () => {
+  const handleOpenForm = async () => {
     if (!isAuthenticated) {
       addToast({ type: 'error', message: 'Please sign in to schedule court time.' });
       navigate('/auth/login', { state: { from: { pathname: '/schedule' } } });
       return;
     }
+    const ok = await canProceed();
+    if (!ok) return;
     setFormError(null);
     setShowForm(true);
   };
@@ -158,6 +163,9 @@ export function SchedulingPage() {
       const msg = 'Please sign in to schedule court time.';
       addToast({ type: 'error', message: msg });
       navigate('/auth/login', { state: { from: { pathname: '/schedule' } } });
+      return;
+    }
+    if (!(await canProceed())) {
       return;
     }
     if (!selectedCourtId) {
@@ -511,6 +519,9 @@ export function SchedulingPage() {
                             <Trash2 className="w-4 h-4" />
                             <span className="hidden sm:inline">Cancel</span>
                           </button>
+                        )}
+                        {!isOwn && (
+                          <ReportButton reportType="court_booking" targetId={b.id} reportedUserId={b.user_id} />
                         )}
                       </div>
                     </div>

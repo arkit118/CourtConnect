@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Filter, Clock, User, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Filter, Clock, User, ChevronDown, Info } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -43,6 +43,7 @@ export function PlayersPage() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('is_banned', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -99,6 +100,13 @@ export function PlayersPage() {
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Player Directory</h1>
           <p className="text-secondary-600">Find hitting partners and connect with the community</p>
+        </div>
+
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">
+            Meet at public courts and use good judgment. Minors should involve a parent or guardian.
+          </p>
         </div>
 
         {/* Search and Filters Bar */}

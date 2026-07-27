@@ -1,8 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
+import { LegalGateModal } from './components/LegalGateModal';
+import { CONTACT_EMAIL } from './lib/legal';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
@@ -19,7 +22,8 @@ import { DashboardPage, ImpactDashboardPage } from './pages/DashboardPage';
 import { AdminPage } from './pages/AdminPage';
 
 // Static pages
-import { AboutPage, PrivacyPage, TermsPage, ContactPage } from './pages/static/AboutPage';
+import { AboutPage, ContactPage } from './pages/static/AboutPage';
+import { TermsPage, PrivacyPage, SafetyPage, CommunityGuidelinesPage } from './pages/static/LegalPages';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -60,10 +64,29 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function BannedBanner() {
+  const { profile } = useAuth();
+  if (!profile?.is_banned) return null;
+
+  return (
+    <div className="bg-red-600 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-start gap-3 text-sm">
+        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+        <p>
+          Your account is restricted and cannot create bookings, listings, event registrations, reports, or profile
+          changes. You can still browse public pages. If you believe this is a mistake, contact{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-medium">{CONTACT_EMAIL}</a>.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function AppRoutes() {
   return (
     <>
       <Header />
+      <BannedBanner />
       <main className="flex-1">
         <Routes>
           {/* Public Routes */}
@@ -72,6 +95,8 @@ function AppRoutes() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/safety" element={<SafetyPage />} />
+          <Route path="/community-guidelines" element={<CommunityGuidelinesPage />} />
 
           {/* Auth Routes - Public only when not logged in */}
           <Route path="/auth/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
@@ -115,6 +140,7 @@ function AppRoutes() {
       </main>
       <Footer />
       <ToastContainer />
+      <LegalGateModal />
     </>
   );
 }

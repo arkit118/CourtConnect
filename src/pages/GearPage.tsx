@@ -1,10 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Upload } from 'lucide-react';
+import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Upload, Info } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { supabase, GearListing, Profile } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
+import { ReportButton } from '../components/ReportButton';
+
+function GearNoticeBanner() {
+  return (
+    <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+      <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+      <p className="text-sm text-amber-800">
+        CourtConnect does not process gear payments, provide shipping, or guarantee transactions. Buyers and sellers
+        coordinate local exchanges directly and at their own risk. Meet in public places and inspect items before paying.
+      </p>
+    </div>
+  );
+}
 
 const categoryLabels: Record<string, string> = {
   racquets: 'Racquets',
@@ -87,6 +101,8 @@ export function GearPage() {
             List Your Gear
           </Link>
         </div>
+
+        <GearNoticeBanner />
 
         <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-6">
           <button
@@ -386,6 +402,12 @@ export function GearDetailPage() {
                 </Link>
               </div>
             )}
+
+            {user?.id !== listing.seller_id && (
+              <div className="mt-4 flex justify-end">
+                <ReportButton reportType="gear_listing" targetId={listing.id} reportedUserId={listing.seller_id} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -397,6 +419,7 @@ export function GearCreatePage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -447,6 +470,9 @@ export function GearCreatePage() {
     e.preventDefault();
     if (!user) {
       navigate('/auth/login');
+      return;
+    }
+    if (!(await canProceed())) {
       return;
     }
 

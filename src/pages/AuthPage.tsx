@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
-import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Calendar } from 'lucide-react';
+import { calculateAge, ageBandForAge, MIN_SIGNUP_AGE } from '../lib/legal';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -138,17 +139,41 @@ export function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    if (!dateOfBirth) {
+      setFormError('Please enter your date of birth.');
+      return;
+    }
+
+    const age = calculateAge(dateOfBirth);
+    if (age < MIN_SIGNUP_AGE) {
+      setFormError('You must be at least 13 to use CourtConnect.');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      setFormError('Please agree to the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await signUp(email, password, name);
+      await signUp(email, password, name, {
+        date_of_birth: dateOfBirth,
+        age_band: ageBandForAge(age),
+      });
       addToast({ type: 'success', message: 'Account created! You can now log in.' });
       navigate('/auth/login');
     } catch (error: any) {
@@ -232,11 +257,48 @@ export function SignupPage() {
               </div>
             </div>
 
+            <div>
+              <label className="label">Date of Birth</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="input pl-10"
+                  max={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+              <p className="text-xs text-secondary-500 mt-1.5">You must be at least 13 to use CourtConnect.</p>
+            </div>
+
+            {formError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                {formError}
+              </div>
+            )}
+
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 rounded border-secondary-300"
+                required
+              />
+              <span className="text-sm text-secondary-600">
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" className="text-primary-600 hover:underline">Terms of Service</Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" className="text-primary-600 hover:underline">Privacy Policy</Link>.
+              </span>
+            </label>
+
             <p className="text-xs text-secondary-500">
-              By signing up, you agree to our{' '}
-              <Link to="/terms" className="text-primary-600 hover:underline">Terms of Service</Link>
-              {' '}and{' '}
-              <Link to="/privacy" className="text-primary-600 hover:underline">Privacy Policy</Link>.
+              CourtConnect is for community coordination only &mdash; it does not officially reserve courts or process
+              gear payments. Minors should use CourtConnect with a parent or guardian's knowledge. See our{' '}
+              <Link to="/safety" target="_blank" className="text-primary-600 hover:underline">Safety page</Link>.
             </p>
 
             <button type="submit" className="btn-primary w-full" disabled={loading}>

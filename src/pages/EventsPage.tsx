@@ -1,10 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users, DollarSign, Clock, ChevronRight, Check } from 'lucide-react';
+import { Calendar, MapPin, Users, DollarSign, Clock, ChevronRight, Check, Info } from 'lucide-react';
 import { format, parseISO, isBefore } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Event, Profile, Registration } from '../lib/supabase';
+import { ReportButton } from '../components/ReportButton';
+
+function EventsNoticeBanner() {
+  return (
+    <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+      <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+      <p className="text-sm text-amber-800">
+        Event details may change. Please follow posted rules and organizer instructions.
+      </p>
+    </div>
+  );
+}
 
 const eventStatusColors: Record<string, string> = {
   open: 'bg-green-50 text-green-700 border-green-200',
@@ -73,6 +86,8 @@ export function EventsPage() {
             Create Event
           </Link>
         </div>
+
+        <EventsNoticeBanner />
 
         {/* Search and Filters */}
         <div className="card p-4 mb-6">
@@ -195,6 +210,7 @@ export function EventDetailPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [event, setEvent] = useState<Event | null>(null);
   const [organizer, setOrganizer] = useState<Profile | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -264,6 +280,7 @@ export function EventDetailPage() {
 
   const confirmRegistration = async () => {
     if (!event || !user) return;
+    if (!(await canProceed())) return;
     setRegistering(true);
 
     try {
@@ -539,6 +556,10 @@ export function EventDetailPage() {
                   </Link>
                 </div>
               )}
+
+              <div className="pt-4 border-t border-secondary-100 mt-4 flex justify-end">
+                <ReportButton reportType="event" targetId={event.id} reportedUserId={event.organizer_id || undefined} />
+              </div>
             </div>
           </div>
         </div>

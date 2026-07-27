@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
+import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from '../lib/legal';
+
+interface SignUpLegalInfo {
+  date_of_birth: string;
+  age_band: 'minor' | 'adult';
+}
 
 interface AuthContextType {
   user: User | null;
@@ -9,7 +15,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, legal: SignUpLegalInfo) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -122,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, legal: SignUpLegalInfo) => {
     setError(null);
     setLoading(true);
 
@@ -143,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Create profile after signup (email confirmation disabled)
     if (data.user) {
       const avatarUrl = data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null;
+      const now = new Date().toISOString();
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -153,6 +160,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           skill_level: 'beginner',
           availability: [],
           favorite_courts: [],
+          date_of_birth: legal.date_of_birth,
+          age_band: legal.age_band,
+          tos_accepted_at: now,
+          tos_version: CURRENT_TOS_VERSION,
+          privacy_accepted_at: now,
+          privacy_version: CURRENT_PRIVACY_VERSION,
+          safety_acknowledged_at: now,
         })
         .select()
         .single();

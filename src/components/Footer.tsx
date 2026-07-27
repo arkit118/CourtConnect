@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { CONTACT_EMAIL } from '../lib/legal';
 
 const footerLinks = {
   community: [
@@ -12,13 +13,12 @@ const footerLinks = {
   company: [
     { label: 'About', to: '/about' },
     { label: 'Contact', to: '/contact' },
-    { label: 'Press', to: '/press' },
-    { label: 'Careers', to: '/careers' },
   ],
   legal: [
-    { label: 'Privacy Policy', to: '/privacy' },
     { label: 'Terms of Service', to: '/terms' },
-    { label: 'Cookie Policy', to: '/cookies' },
+    { label: 'Privacy Policy', to: '/privacy' },
+    { label: 'Safety', to: '/safety' },
+    { label: 'Community Guidelines', to: '/community-guidelines' },
   ],
 };
 
@@ -110,8 +110,11 @@ export function Footer() {
         </div>
 
         <div className="border-t border-secondary-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-secondary-500 text-sm">
-            © {new Date().getFullYear()} CourtConnect. All rights reserved.
+          <p className="text-secondary-500 text-sm text-center md:text-left">
+            © {new Date().getFullYear()} CourtConnect. All rights reserved.{' '}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-white transition-colors">
+              {CONTACT_EMAIL}
+            </a>
           </p>
           <div className="flex items-center gap-2 text-sm text-secondary-500">
             <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
