@@ -283,6 +283,7 @@ export function SchedulingPage() {
   };
 
   const handleCancel = async (bookingId: string) => {
+    if (!(await canProceed())) return;
     try {
       const { error: err } = await supabase
         .from('court_bookings')
@@ -292,6 +293,7 @@ export function SchedulingPage() {
       addToast({ type: 'info', message: 'Booking cancelled' });
       fetchBookings();
     } catch (e: any) {
+      console.error('Error cancelling booking:', e);
       addToast({ type: 'error', message: e.message || 'Failed to cancel booking' });
     }
   };

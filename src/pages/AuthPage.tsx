@@ -10,7 +10,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { addToast } = useToastStore();
@@ -28,14 +28,6 @@ export function LoginPage() {
       addToast({ type: 'error', message: error.message || 'Failed to sign in' });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      addToast({ type: 'error', message: error.message || 'Failed to sign in with Google' });
     }
   };
 
@@ -104,25 +96,6 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-secondary-200" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-4 text-sm text-secondary-500">Or continue with</span>
-            </div>
-          </div>
-
-          <button onClick={handleGoogleSignIn} className="btn-outline w-full">
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.28v2.69h3.57c2.08-1.92 3.28-4.74 3.28-7.98z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.69c-1.01.68-2.3 1.08-3.71 1.08-2.86 0-5.3-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.68-.34-1.4-.34-2.13s.12-1.45.34-2.09V7.03H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.97l2.95-2.35 1.71-2.53z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.03l3.66 2.84c.86-2.6 3.3-4.49 6.16-4.49z" />
-            </svg>
-            Continue with Google
-          </button>
-
           <p className="text-center text-secondary-600 mt-8">
             Don't have an account?{' '}
             <Link to="/auth/signup" className="text-primary-600 font-semibold hover:text-primary-700">
@@ -144,7 +117,7 @@ export function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
 
@@ -180,14 +153,6 @@ export function SignupPage() {
       addToast({ type: 'error', message: error.message || 'Failed to create account' });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      addToast({ type: 'error', message: error.message || 'Failed to sign in with Google' });
     }
   };
 
@@ -305,25 +270,6 @@ export function SignupPage() {
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-secondary-200" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-4 text-sm text-secondary-500">Or continue with</span>
-            </div>
-          </div>
-
-          <button onClick={handleGoogleSignIn} className="btn-outline w-full">
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.28v2.69h3.57c2.08-1.92 3.28-4.74 3.28-7.98z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.69c-1.01.68-2.3 1.08-3.71 1.08-2.86 0-5.3-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.68-.34-1.4-.34-2.13s.12-1.45.34-2.09V7.03H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.97l2.95-2.35 1.71-2.53z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.03l3.66 2.84c.86-2.6 3.3-4.49 6.16-4.49z" />
-            </svg>
-            Continue with Google
-          </button>
 
           <p className="text-center text-secondary-600 mt-8">
             Already have an account?{' '}

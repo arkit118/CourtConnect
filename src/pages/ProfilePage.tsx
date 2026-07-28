@@ -94,6 +94,7 @@ export function ProfilePage() {
       addToast({ type: 'error', message: validation.error || 'Invalid file' });
       return;
     }
+    if (!(await canProceed())) return;
 
     setUploading(true);
     try {
@@ -111,6 +112,7 @@ export function ProfilePage() {
       setEditForm(prev => ({ ...prev, avatar_url: publicUrl }));
       addToast({ type: 'success', message: 'Profile photo updated!' });
     } catch (error: any) {
+      console.error('Error uploading profile photo:', error);
       addToast({ type: 'error', message: error.message || 'Failed to upload image' });
     } finally {
       setUploading(false);
@@ -429,6 +431,7 @@ export function ProfileEditPage() {
       addToast({ type: 'error', message: validation.error || 'Invalid file' });
       return;
     }
+    if (!(await canProceed())) return;
 
     setUploading(true);
     try {
@@ -437,6 +440,7 @@ export function ProfileEditPage() {
       await updateProfile({ avatar_url: publicUrl });
       addToast({ type: 'success', message: 'Profile photo updated!' });
     } catch (error: any) {
+      console.error('Error uploading profile photo:', error);
       addToast({ type: 'error', message: error.message || 'Failed to upload image' });
     } finally {
       setUploading(false);

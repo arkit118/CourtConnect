@@ -69,7 +69,16 @@ export function GearPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setListings(data || []);
+      // Hide listings from banned sellers. Filtered client-side rather than
+      // with a `profiles!inner` RLS-filtered join: profiles has no `anon`
+      // SELECT policy (by design - it would expose date_of_birth,
+      // ban_reason, etc. to logged-out visitors), so an inner join would
+      // silently return zero listings for anyone not signed in. Signed-in
+      // viewers get the seller embed and this filters correctly; anon
+      // viewers can't see the embed either way, so nothing is excluded for
+      // them until an admin deactivates the listing directly.
+      const visibleListings = (data || []).filter((listing: any) => !listing.seller?.is_banned);
+      setListings(visibleListings);
     } catch (error) {
       console.error('Error fetching listings:', error);
     } finally {
@@ -238,6 +247,7 @@ export function GearDetailPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [listing, setListing] = useState<GearListing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -280,24 +290,28 @@ export function GearDetailPage() {
       navigate('/auth/login', { state: { from: { pathname: `/gear/${id}` } } });
       return;
     }
+    if (!(await canProceed())) return;
 
     try {
       if (isInterested) {
-        await supabase
+        const { error } = await supabase
           .from('gear_interests')
           .delete()
           .eq('listing_id', listing.id)
           .eq('user_id', user!.id);
+        if (error) throw error;
         setIsInterested(false);
         addToast({ type: 'info', message: 'Removed interest' });
       } else {
-        await supabase
+        const { error } = await supabase
           .from('gear_interests')
           .insert({ listing_id: listing.id, user_id: user!.id });
+        if (error) throw error;
         setIsInterested(true);
         addToast({ type: 'success', message: 'Marked as interested!' });
       }
     } catch (error: any) {
+      console.error('Error updating gear interest:', error);
       addToast({ type: 'error', message: error.message || 'Failed to update' });
     }
   };

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, MapPin, Users, Package, Flag, ShieldAlert } from 'lucide-react';
 import { CONTACT_EMAIL } from '../../lib/legal';
+import { ReportButton } from '../../components/ReportButton';
 
 const EFFECTIVE_DATE = 'July 27, 2026';
 
@@ -117,9 +118,9 @@ export function TermsPage() {
             <p>CourtConnect may update these Terms. If major changes happen, you may be asked to accept the new version before continuing to use the app.</p>
           </LegalSection>
 
-          <LegalSection number={16} title="Contact">
+          <LegalSection number={16} title="Contact, Support, and Account Deletion">
             <p>
-              Questions about these Terms? Email{' '}
+              Questions about these Terms, general support, or requests to delete your account? Email{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a>.
             </p>
           </LegalSection>
@@ -203,9 +204,9 @@ export function PrivacyPage() {
             <p>This Privacy Policy may be updated from time to time.</p>
           </LegalSection>
 
-          <LegalSection number={10} title="Contact">
+          <LegalSection number={10} title="Contact and Support">
             <p>
-              Questions about this Privacy Policy? Email{' '}
+              Questions about this Privacy Policy, general support, or account deletion requests? Email{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a>.
             </p>
           </LegalSection>
@@ -296,10 +297,18 @@ export function SafetyPage() {
               If you see unsafe content, a suspicious listing, or a concerning user or booking, use the "Report"
               action where it's available on the relevant page.
             </p>
-            <p className="text-secondary-600 flex items-start gap-2">
+            <p className="text-secondary-600 flex items-start gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
               <span>Emergency situations should be handled by calling local emergency services (911) directly &mdash; not through CourtConnect.</span>
             </p>
+            <p className="text-secondary-600 mb-3">
+              Have a general safety concern that isn't tied to a specific listing, booking, or profile? Report it directly:
+            </p>
+            <ReportButton
+              reportType="general"
+              label="Report a Safety Concern"
+              className="btn-outline"
+            />
           </div>
 
           <p className="text-sm text-secondary-500">

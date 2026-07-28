@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Upload, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { supabase } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
 
@@ -12,6 +13,7 @@ export function EventCreatePage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -73,6 +75,9 @@ export function EventCreatePage() {
     e.preventDefault();
     if (!user) {
       navigate('/auth/login');
+      return;
+    }
+    if (!(await canProceed())) {
       return;
     }
 

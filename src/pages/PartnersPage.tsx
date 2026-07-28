@@ -201,8 +201,10 @@ function BrowsePartners({ players, loading }: { players: Profile[]; loading: boo
 function RequestsView({ incomingRequests, outgoingRequests, onAction }: { incomingRequests: PartnerRequest[]; outgoingRequests: PartnerRequest[]; onAction: () => void }) {
   const { addToast } = useToastStore();
   const { user } = useAuth();
+  const canProceed = useActionGate();
 
   const handleAccept = async (requestId: string) => {
+    if (!(await canProceed())) return;
     try {
       const { error } = await supabase
         .from('partner_requests')
@@ -212,11 +214,13 @@ function RequestsView({ incomingRequests, outgoingRequests, onAction }: { incomi
       addToast({ type: 'success', message: 'Request accepted!' });
       onAction();
     } catch (error: any) {
+      console.error('Error accepting partner request:', error);
       addToast({ type: 'error', message: error.message || 'Failed to accept' });
     }
   };
 
   const handleDecline = async (requestId: string) => {
+    if (!(await canProceed())) return;
     try {
       const { error } = await supabase
         .from('partner_requests')
@@ -226,6 +230,7 @@ function RequestsView({ incomingRequests, outgoingRequests, onAction }: { incomi
       addToast({ type: 'info', message: 'Request declined' });
       onAction();
     } catch (error: any) {
+      console.error('Error declining partner request:', error);
       addToast({ type: 'error', message: error.message || 'Failed to decline' });
     }
   };

@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Calendar, Users, Package, Settings, User, Check, X, DollarSign } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useActionGate } from '../hooks/useActionGate';
 import { supabase, PartnerRequest, GearListing, Registration, ImpactMetric } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 
 export function DashboardPage() {
   const { profile, user, loading: authLoading } = useAuth();
   const { addToast } = useToastStore();
+  const canProceed = useActionGate();
   const [upcomingEvents, setUpcomingEvents] = useState<Registration[]>([]);
   const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([]);
   const [myListings, setMyListings] = useState<GearListing[]>([]);
@@ -65,6 +67,7 @@ export function DashboardPage() {
   };
 
   const handleAcceptRequest = async (requestId: string) => {
+    if (!(await canProceed())) return;
     try {
       const { error } = await supabase
         .from('partner_requests')
@@ -74,11 +77,13 @@ export function DashboardPage() {
       addToast({ type: 'success', message: 'Request accepted!' });
       fetchDashboardData();
     } catch (error: any) {
+      console.error('Error accepting partner request:', error);
       addToast({ type: 'error', message: error.message || 'Failed to accept' });
     }
   };
 
   const handleDeclineRequest = async (requestId: string) => {
+    if (!(await canProceed())) return;
     try {
       const { error } = await supabase
         .from('partner_requests')
@@ -88,6 +93,7 @@ export function DashboardPage() {
       addToast({ type: 'info', message: 'Request declined' });
       fetchDashboardData();
     } catch (error: any) {
+      console.error('Error declining partner request:', error);
       addToast({ type: 'error', message: error.message || 'Failed to decline' });
     }
   };
