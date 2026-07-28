@@ -33,13 +33,16 @@ export function PartnersPage() {
   const fetchData = async () => {
     try {
       // Fetch players
-      const { data: playersData } = await supabase
+      let playersQuery = supabase
         .from('profiles')
         .select('*')
-        .neq('id', user?.id || '')
         .eq('is_banned', false)
         .order('created_at', { ascending: false })
         .limit(20);
+      if (user?.id) {
+        playersQuery = playersQuery.neq('id', user.id);
+      }
+      const { data: playersData } = await playersQuery;
       setPlayers(playersData || []);
 
       // Fetch requests if logged in
