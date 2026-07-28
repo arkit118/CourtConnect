@@ -16,6 +16,9 @@ interface Props {
 // the pending/declined messages. Never touches public pages - only ever
 // rendered by the matching/chat UI itself.
 export function SocialOnboardingGate({ status }: Props) {
+  const { profile } = useAuth();
+  const [retryingParentEmail, setRetryingParentEmail] = useState(false);
+
   if (status === 'loading') {
     return (
       <div className="card p-12 text-center">
@@ -64,12 +67,36 @@ export function SocialOnboardingGate({ status }: Props) {
   }
 
   if (status === 'pending_consent') {
+    if (retryingParentEmail) {
+      return <ParentEmailStep onSubmitted={() => setRetryingParentEmail(false)} />;
+    }
+
+    // parent_consent_status flips to 'pending' as soon as the request is
+    // recorded, before we know whether the consent email actually sent -
+    // sending happens in a separate Edge Function call right after. Only
+    // claim the email went out once mark_parent_consent_email_sent() has
+    // confirmed that.
+    if (profile?.parent_consent_email_sent_at) {
+      return (
+        <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
+          We've sent your parent or guardian an email asking them to approve partner matching and chat for your
+          account. You'll be able to see match candidates and chat once they respond. This does not affect the rest
+          of CourtConnect - you can still browse courts, events, and the schedule.
+        </SafetyCard>
+      );
+    }
+
     return (
-      <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
-        We've sent your parent or guardian an email asking them to approve partner matching and chat for your
-        account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
-        CourtConnect - you can still browse courts, events, and the schedule.
-      </SafetyCard>
+      <div className="max-w-lg mx-auto space-y-4">
+        <SafetyCard icon={AlertTriangle} tone="warning" title="Parent/guardian approval needed">
+          Parent/guardian approval is required before you can use partner matching and chat. We could not send the
+          approval email yet. Please try again later or contact CourtConnect support. This does not affect the rest
+          of CourtConnect - you can still browse courts, events, and the schedule.
+        </SafetyCard>
+        <button type="button" onClick={() => setRetryingParentEmail(true)} className="btn-outline w-full">
+          Try sending the email again
+        </button>
+      </div>
     );
   }
 
@@ -228,7 +255,7 @@ function AdultActivationStep() {
   );
 }
 
-function ParentEmailStep() {
+function ParentEmailStep({ onSubmitted }: { onSubmitted?: () => void } = {}) {
   const { profile, refreshProfile } = useAuth();
   const { addToast } = useToastStore();
   const [parentEmail, setParentEmail] = useState('');
@@ -272,6 +299,13 @@ function ParentEmailStep() {
               ? 'Your request was saved, but the consent email could not be sent yet because email sending is not configured. Contact support to complete this step.'
               : 'Your request was saved, but we could not send the consent email. Please contact support.'
           );
+        } else {
+          // Only record the email as sent once the Edge Function has
+          // actually confirmed it - this is what SocialOnboardingGate's
+          // pending_consent view checks before it's allowed to tell the
+          // user "we've sent your parent an email."
+          const { error: markError } = await supabase.rpc('mark_parent_consent_email_sent');
+          if (markError) console.error('Error marking parent consent email as sent:', markError);
         }
       } catch (emailErr: any) {
         console.error('Error invoking send-parent-consent-email:', emailErr);
@@ -280,6 +314,7 @@ function ParentEmailStep() {
 
       await refreshProfile();
       addToast({ type: 'success', message: 'Parent/guardian approval requested.' });
+      onSubmitted?.();
     } catch (err: any) {
       console.error('Error requesting parent consent:', err);
       setError(err.message || 'Something went wrong. Please try again.');

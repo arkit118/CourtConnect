@@ -64,6 +64,7 @@ export type Profile = {
   parent_consent_requested_at: string | null;
   parent_consent_decided_at: string | null;
   parent_consent_decision: 'approved' | 'declined' | null;
+  parent_consent_email_sent_at: string | null;
   created_at: string;
   updated_at: string;
 };
