@@ -10,6 +10,20 @@ Support/appeals contact: courtconnect.contact@gmail.com
 Never use the `service_role` key in the frontend. Everything below is done by a human,
 logged into the Supabase dashboard directly (Table Editor / SQL Editor), not via the app.
 
+## 0. Getting access to /admin
+
+The in-app `/admin` page (comment/listing moderation, basic stats) requires
+`profiles.role = 'admin'`. This is not set by default — every account starts as
+`role = 'player'`. To grant yourself access: Table Editor → `profiles` → find your row →
+set `role` to `admin`. Banned accounts (`is_banned = true`) are redirected away from
+`/admin` even if `role = 'admin'`, so unban yourself first if that ever applies.
+
+Note that `/admin`'s comment/listing moderation actions only work on content you own —
+there is no admin-bypass RLS policy, so approving/deleting another user's comment or
+deactivating another user's listing from that page currently has no effect (RLS silently
+blocks it). Use the manual Table Editor steps in section 5 below for other users' content
+until that's addressed.
+
 ---
 
 ## 1. Viewing open reports
