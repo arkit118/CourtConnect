@@ -8,6 +8,7 @@ const navLinks = [
   { to: '/events', label: 'Events' },
   { to: '/players', label: 'Players' },
   { to: '/partners', label: 'Partners' },
+  { to: '/matches', label: 'Matches' },
   { to: '/gear', label: 'Gear Exchange' },
   { to: '/courts', label: 'Courts' },
   { to: '/schedule', label: 'Schedule' },
@@ -39,7 +40,8 @@ export function Header() {
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    location.pathname === path || (path === '/matches' && location.pathname.startsWith('/matches/'));
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100">

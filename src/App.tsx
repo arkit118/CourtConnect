@@ -14,12 +14,15 @@ import { ProfilePage, ProfileEditPage } from './pages/ProfilePage';
 import { PlayersPage } from './pages/PlayersPage';
 import { EventsPage, EventDetailPage } from './pages/EventsPage';
 import { EventCreatePage } from './pages/EventCreatePage';
-import { PartnersPage, PartnerRequestPage } from './pages/PartnersPage';
+import { PartnersPage } from './pages/PartnersPage';
 import { GearPage, GearDetailPage, GearCreatePage } from './pages/GearPage';
 import { CourtsPage, CourtDetailPage } from './pages/CourtsPage';
 import { SchedulingPage } from './pages/SchedulingPage';
 import { DashboardPage, ImpactDashboardPage } from './pages/DashboardPage';
 import { AdminPage } from './pages/AdminPage';
+import { MatchesPage } from './pages/MatchesPage';
+import { ChatPage } from './pages/ChatPage';
+import { ParentalConsentPage } from './pages/ParentalConsentPage';
 
 // Static pages
 import { AboutPage, ContactPage } from './pages/static/AboutPage';
@@ -145,9 +148,22 @@ function AppRoutes() {
           <Route path="/events/create" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
           <Route path="/events/:id" element={<EventDetailPage />} />
 
-          {/* Partner Routes */}
+          {/* Partner Routes - the old /partners/request/:id "Request to
+              Hit" flow was retired (no age-band/Terms/ban safety checks);
+              redirect any old links to the safe Partner Matching page. */}
           <Route path="/partners" element={<PartnersPage />} />
-          <Route path="/partners/request/:id" element={<PartnerRequestPage />} />
+          <Route path="/partners/request/:id" element={<Navigate to="/partners" replace />} />
+
+          {/* Matching / Chat Routes - matching requires sign-in; the
+              social/legal/consent eligibility gate itself is handled
+              inside each page via useSocialEligibility, not here, so a
+              signed-in-but-not-yet-eligible user still gets a clear
+              in-page message instead of a redirect loop. */}
+          <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
+          <Route path="/matches/:id" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+
+          {/* Parental consent - public, no account required for the parent/guardian */}
+          <Route path="/parental-consent" element={<ParentalConsentPage />} />
 
           {/* Gear Routes */}
           <Route path="/gear" element={<GearPage />} />

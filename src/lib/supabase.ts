@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, processLock } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -12,6 +12,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // QA fix: by default, when navigator.locks is available (all modern
+    // browsers), @supabase/auth-js serializes every auth/session
+    // operation - including the implicit token check every single
+    // .from()/.rpc() call makes before it can attach an Authorization
+    // header - behind a Web Locks API mutex (navigatorLock), meant to
+    // coordinate token refreshes across multiple tabs of the same origin.
+    // Root-caused during QA: on a fresh full-page load with a persisted
+    // session, this lock reliably never resolved, so *every* Supabase
+    // request in that tab (not just auth calls - `courts`, `profiles`,
+    // etc. too) stalled indefinitely behind it, capped only by the
+    // withTimeout() wrappers added elsewhere in this app to turn that
+    // hang into a visible error instead of an infinite spinner. Switching
+    // to processLock keeps requests correctly serialized within a single
+    // tab using a plain in-memory promise chain instead of the browser
+    // Locks API, which does not exhibit this hang. The tradeoff is losing
+    // cross-tab coordination of token refreshes (a user with two tabs
+    // open could very rarely see one tab's refresh briefly race another's)
+    // - a much smaller, rarer risk than every signed-in page load stalling.
+    lock: processLock,
   },
 });
 
@@ -38,6 +57,13 @@ export type Profile = {
   is_banned: boolean;
   banned_at: string | null;
   ban_reason: string | null;
+  social_features_enabled: boolean;
+  matching_enabled: boolean;
+  chat_safety_acknowledged_at: string | null;
+  parent_consent_status: 'not_required' | 'pending' | 'approved' | 'declined' | 'revoked';
+  parent_consent_requested_at: string | null;
+  parent_consent_decided_at: string | null;
+  parent_consent_decision: 'approved' | 'declined' | null;
   created_at: string;
   updated_at: string;
 };
@@ -160,7 +186,7 @@ export type ImpactMetric = {
   updated_at: string;
 };
 
-export type ReportType = 'user' | 'gear_listing' | 'court_booking' | 'event' | 'court' | 'general';
+export type ReportType = 'user' | 'gear_listing' | 'court_booking' | 'event' | 'court' | 'general' | 'match' | 'message';
 
 export type ReportStatus = 'open' | 'reviewed' | 'actioned' | 'dismissed';
 
@@ -176,4 +202,53 @@ export type Report = {
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type MatchStatus = 'pending' | 'active' | 'declined' | 'ended' | 'blocked';
+
+export type Match = {
+  id: string;
+  user_a: string;
+  user_b: string;
+  requested_by: string | null;
+  age_band: 'minor' | 'adult' | null;
+  status: MatchStatus;
+  created_at: string;
+  updated_at: string;
+  accepted_at: string | null;
+  ended_at: string | null;
+  blocked_at: string | null;
+};
+
+export type Message = {
+  id: string;
+  match_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  deleted_at: string | null;
+  reported: boolean;
+};
+
+export type Block = {
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+};
+
+// Returned by the get_match_candidates() RPC - deliberately only the
+// safe fields a candidate card needs, never date_of_birth, parent_email,
+// ban_reason, or any other sensitive column.
+export type MatchCandidate = {
+  id: string;
+  name: string;
+  home_town: string | null;
+  skill_level: Profile['skill_level'];
+  utr_rating: number | null;
+  preferred_play_style: string | null;
+  availability: string[];
+  bio: string | null;
+  age_band: 'minor' | 'adult';
+  avatar_url: string | null;
+  created_at: string;
 };

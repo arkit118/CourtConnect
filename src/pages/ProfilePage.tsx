@@ -333,8 +333,8 @@ export function ProfilePage() {
                       </button>
                     )}
                     {!isOwnProfile && user && (
-                      <Link to={`/partners/request/${profile?.id}`} className="btn-primary">
-                        Request to Hit
+                      <Link to="/partners" className="btn-primary">
+                        Find a Match
                       </Link>
                     )}
                     {!isOwnProfile && profile && (

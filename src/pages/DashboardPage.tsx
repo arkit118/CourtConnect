@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Package, Settings, User, Check, X, DollarSign } from 'lucide-react';
+import { Calendar, Users, Package, Settings, User, DollarSign, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useToastStore } from '../hooks/useToast';
-import { useActionGate } from '../hooks/useActionGate';
-import { supabase, PartnerRequest, GearListing, Registration, ImpactMetric } from '../lib/supabase';
+import { supabase, GearListing, Registration, ImpactMetric } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 
 export function DashboardPage() {
   const { profile, user, loading: authLoading } = useAuth();
-  const { addToast } = useToastStore();
-  const canProceed = useActionGate();
   const [upcomingEvents, setUpcomingEvents] = useState<Registration[]>([]);
-  const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([]);
   const [myListings, setMyListings] = useState<GearListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,15 +35,6 @@ export function DashboardPage() {
         .limit(5);
       setUpcomingEvents(regs || []);
 
-      // Fetch partner requests
-      const { data: requests } = await supabase
-        .from('partner_requests')
-        .select('*, requester:profiles!partner_requests_requester_id_fkey(*)')
-        .eq('recipient_id', user.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-      setPartnerRequests(requests || []);
-
       // Fetch my gear listings
       const { data: listings } = await supabase
         .from('gear_listings')
@@ -63,38 +49,6 @@ export function DashboardPage() {
       setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAcceptRequest = async (requestId: string) => {
-    if (!(await canProceed())) return;
-    try {
-      const { error } = await supabase
-        .from('partner_requests')
-        .update({ status: 'accepted' })
-        .eq('id', requestId);
-      if (error) throw error;
-      addToast({ type: 'success', message: 'Request accepted!' });
-      fetchDashboardData();
-    } catch (error: any) {
-      console.error('Error accepting partner request:', error);
-      addToast({ type: 'error', message: error.message || 'Failed to accept' });
-    }
-  };
-
-  const handleDeclineRequest = async (requestId: string) => {
-    if (!(await canProceed())) return;
-    try {
-      const { error } = await supabase
-        .from('partner_requests')
-        .update({ status: 'declined' })
-        .eq('id', requestId);
-      if (error) throw error;
-      addToast({ type: 'info', message: 'Request declined' });
-      fetchDashboardData();
-    } catch (error: any) {
-      console.error('Error declining partner request:', error);
-      addToast({ type: 'error', message: error.message || 'Failed to decline' });
     }
   };
 
@@ -146,18 +100,18 @@ export function DashboardPage() {
             <p className="text-xs text-secondary-500">upcoming</p>
           </div>
 
-          <div className="card p-5">
+          <Link to="/partners" className="card p-5 card-hover">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-accent-100 flex items-center justify-center">
-                <Users className="w-5 h-5 text-accent-600" />
+                <Heart className="w-5 h-5 text-accent-600" />
               </div>
               <div>
-                <p className="text-sm text-secondary-500">Partners</p>
-                <p className="text-2xl font-bold text-secondary-900">{partnerRequests.length}</p>
+                <p className="text-sm text-secondary-500">Partner Matching</p>
+                <p className="text-base font-semibold text-secondary-900">Find a partner</p>
               </div>
             </div>
-            <p className="text-xs text-secondary-500">pending</p>
-          </div>
+            <p className="text-xs text-secondary-500">safe, age-banded matching</p>
+          </Link>
 
           <div className="card p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -225,46 +179,19 @@ export function DashboardPage() {
               )}
             </div>
 
-            {/* Partner Requests */}
+            {/* Partner Matching */}
             <div className="card p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-secondary-900">Partner Requests</h2>
-                <Link to="/partners" className="text-sm text-primary-600 hover:text-primary-700">View all</Link>
+                <h2 className="text-lg font-semibold text-secondary-900">Partner Matching</h2>
+                <Link to="/matches" className="text-sm text-primary-600 hover:text-primary-700">View my matches</Link>
               </div>
-              {partnerRequests.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-                  <p className="text-secondary-600 mb-4">No pending requests</p>
-                  <Link to="/partners" className="btn-outline">Find Partners</Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {partnerRequests.map((request) => {
-                    const requester = (request as any).requester;
-                    return (
-                      <div key={request.id} className="flex items-center gap-4 p-4 rounded-xl bg-secondary-50">
-                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                          <User className="w-5 h-5 text-primary-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-secondary-900 truncate">{requester?.name || 'Player'}</h3>
-                          <p className="text-sm text-secondary-500 truncate">
-                            {format(parseISO(request.proposed_date), 'MMM d')} at {request.proposed_time}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => handleAcceptRequest(request.id)} className="btn-primary btn-sm">
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDeclineRequest(request.id)} className="btn-ghost btn-sm text-red-600">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <div className="text-center py-8">
+                <Heart className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
+                <p className="text-secondary-600 mb-4">
+                  Use Partner Matching for safe age-banded tennis partner requests.
+                </p>
+                <Link to="/partners" className="btn-outline">Find Partners</Link>
+              </div>
             </div>
 
             {/* My Listings */}
@@ -334,10 +261,6 @@ export function DashboardPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-secondary-600">Your Events</span>
                   <span className="font-semibold text-secondary-900">{upcomingEvents.length}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-secondary-600">Partner Requests</span>
-                  <span className="font-semibold text-secondary-900">{partnerRequests.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-secondary-600">Active Listings</span>

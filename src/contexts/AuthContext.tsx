@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
-import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from '../lib/legal';
 import { withTimeout, isMissingColumnError, devLog } from '../lib/withTimeout';
 
 const AUTH_TIMEOUT_MS = 8000;
@@ -55,43 +54,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    // QA fix: this used to also call supabase.auth.getSession() directly
+    // here before setting up onAuthStateChange. Reproduced during preview
+    // QA: every fresh, signed-in page load consistently stalled for the
+    // full 8s timeout on that getSession() call, and - critically -
+    // unrelated public queries (e.g. SchedulingPage's `courts` fetch)
+    // didn't even dispatch their HTTP request until *after* that timeout
+    // fired, meaning the shared Supabase client was serializing all
+    // requests in this tab behind the session check. onAuthStateChange
+    // always fires an INITIAL_SESSION event exactly once on subscribe,
+    // with the same session data getSession() would have returned - so
+    // calling both was redundant and appears to have been the source of
+    // the internal contention. Relying solely on the listener removes the
+    // double session-resolution without losing anything: every branch
+    // below (SIGNED_IN/INITIAL_SESSION/TOKEN_REFRESHED/SIGNED_OUT) is
+    // still handled, `loading` still always resolves, and the timer below
+    // is kept purely as a last-resort safety net in case the client never
+    // fires any event at all (should not happen in practice).
+    let resolvedInitial = false;
 
-    async function init() {
-      devLog('[AuthContext] initializing session...');
-      try {
-        const { data: { session: initialSession } } = await withTimeout(
-          supabase.auth.getSession(),
-          AUTH_TIMEOUT_MS,
-          'Auth session check timed out'
-        );
-
-        if (cancelled || !mountedRef.current) return;
-
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-
-        if (initialSession?.user) {
-          await fetchOrCreateProfile(initialSession.user);
-        }
-      } catch (err) {
-        console.error('[AuthContext] Error initializing auth session:', err);
-        if (mountedRef.current) {
-          // A failed/timed-out session check should never block the rest
-          // of the app - public pages must still render. We simply end up
-          // signed-out looking, which is safe.
-          setSession(null);
-          setUser(null);
-        }
-      } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-          devLog('[AuthContext] initial load finished');
-        }
+    const safetyTimer = setTimeout(() => {
+      if (!resolvedInitial && mountedRef.current) {
+        console.error('[AuthContext] No auth state received within timeout - proceeding as signed out');
+        resolvedInitial = true;
+        setLoading(false);
       }
-    }
-
-    init();
+    }, AUTH_TIMEOUT_MS);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, changedSession) => {
       if (!mountedRef.current) return;
@@ -101,16 +89,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(changedSession?.user ?? null);
       setError(null);
 
-      if (event === 'SIGNED_IN' && changedSession?.user) {
+      if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
         await fetchOrCreateProfile(changedSession.user);
       } else if (event === 'SIGNED_OUT') {
         setProfile(null);
         setProfileError(null);
       }
+
+      if (!resolvedInitial && mountedRef.current) {
+        resolvedInitial = true;
+        clearTimeout(safetyTimer);
+        setLoading(false);
+        devLog('[AuthContext] initial load finished');
+      }
     });
 
     return () => {
-      cancelled = true;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -153,32 +148,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Profile doesn't exist yet (e.g. first Google sign-in) - create one
+      // Profile doesn't exist yet (e.g. first Google sign-in, or this
+      // fires before signUp()'s own upsert_signup_profile RPC call has
+      // landed) - create a minimal one.
       if (fetchError?.code === 'PGRST116') {
         const name = sessionUser.user_metadata?.name || sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0] || 'Player';
         const avatarUrl = sessionUser.user_metadata?.avatar_url || sessionUser.user_metadata?.picture || null;
 
-        const { data: newProfile, error: createError } = await withTimeout(
-          supabase
-            .from('profiles')
-            .insert({
-              id: sessionUser.id,
-              name,
-              avatar_url: avatarUrl,
-              role: 'player',
-              skill_level: 'beginner',
-              availability: [],
-              favorite_courts: [],
-            })
-            .select()
-            .single(),
+        // QA fix: this used to be a plain .insert(), which could race
+        // against signUp()'s own profile-creation call (both are
+        // triggered by the same supabase.auth.signUp() and can run
+        // concurrently). If signUp() won that race, this insert would
+        // hit a 23505 duplicate-key error and this whole function would
+        // fall into the catch block below, showing a spurious "could not
+        // load your profile" error even though a perfectly good profile
+        // (with the full legal/age fields) had just been created.
+        // ignoreDuplicates makes a genuine race a safe, silent no-op -
+        // whichever side actually created the row, we then always
+        // re-select and use whatever is really in the database, so this
+        // path can never overwrite a fuller row with this minimal one.
+        const { error: createError } = await withTimeout(
+          supabase.from('profiles').upsert(
+            { id: sessionUser.id, name, avatar_url: avatarUrl, role: 'player', skill_level: 'beginner', availability: [], favorite_courts: [] },
+            { onConflict: 'id', ignoreDuplicates: true }
+          ),
           AUTH_TIMEOUT_MS,
           'Profile creation timed out'
         );
-
         if (createError) throw createError;
-        if (mountedRef.current && newProfile) {
-          setProfile(newProfile);
+
+        const { data: finalProfile, error: refetchError } = await withTimeout(
+          supabase.from('profiles').select('*').eq('id', sessionUser.id).single(),
+          AUTH_TIMEOUT_MS,
+          'Profile fetch timed out'
+        );
+        if (refetchError) throw refetchError;
+        if (mountedRef.current && finalProfile) {
+          setProfile(finalProfile);
           setProfileError(null);
         }
       } else if (fetchError) {
@@ -215,49 +221,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw signUpError;
       }
 
-      // Create profile after signup (email confirmation disabled)
+      // QA fix: this used to be a plain .insert() with the full legal/age
+      // fields, silently ignoring a 23505 conflict. That conflict happens
+      // reliably (not just occasionally) because supabase.auth.signUp()
+      // also fires onAuthStateChange('SIGNED_IN'/'INITIAL_SESSION'),
+      // whose handler (fetchOrCreateProfile above) races to create its
+      // own *minimal* profile - and whichever insert lost the race had
+      // its data silently discarded, so date_of_birth/age_band/
+      // tos_version/tos_accepted_at/privacy_version/privacy_accepted_at
+      // ended up NULL on essentially every signup. upsert_signup_profile
+      // is a SECURITY DEFINER RPC that does a single INSERT ... ON
+      // CONFLICT (id) DO UPDATE for exactly these fields, so no matter
+      // which side's row-creation attempt reaches Postgres first, this
+      // call is guaranteed to end with the full legal/age data in place.
+      // (A plain client-side upsert can't do this: protect_sensitive_
+      // profile_columns pins age_band/date_of_birth back to their prior
+      // value on a normal authenticated self-UPDATE, which is exactly
+      // what upsert-on-conflict would be here without the RPC's bypass.)
       if (data.user) {
         const avatarUrl = data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null;
-        const now = new Date().toISOString();
-        const { error: profileInsertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            name,
-            avatar_url: avatarUrl,
-            role: 'player',
-            skill_level: 'beginner',
-            availability: [],
-            favorite_courts: [],
-            date_of_birth: legal.date_of_birth,
-            age_band: legal.age_band,
-            tos_accepted_at: now,
-            tos_version: CURRENT_TOS_VERSION,
-            privacy_accepted_at: now,
-            privacy_version: CURRENT_PRIVACY_VERSION,
-            safety_acknowledged_at: now,
-          })
-          .select()
-          .single();
 
-        if (profileInsertError && profileInsertError.code !== '23505') { // Ignore duplicate key error
-          console.error('[AuthContext] Profile creation error:', profileInsertError);
-          if (isMissingColumnError(profileInsertError)) {
-            setProfileError(MIGRATION_MISSING_MESSAGE);
-          }
+        const { data: rpcResult, error: rpcError } = await withTimeout(
+          supabase.rpc('upsert_signup_profile', {
+            p_name: name,
+            p_avatar_url: avatarUrl,
+            p_date_of_birth: legal.date_of_birth,
+          }),
+          AUTH_TIMEOUT_MS,
+          'Saving your profile timed out. Please try again.'
+        );
+
+        if (rpcError) {
+          console.error('[AuthContext] Error upserting signup profile:', rpcError);
+          setError(rpcError.message);
+          throw rpcError;
         }
 
-        // Fetch the profile to update state
-        const { data: newProfile, error: refetchError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        const resultProfile = (rpcResult as { ok?: boolean; profile?: Profile } | null)?.profile ?? null;
 
-        if (refetchError) {
-          console.error('[AuthContext] Error refetching profile after signup:', refetchError);
-        } else if (newProfile && mountedRef.current) {
-          setProfile(newProfile);
+        if (resultProfile) {
+          // Verify the fields this whole fix exists to guarantee actually
+          // landed, rather than silently trusting the RPC's own success
+          // flag - if something unexpected happened, surface it visibly
+          // instead of leaving the user looking "signed up" with a
+          // profile that will fail every legal/matching check later.
+          if (!resultProfile.tos_version || !resultProfile.age_band) {
+            console.error('[AuthContext] upsert_signup_profile returned an incomplete profile:', resultProfile);
+            setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
+          }
+          if (mountedRef.current) {
+            setProfile(resultProfile);
+            setProfileError((prev) => (resultProfile.tos_version && resultProfile.age_band ? null : prev));
+          }
+        } else {
+          console.error('[AuthContext] upsert_signup_profile returned no profile:', rpcResult);
+          if (mountedRef.current) setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
         }
       }
     } finally {
