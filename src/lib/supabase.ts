@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, processLock } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -12,6 +12,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // QA fix: by default, when navigator.locks is available (all modern
+    // browsers), @supabase/auth-js serializes every auth/session
+    // operation - including the implicit token check every single
+    // .from()/.rpc() call makes before it can attach an Authorization
+    // header - behind a Web Locks API mutex (navigatorLock), meant to
+    // coordinate token refreshes across multiple tabs of the same origin.
+    // Root-caused during QA: on a fresh full-page load with a persisted
+    // session, this lock reliably never resolved, so *every* Supabase
+    // request in that tab (not just auth calls - `courts`, `profiles`,
+    // etc. too) stalled indefinitely behind it, capped only by the
+    // withTimeout() wrappers added elsewhere in this app to turn that
+    // hang into a visible error instead of an infinite spinner. Switching
+    // to processLock keeps requests correctly serialized within a single
+    // tab using a plain in-memory promise chain instead of the browser
+    // Locks API, which does not exhibit this hang. The tradeoff is losing
+    // cross-tab coordination of token refreshes (a user with two tabs
+    // open could very rarely see one tab's refresh briefly race another's)
+    // - a much smaller, rarer risk than every signed-in page load stalling.
+    lock: processLock,
   },
 });
 

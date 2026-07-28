@@ -14,7 +14,7 @@ import { ProfilePage, ProfileEditPage } from './pages/ProfilePage';
 import { PlayersPage } from './pages/PlayersPage';
 import { EventsPage, EventDetailPage } from './pages/EventsPage';
 import { EventCreatePage } from './pages/EventCreatePage';
-import { PartnersPage, PartnerRequestPage } from './pages/PartnersPage';
+import { PartnersPage } from './pages/PartnersPage';
 import { GearPage, GearDetailPage, GearCreatePage } from './pages/GearPage';
 import { CourtsPage, CourtDetailPage } from './pages/CourtsPage';
 import { SchedulingPage } from './pages/SchedulingPage';
@@ -148,9 +148,11 @@ function AppRoutes() {
           <Route path="/events/create" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
           <Route path="/events/:id" element={<EventDetailPage />} />
 
-          {/* Partner Routes */}
+          {/* Partner Routes - the old /partners/request/:id "Request to
+              Hit" flow was retired (no age-band/Terms/ban safety checks);
+              redirect any old links to the safe Partner Matching page. */}
           <Route path="/partners" element={<PartnersPage />} />
-          <Route path="/partners/request/:id" element={<PartnerRequestPage />} />
+          <Route path="/partners/request/:id" element={<Navigate to="/partners" replace />} />
 
           {/* Matching / Chat Routes - matching requires sign-in; the
               social/legal/consent eligibility gate itself is handled
