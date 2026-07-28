@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, ChevronDown, Settings, Loader2 } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, Settings, Loader2, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 
@@ -119,6 +119,14 @@ export function Header() {
                           <User className="w-4 h-4" />
                           My Profile
                         </Link>
+                        <Link
+                          to="/matches"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <Heart className="w-4 h-4" />
+                          Matches
+                        </Link>
                       </div>
                       <div className="border-t border-secondary-100 pt-2">
                         <button
@@ -197,6 +205,13 @@ export function Header() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       My Profile
+                    </Link>
+                    <Link
+                      to="/matches"
+                      className="px-4 py-3 rounded-lg text-sm font-medium text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Matches
                     </Link>
                     <button
                       onClick={() => {

@@ -20,6 +20,9 @@ import { CourtsPage, CourtDetailPage } from './pages/CourtsPage';
 import { SchedulingPage } from './pages/SchedulingPage';
 import { DashboardPage, ImpactDashboardPage } from './pages/DashboardPage';
 import { AdminPage } from './pages/AdminPage';
+import { MatchesPage } from './pages/MatchesPage';
+import { ChatPage } from './pages/ChatPage';
+import { ParentalConsentPage } from './pages/ParentalConsentPage';
 
 // Static pages
 import { AboutPage, ContactPage } from './pages/static/AboutPage';
@@ -148,6 +151,17 @@ function AppRoutes() {
           {/* Partner Routes */}
           <Route path="/partners" element={<PartnersPage />} />
           <Route path="/partners/request/:id" element={<PartnerRequestPage />} />
+
+          {/* Matching / Chat Routes - matching requires sign-in; the
+              social/legal/consent eligibility gate itself is handled
+              inside each page via useSocialEligibility, not here, so a
+              signed-in-but-not-yet-eligible user still gets a clear
+              in-page message instead of a redirect loop. */}
+          <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
+          <Route path="/matches/:id" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+
+          {/* Parental consent - public, no account required for the parent/guardian */}
+          <Route path="/parental-consent" element={<ParentalConsentPage />} />
 
           {/* Gear Routes */}
           <Route path="/gear" element={<GearPage />} />

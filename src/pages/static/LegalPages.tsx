@@ -27,8 +27,8 @@ export function TermsPage() {
           <LegalSection number={1} title="What CourtConnect Is">
             <p>
               CourtConnect is a local tennis community platform, starting in Livingston, NJ. It helps players find
-              local tennis courts, view and register for events, coordinate community court time, and use gear
-              exchange and related community features.
+              local tennis courts, view and register for events, coordinate community court time, use gear exchange,
+              and use optional partner matching and in-app chat to connect with other members.
             </p>
           </LegalSection>
 
@@ -36,6 +36,12 @@ export function TermsPage() {
             <p>You must be at least 13 years old to create a CourtConnect account.</p>
             <p>If you are under 18, you should use CourtConnect with your parent or guardian's knowledge and permission.</p>
             <p>If you are under 13, you may not create an account or use CourtConnect.</p>
+            <p>
+              Partner matching and in-app chat are optional features with their own eligibility rule: if you are
+              under 18, a parent or guardian must approve your use of matching and chat specifically before you can
+              use them. This does not affect your ability to use the rest of CourtConnect (courts, events, schedule,
+              gear exchange).
+            </p>
           </LegalSection>
 
           <LegalSection number={3} title="Accounts">
@@ -84,41 +90,65 @@ export function TermsPage() {
             <p>Do not share sensitive personal information publicly. In an emergency, contact local emergency services directly &mdash; not CourtConnect.</p>
           </LegalSection>
 
-          <LegalSection number={10} title="User Content">
+          <LegalSection number={10} title="Partner Matching and Chat">
+            <p>
+              CourtConnect offers optional partner matching and in-app chat so members can coordinate hitting
+              partners and tennis meetups.
+            </p>
+            <p>
+              Minors (users under 18) are only ever matched with other minors, and only after a parent or guardian
+              has approved matching/chat for that account. Adults are only ever matched with other adults. Minors
+              and adults cannot be matched with each other, and this is enforced at the database level, not just in
+              the app.
+            </p>
+            <p>
+              CourtConnect provides tools to report and block other users, and may remove access to matching/chat or
+              ban accounts for unsafe or abusive behavior.
+            </p>
+            <p>
+              CourtConnect does not guarantee the safety of any offline meetup arranged through matching or chat, does
+              not verify the identity of members beyond the information they provide, and does not process any
+              payments through matching or chat. Do not arrange paid hitting, coaching, or lessons through
+              CourtConnect.
+            </p>
+          </LegalSection>
+
+          <LegalSection number={12} title="User Content">
             <p>
               You are responsible for information you post, including profiles, listings, bookings, event comments,
-              or reports. CourtConnect may remove content that violates these rules or safety standards.
+              chat messages, or reports. CourtConnect may remove content that violates these rules or safety
+              standards.
             </p>
           </LegalSection>
 
-          <LegalSection number={11} title="Moderation">
-            <p>CourtConnect may remove listings, bookings, content, or accounts that violate these rules, and may ban users for unsafe or abusive behavior.</p>
+          <LegalSection number={13} title="Moderation">
+            <p>CourtConnect may remove listings, bookings, content, matches, chat access, or accounts that violate these rules, and may ban users for unsafe or abusive behavior.</p>
           </LegalSection>
 
-          <LegalSection number={12} title="Third-Party Services">
-            <p>Supabase, Vercel, and other services may power the app. External links are not fully controlled by CourtConnect.</p>
+          <LegalSection number={14} title="Third-Party Services">
+            <p>Supabase, Vercel, Resend, and other services may power the app. External links are not fully controlled by CourtConnect.</p>
           </LegalSection>
 
-          <LegalSection number={13} title="Disclaimers">
+          <LegalSection number={15} title="Disclaimers">
             <p>
-              CourtConnect is provided "as-is." There is no guarantee that courts, events, listings, or users will be
-              available, accurate, safe, or suitable for any particular purpose.
+              CourtConnect is provided "as-is." There is no guarantee that courts, events, listings, matches, or users
+              will be available, accurate, safe, or suitable for any particular purpose.
             </p>
           </LegalSection>
 
-          <LegalSection number={14} title="Limitation of Liability">
+          <LegalSection number={16} title="Limitation of Liability">
             <p>
               To the fullest extent allowed by law, CourtConnect is not responsible for offline meetups, injuries,
-              disputes between users, gear transactions, or third-party services arranged or coordinated through the
-              platform.
+              disputes between users, gear transactions, matches or chat interactions, or third-party services
+              arranged or coordinated through the platform.
             </p>
           </LegalSection>
 
-          <LegalSection number={15} title="Changes">
+          <LegalSection number={17} title="Changes">
             <p>CourtConnect may update these Terms. If major changes happen, you may be asked to accept the new version before continuing to use the app.</p>
           </LegalSection>
 
-          <LegalSection number={16} title="Contact, Support, and Account Deletion">
+          <LegalSection number={18} title="Contact, Support, and Account Deletion">
             <p>
               Questions about these Terms, general support, or requests to delete your account? Email{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a>.
@@ -147,6 +177,8 @@ export function PrivacyPage() {
               <li>Court bookings: player name, partner/opponent name, court, date/time, and notes</li>
               <li>Event registrations</li>
               <li>Gear listings and interest/contact information, if you use gear exchange</li>
+              <li>Partner matching and chat data: match requests, match status, chat messages, and block records, if you use partner matching or chat</li>
+              <li>A parent or guardian's email address, if you are a minor requesting approval to use partner matching or chat</li>
               <li>Reports and safety submissions you file</li>
               <li>Basic technical information such as browser/device details, auth/session data, and hosting/backend logs</li>
             </ul>
@@ -157,6 +189,8 @@ export function PrivacyPage() {
               <li>Provide accounts and authentication</li>
               <li>Show courts, events, schedule entries, and listings</li>
               <li>Prevent under-13 signup</li>
+              <li>Operate partner matching and chat, including keeping minors matched only with other minors and adults matched only with other adults</li>
+              <li>Request and record parent/guardian approval before a minor can use matching or chat</li>
               <li>Improve safety and moderation</li>
               <li>Communicate with you about your account or support requests</li>
               <li>Maintain security and debug issues</li>
@@ -170,19 +204,27 @@ export function PrivacyPage() {
               <li>Event information may be public</li>
               <li>Profile information may be visible depending on which features you use</li>
               <li>Gear listings may be visible</li>
+              <li>Match requests are visible only to the two people involved</li>
+              <li>Chat messages are visible only to the two participants in that match - chat is not public, but may be reviewed by CourtConnect if a message or user is reported, or for safety/moderation purposes</li>
               <li>Reports you submit are not public</li>
             </ul>
           </LegalSection>
 
           <LegalSection number={4} title="Sharing">
             <p>CourtConnect does not sell your personal information.</p>
-            <p>Data may be processed by service providers such as Supabase and Vercel to run the app.</p>
+            <p>Data may be processed by service providers such as Supabase, Vercel, and Resend (for parent/guardian consent emails) to run the app.</p>
             <p>Information may be disclosed if required for safety, legal compliance, or abuse prevention.</p>
           </LegalSection>
 
           <LegalSection number={5} title="Children and Minors">
             <p>You must be at least 13 to use CourtConnect. We do not knowingly allow users under 13 to create accounts.</p>
-            <p>Users under 18 should use the app with parent/guardian involvement. We do not currently offer a verified parental consent process.</p>
+            <p>Users under 18 should use the app with parent/guardian involvement.</p>
+            <p>
+              Partner matching and chat specifically require a parent or guardian to approve those features for a
+              minor's account, via an email sent to the address the minor provides. This is a lightweight, email-link
+              approval process appropriate for a v1 product - it does not verify that the email address actually
+              belongs to the user's parent or guardian. Minors are only ever matched with other minors, never adults.
+            </p>
           </LegalSection>
 
           <LegalSection number={6} title="Data Security">
@@ -258,6 +300,23 @@ export function SafetyPage() {
 
           <div className="card p-6 md:p-8">
             <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 text-primary-600" />
+              </div>
+              <h2 className="text-lg font-bold text-secondary-900">Partner Matching and Chat Safety</h2>
+            </div>
+            <ul className="list-disc list-inside space-y-1 text-secondary-600">
+              <li>Minors are only ever matched with other minors, never adults - enforced at the database level</li>
+              <li>Minors need parent/guardian approval before they can use matching or chat at all</li>
+              <li>Do not share sensitive personal information in chat (address, financial details, school schedule, etc.)</li>
+              <li>Do not arrange paid hitting, coaching, or lessons through chat</li>
+              <li>Block and report anyone who makes you uncomfortable - blocking immediately ends any open match with that person</li>
+              <li>Chat is not monitored in real time, but reported messages are reviewed</li>
+            </ul>
+          </div>
+
+          <div className="card p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
                 <Package className="w-5 h-5 text-green-600" />
               </div>
@@ -294,8 +353,10 @@ export function SafetyPage() {
               <h2 className="text-lg font-bold text-secondary-900">Reporting</h2>
             </div>
             <p className="text-secondary-600 mb-2">
-              If you see unsafe content, a suspicious listing, or a concerning user or booking, use the "Report"
-              action where it's available on the relevant page.
+              If you see unsafe content, a suspicious listing, a concerning user, booking, match, or chat message, use
+              the "Report" action where it's available on the relevant page. In matching and chat, you can also
+              "Block" someone directly - blocking removes them from your candidates and immediately closes any open
+              match or chat with them.
             </p>
             <p className="text-secondary-600 flex items-start gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
@@ -328,8 +389,10 @@ export function CommunityGuidelinesPage() {
     'No inappropriate content or behavior',
     'No paid hitting, coaching, or lesson arrangements through CourtConnect',
     'No fake listings, bookings, or events',
+    'No attempting to match or chat with someone outside your age band (minors with minors only, adults with adults only)',
+    'No requesting sensitive personal information in chat',
     'Follow all posted court, facility, and town rules',
-    'Report safety issues instead of handling them yourself',
+    'Report safety issues and block anyone who makes you uncomfortable, instead of handling it yourself',
   ];
 
   return (

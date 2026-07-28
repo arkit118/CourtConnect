@@ -38,6 +38,13 @@ export type Profile = {
   is_banned: boolean;
   banned_at: string | null;
   ban_reason: string | null;
+  social_features_enabled: boolean;
+  matching_enabled: boolean;
+  chat_safety_acknowledged_at: string | null;
+  parent_consent_status: 'not_required' | 'pending' | 'approved' | 'declined' | 'revoked';
+  parent_consent_requested_at: string | null;
+  parent_consent_decided_at: string | null;
+  parent_consent_decision: 'approved' | 'declined' | null;
   created_at: string;
   updated_at: string;
 };
@@ -160,7 +167,7 @@ export type ImpactMetric = {
   updated_at: string;
 };
 
-export type ReportType = 'user' | 'gear_listing' | 'court_booking' | 'event' | 'court' | 'general';
+export type ReportType = 'user' | 'gear_listing' | 'court_booking' | 'event' | 'court' | 'general' | 'match' | 'message';
 
 export type ReportStatus = 'open' | 'reviewed' | 'actioned' | 'dismissed';
 
@@ -176,4 +183,53 @@ export type Report = {
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type MatchStatus = 'pending' | 'active' | 'declined' | 'ended' | 'blocked';
+
+export type Match = {
+  id: string;
+  user_a: string;
+  user_b: string;
+  requested_by: string | null;
+  age_band: 'minor' | 'adult' | null;
+  status: MatchStatus;
+  created_at: string;
+  updated_at: string;
+  accepted_at: string | null;
+  ended_at: string | null;
+  blocked_at: string | null;
+};
+
+export type Message = {
+  id: string;
+  match_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  deleted_at: string | null;
+  reported: boolean;
+};
+
+export type Block = {
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+};
+
+// Returned by the get_match_candidates() RPC - deliberately only the
+// safe fields a candidate card needs, never date_of_birth, parent_email,
+// ban_reason, or any other sensitive column.
+export type MatchCandidate = {
+  id: string;
+  name: string;
+  home_town: string | null;
+  skill_level: Profile['skill_level'];
+  utr_rating: number | null;
+  preferred_play_style: string | null;
+  availability: string[];
+  bio: string | null;
+  age_band: 'minor' | 'adult';
+  avatar_url: string | null;
+  created_at: string;
 };
