@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AlertTriangle, AlertOctagon } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
@@ -85,6 +85,14 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// /gear-exchange is an alias for /gear ("Gear Exchange" is the feature's
+// display name; /gear is - and remains - the canonical route). This
+// preserves the :id param when redirecting a gear detail link.
+function GearExchangeDetailRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/gear/${id}`} replace />;
+}
+
 function BannedBanner() {
   const { profile } = useAuth();
   if (!profile?.is_banned) return null;
@@ -169,6 +177,10 @@ function AppRoutes() {
           <Route path="/gear" element={<GearPage />} />
           <Route path="/gear/:id" element={<GearDetailPage />} />
           <Route path="/gear/create" element={<ProtectedRoute><GearCreatePage /></ProtectedRoute>} />
+          {/* /gear-exchange alias - see GearExchangeDetailRedirect above */}
+          <Route path="/gear-exchange" element={<Navigate to="/gear" replace />} />
+          <Route path="/gear-exchange/create" element={<Navigate to="/gear/create" replace />} />
+          <Route path="/gear-exchange/:id" element={<GearExchangeDetailRedirect />} />
 
           {/* Courts Routes */}
           <Route path="/courts" element={<CourtsPage />} />
