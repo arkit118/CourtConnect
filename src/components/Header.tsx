@@ -50,7 +50,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16 md:h-18">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center shrink-0">
-              <Logo iconClassName="h-7 w-7 md:h-9 md:w-9" wordmarkClassName="text-base md:text-xl" />
+              <Logo variant="lockup" className="h-8 md:h-10" />
             </Link>
             <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
