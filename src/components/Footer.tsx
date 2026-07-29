@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { CONTACT_EMAIL } from '../lib/legal';
 import { Logo } from './brand/Logo';
 
@@ -8,8 +8,10 @@ const footerLinks = {
     { label: 'Events', to: '/events' },
     { label: 'Players', to: '/players' },
     { label: 'Partners', to: '/partners' },
+    { label: 'Matches', to: '/matches' },
     { label: 'Gear Exchange', to: '/gear' },
     { label: 'Courts', to: '/courts' },
+    { label: 'Schedule', to: '/schedule' },
   ],
   company: [
     { label: 'About', to: '/about' },
@@ -23,12 +25,10 @@ const footerLinks = {
   ],
 };
 
-const socialLinks = [
-  { icon: Facebook, href: '#', label: 'Facebook' },
-  { icon: Twitter, href: '#', label: 'Twitter' },
-  { icon: Instagram, href: '#', label: 'Instagram' },
-  { icon: Youtube, href: '#', label: 'YouTube' },
-];
+// Only Instagram is planned; the account isn't live yet, so this is a
+// disabled, non-navigating placeholder rather than a link to nowhere.
+// Facebook/Twitter/YouTube are removed outright - not part of the launch
+// social presence.
 
 export function Footer() {
   return (
@@ -43,16 +43,13 @@ export function Footer() {
               Connecting local tennis communities through affordable tournaments, partner matching, and gear exchange.
             </p>
             <div className="flex gap-3">
-              {socialLinks.map(({ icon: Icon, href, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  className="w-10 h-10 rounded-lg bg-secondary-800 hover:bg-primary-500 flex items-center justify-center transition-colors"
-                  aria-label={label}
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              ))}
+              <span
+                className="w-10 h-10 rounded-lg bg-secondary-800/60 text-secondary-500 flex items-center justify-center cursor-not-allowed"
+                title="Instagram coming soon"
+                aria-label="Instagram - coming soon"
+              >
+                <Instagram className="w-5 h-5" />
+              </span>
             </div>
           </div>
 

@@ -47,7 +47,6 @@ const conditionColors: Record<string, string> = {
 
 const categories = ['racquets', 'shoes', 'bags', 'strings', 'apparel', 'accessories', 'other'];
 const conditions = ['new', 'like-new', 'good', 'fair'];
-const towns = ['Bloomfield', 'Caldwell', 'Livingston', 'Maplewood', 'Millburn', 'Montclair', 'South Orange'];
 
 export function GearPage() {
   const [listings, setListings] = useState<GearListing[]>([]);
@@ -55,7 +54,6 @@ export function GearPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
-  const [selectedTown, setSelectedTown] = useState('');
 
   useEffect(() => {
     fetchListings();
@@ -94,9 +92,8 @@ export function GearPage() {
 
     const matchesCategory = !selectedCategory || listing.category === selectedCategory;
     const matchesCondition = !selectedCondition || listing.condition === selectedCondition;
-    const matchesTown = !selectedTown || listing.town === selectedTown;
 
-    return matchesSearch && matchesCategory && matchesCondition && matchesTown;
+    return matchesSearch && matchesCategory && matchesCondition;
   });
 
   return (
@@ -156,16 +153,6 @@ export function GearPage() {
               <option value="">Any Condition</option>
               {conditions.map((cond) => (
                 <option key={cond} value={cond}>{conditionLabels[cond]}</option>
-              ))}
-            </select>
-            <select
-              value={selectedTown}
-              onChange={(e) => setSelectedTown(e.target.value)}
-              className="input w-auto"
-            >
-              <option value="">Any Town</option>
-              {towns.map((town) => (
-                <option key={town} value={town}>{town}</option>
               ))}
             </select>
           </div>

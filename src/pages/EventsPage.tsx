@@ -112,7 +112,7 @@ export function EventsPage() {
               onChange={(e) => setSelectedTown(e.target.value)}
               className="input w-auto"
             >
-              <option value="">Livingston Pilot</option>
+              <option value="">All Towns</option>
               {towns.map((town) => (
                 <option key={town} value={town}>{town}</option>
               ))}
