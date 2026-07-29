@@ -159,49 +159,27 @@ function HowItWorksSection() {
   );
 }
 
+// Launch-cleanup note: this used to show numeric counters (Active
+// Players, Events Hosted, Player Savings, Gear Exchanges) sourced from
+// impact_metrics - a manually-edited table with no real calculation
+// behind it (and, separately, only readable by signed-in users per its
+// RLS policy, so logged-out homepage visitors never saw real numbers
+// from it anyway). Replaced with honest, non-numeric value cards instead
+// of unverifiable traction numbers.
 function ImpactSection() {
-  const [metrics, setMetrics] = useState<{ value: string; label: string }[] | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchMetrics();
-  }, []);
-
-  const fetchMetrics = async () => {
-    try {
-      const { data } = await withTimeout(
-        supabase.from('impact_metrics').select('*'),
-        15000,
-        'Loading impact metrics timed out'
-      );
-      if (data && data.length > 0) {
-        const metricMap = data.reduce((acc, m) => {
-          acc[m.metric_type] = m.value;
-          return acc;
-        }, {} as Record<string, number>);
-
-        setMetrics([
-          { value: `${metricMap.players || 0}`, label: 'Active Players' },
-          { value: `${metricMap.events || 0}`, label: 'Events Hosted' },
-          { value: `$${Math.round((metricMap.savings || 0) / 1000)}K+`, label: 'Player Savings' },
-          { value: `${metricMap.gear_exchanges || 0}`, label: 'Gear Exchanges' },
-        ]);
-      } else {
-        setMetrics(null);
-      }
-    } catch (error) {
-      console.error('Error fetching metrics:', error);
-      setMetrics(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const values = [
+    { icon: MapPin, title: 'Find local tennis courts' },
+    { icon: Calendar, title: 'Coordinate court time' },
+    { icon: Heart, title: 'Match with local players' },
+    { icon: Package, title: 'Exchange gear locally' },
+    { icon: Users, title: 'Parent approval for under-18 social features' },
+  ];
 
   return (
     <section className="section bg-gradient-to-br from-primary-600 to-primary-800 text-white">
       <div className="container-custom">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-extrabold mb-4">
             Building Community in Livingston
           </h2>
           <p className="text-lg text-primary-100 max-w-2xl mx-auto">
@@ -209,35 +187,19 @@ function ImpactSection() {
           </p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="text-center p-6 md:p-8 rounded-2xl bg-white/10 backdrop-blur border border-white/20">
-                <div className="h-10 bg-white/20 rounded animate-pulse mb-2" />
-                <div className="h-4 bg-white/20 rounded animate-pulse" />
-              </div>
-            ))}
-          </div>
-        ) : metrics ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {metrics.map((metric, i) => (
-              <div key={i} className="text-center p-6 md:p-8 rounded-2xl bg-white/10 backdrop-blur border border-white/20">
-                <div className="text-4xl md:text-5xl font-extrabold mb-2">
-                  {metric.value}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
+          {values.map((v, i) => {
+            const Icon = v.icon;
+            return (
+              <div key={i} className="text-center p-5 md:p-6 rounded-2xl bg-white/10 backdrop-blur border border-white/20">
+                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center mx-auto mb-3">
+                  <Icon className="w-5 h-5" />
                 </div>
-                <div className="text-primary-100 font-medium">{metric.label}</div>
+                <p className="text-sm font-medium text-white">{v.title}</p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white/10 backdrop-blur border border-white/20">
-              <span className="w-3 h-3 rounded-full bg-white animate-pulse" />
-              <span className="text-lg font-medium">Pilot launching soon</span>
-            </div>
-            <p className="text-primary-100 mt-4">Be the first to join our Livingston community!</p>
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
     </section>
   );

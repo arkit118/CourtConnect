@@ -113,18 +113,18 @@ export function DashboardPage() {
             <p className="text-xs text-secondary-500">safe, age-banded matching</p>
           </Link>
 
-          <div className="card p-5">
+          <Link to="/gear" className="card p-5 card-hover">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-secondary-500">Saved</p>
-                <p className="text-2xl font-bold text-secondary-900">$--</p>
+                <p className="text-sm text-secondary-500">Gear Exchange</p>
+                <p className="text-base font-semibold text-secondary-900">Buy or sell gear</p>
               </div>
             </div>
-            <p className="text-xs text-secondary-500">this month</p>
-          </div>
+            <p className="text-xs text-secondary-500">local, no fees</p>
+          </Link>
 
           <div className="card p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -281,35 +281,13 @@ export function DashboardPage() {
   );
 }
 
+// Launch-cleanup note: this page used to show numeric counters (Active
+// Players, Events Hosted, Player Savings, Gear Exchanges) read from
+// impact_metrics - a manually-edited table with no real calculation
+// behind any of those numbers. Removed rather than risk showing
+// unverifiable/stale traction figures; this page isn't linked from any
+// nav/footer, so it's kept only as a direct-URL "about the pilot" page.
 export function ImpactDashboardPage() {
-  const [metrics, setMetrics] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchMetrics();
-  }, []);
-
-  const fetchMetrics = async () => {
-    try {
-      const { data } = await supabase
-        .from('impact_metrics')
-        .select('*');
-      if (data && data.length > 0) {
-        const metricMap = data.reduce((acc, m) => {
-          acc[m.metric_type] = m.value;
-          return acc;
-        }, {} as Record<string, number>);
-        setMetrics(metricMap);
-      }
-    } catch (error) {
-      console.error('Error fetching metrics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const hasMetrics = Object.keys(metrics).length > 0;
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container-custom">
@@ -319,56 +297,13 @@ export function ImpactDashboardPage() {
           <p className="text-secondary-600">Building tennis community in Livingston, NJ</p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="card p-6">
-                <div className="h-12 bg-secondary-200 rounded animate-pulse mb-4" />
-                <div className="h-8 bg-secondary-200 rounded animate-pulse mb-2" />
-                <div className="h-4 bg-secondary-200 rounded animate-pulse" />
-              </div>
-            ))}
+        <div className="text-center py-12 mb-12">
+          <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-primary-50 border border-primary-100">
+            <span className="w-3 h-3 rounded-full bg-primary-400 animate-pulse" />
+            <span className="text-lg font-medium text-primary-700">Pilot launching soon</span>
           </div>
-        ) : hasMetrics ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <div className="card p-6">
-              <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-primary-600" />
-              </div>
-              <div className="text-3xl font-bold text-secondary-900 mb-1">{metrics.players || 0}</div>
-              <span className="text-sm text-secondary-500">Active Players</span>
-            </div>
-            <div className="card p-6">
-              <div className="w-12 h-12 rounded-xl bg-accent-100 flex items-center justify-center mb-4">
-                <Calendar className="w-6 h-6 text-accent-600" />
-              </div>
-              <div className="text-3xl font-bold text-secondary-900 mb-1">{metrics.events || 0}</div>
-              <span className="text-sm text-secondary-500">Events Hosted</span>
-            </div>
-            <div className="card p-6">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-                <User className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="text-3xl font-bold text-secondary-900 mb-1">${Math.round((metrics.savings || 0) / 1000)}K</div>
-              <span className="text-sm text-secondary-500">Player Savings</span>
-            </div>
-            <div className="card p-6">
-              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
-                <Package className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="text-3xl font-bold text-secondary-900 mb-1">{metrics.gear_exchanges || 0}</div>
-              <span className="text-sm text-secondary-500">Gear Exchanges</span>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-12 mb-12">
-            <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-primary-50 border border-primary-100">
-              <span className="w-3 h-3 rounded-full bg-primary-400 animate-pulse" />
-              <span className="text-lg font-medium text-primary-700">Pilot launching soon</span>
-            </div>
-            <p className="text-secondary-600 mt-4">Impact metrics will appear as our Livingston community grows.</p>
-          </div>
-        )}
+          <p className="text-secondary-600 mt-4">Impact metrics will appear as our Livingston community grows.</p>
+        </div>
 
         {/* Mission */}
         <div className="card p-8 bg-gradient-to-br from-primary-600 to-primary-800 text-white">

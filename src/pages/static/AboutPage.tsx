@@ -1,4 +1,5 @@
 import { Heart, Users, Zap, Shield } from 'lucide-react';
+import { CONTACT_EMAIL } from '../../lib/legal';
 
 export function AboutPage() {
   return (
@@ -77,32 +78,14 @@ export function ContactPage() {
           Have a question or feedback? We'd love to hear from you.
         </p>
 
-        <div className="card p-8">
-          <form className="space-y-6">
-            <div>
-              <label className="label">Name</label>
-              <input type="text" className="input" placeholder="Your name" />
-            </div>
-            <div>
-              <label className="label">Email</label>
-              <input type="email" className="input" placeholder="you@example.com" />
-            </div>
-            <div>
-              <label className="label">Subject</label>
-              <select className="input">
-                <option>General Inquiry</option>
-                <option>Partnership Opportunity</option>
-                <option>Bug Report</option>
-                <option>Feature Request</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">Message</label>
-              <textarea className="input min-h-[150px]" placeholder="How can we help?" />
-            </div>
-            <button type="submit" className="btn-primary w-full">Send Message</button>
-          </form>
+        <div className="card p-8 text-center">
+          <p className="text-secondary-600 mb-6">
+            The best way to reach us right now is by email. Include your account email and as much detail as you
+            can, and we'll get back to you.
+          </p>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="btn-primary">
+            Email {CONTACT_EMAIL}
+          </a>
         </div>
       </div>
     </div>
