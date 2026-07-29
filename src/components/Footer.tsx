@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 import { CONTACT_EMAIL } from '../lib/legal';
+import { LogoIcon, LogoWordmark } from './brand/Logo';
 
 const footerLinks = {
   community: [
@@ -35,13 +36,9 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
-              </div>
-              <span className="text-xl font-bold">
-                Court<span className="text-primary-400">Connect</span>
-              </span>
+            <Link to="/" className="flex items-center gap-2.5 mb-4">
+              <LogoIcon className="h-8 w-8" />
+              <LogoWordmark className="text-lg" dark />
             </Link>
             <p className="text-secondary-400 text-sm mb-6">
               Connecting local tennis communities through affordable tournaments, partner matching, and gear exchange.

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, ChevronDown, Settings, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { Logo } from './brand/Logo';
 
 const navLinks = [
   { to: '/events', label: 'Events' },
@@ -44,26 +45,21 @@ export function Header() {
     location.pathname === path || (path === '/matches' && location.pathname.startsWith('/matches/'));
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100 shadow-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-16 md:h-18">
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">C</span>
-              </div>
-              <span className="text-xl font-bold text-secondary-900 hidden sm:block">
-                Court<span className="text-primary-500">Connect</span>
-              </span>
+            <Link to="/" className="flex items-center shrink-0">
+              <Logo iconClassName="h-7 w-7 md:h-9 md:w-9" wordmarkClassName="text-base md:text-xl" />
             </Link>
             <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 ${
                     isActive(link.to)
-                      ? 'text-primary-600 bg-primary-50'
+                      ? 'bg-primary-50 text-primary-700'
                       : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                   }`}
                 >
@@ -107,7 +103,7 @@ export function Header() {
                       <div className="py-2">
                         <Link
                           to="/dashboard"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50"
+                          className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-secondary-700 hover:bg-secondary-50"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <Settings className="w-4 h-4" />
@@ -115,7 +111,7 @@ export function Header() {
                         </Link>
                         <Link
                           to="/profile"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50"
+                          className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-secondary-700 hover:bg-secondary-50"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <User className="w-4 h-4" />
@@ -129,7 +125,7 @@ export function Header() {
                             handleSignOut();
                           }}
                           disabled={signingOut}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
                         >
                           {signingOut ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -173,10 +169,10 @@ export function Header() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-3 rounded-xl text-[15px] font-semibold transition-colors duration-200 ${
                     isActive(link.to)
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50 active:bg-secondary-100'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -188,14 +184,14 @@ export function Header() {
                   <div className="border-t border-secondary-100 mt-2 pt-2">
                     <Link
                       to="/dashboard"
-                      className="px-4 py-3 rounded-lg text-sm font-medium text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50"
+                      className="block px-4 py-3 rounded-xl text-[15px] font-semibold text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50 active:bg-secondary-100"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Dashboard
                     </Link>
                     <Link
                       to="/profile"
-                      className="px-4 py-3 rounded-lg text-sm font-medium text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50"
+                      className="block px-4 py-3 rounded-xl text-[15px] font-semibold text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50 active:bg-secondary-100"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       My Profile
@@ -206,24 +202,24 @@ export function Header() {
                         handleSignOut();
                       }}
                       disabled={signingOut}
-                      className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      className="w-full text-left px-4 py-3 rounded-xl text-[15px] font-semibold text-red-600 hover:bg-red-50 active:bg-red-100 disabled:opacity-50"
                     >
                       {signingOut ? 'Signing out...' : 'Sign Out'}
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="border-t border-secondary-100 mt-2 pt-2 flex flex-col gap-1">
+                <div className="border-t border-secondary-100 mt-2 pt-3 flex flex-col gap-2">
                   <Link
                     to="/auth/login"
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50"
+                    className="px-4 py-3 rounded-xl text-[15px] font-semibold text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50 text-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/auth/signup"
-                    className="px-4 py-3 rounded-lg text-sm font-medium bg-primary-500 text-white hover:bg-primary-600"
+                    className="btn-primary justify-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Join Now

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Package, MapPin, ArrowRight, Star } from 'lucide-react';
+import { Calendar, Users, Package, MapPin, ArrowRight, Heart, MessageCircle } from 'lucide-react';
 import { supabase, Event } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { withTimeout } from '../lib/withTimeout';
+import { LogoIcon } from '../components/brand/Logo';
 
 export function LandingPage() {
   return (
@@ -13,7 +14,7 @@ export function LandingPage() {
       <HowItWorksSection />
       <ImpactSection />
       <EventsPreviewSection />
-      <TestimonialsSection />
+      <TrustSection />
       <CTASection />
     </div>
   );
@@ -21,51 +22,46 @@ export function LandingPage() {
 
 function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <img
-          src="https://images.pexels.com/photos/3133638/pexels-photo-3133638.jpeg?auto=compress&cs=tinysrgb&w=1600"
-          alt="Tennis court"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-secondary-900/90 via-secondary-900/70 to-primary-900/50" />
-      </div>
+    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-navy-800 via-navy-700 to-primary-800">
+      <div className="absolute inset-0 court-grid-bg-light" />
+      <div className="absolute -top-24 -left-24 w-[36rem] h-[36rem] rounded-full bg-primary-400/20 blur-3xl" />
+      <div className="absolute -bottom-32 -right-16 w-[32rem] h-[32rem] rounded-full bg-navy-300/20 blur-3xl" />
+      <LogoIcon className="absolute right-[6%] top-[18%] h-40 w-40 md:h-56 md:w-56 opacity-[0.07] rotate-12 hidden md:block" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-3xl mx-auto">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-24">
+        <div className="max-w-3xl mx-auto animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/20 mb-6">
             <span className="w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
-            <span className="text-sm text-white/90">Launching in Livingston, NJ</span>
+            <span className="text-sm font-medium text-white/90">Launching in Livingston, NJ</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
-            Affordable Competitive
-            <span className="block mt-2 bg-gradient-to-r from-accent-400 to-accent-300 bg-clip-text text-transparent">
-              Tennis for Everyone
-            </span>
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-[1.05] tracking-tight text-balance">
+            Your local tennis
+            <span className="block mt-1 text-primary-300">community, connected</span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-            Starting in Livingston with plans to expand across Essex County. Join local tournaments, find hitting partners, and grow the tennis community. No club membership required.
+          <p className="text-lg sm:text-xl text-white/75 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Find courts, join events, coordinate court time, match with hitting partners, and exchange gear &mdash;
+            all in one place. Starting in Livingston, with plans to grow across Essex County. No club membership
+            required.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/auth/signup"
-              className="btn-accent btn-lg inline-flex items-center gap-2"
-            >
+            <Link to="/auth/signup" className="btn-primary btn-lg inline-flex items-center gap-2">
               Join Now
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               to="/events"
-              className="btn-lg inline-flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20"
+              className="btn-lg inline-flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/20 backdrop-blur"
             >
               Browse Events
             </Link>
           </div>
         </div>
       </div>
+
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
     </section>
   );
 }
@@ -73,28 +69,28 @@ function HeroSection() {
 function FeaturesSection() {
   const features = [
     {
-      icon: Calendar,
-      title: 'Community Tournaments',
-      description: 'Affordable shootout tournaments for all skill levels. Compete, improve, and win prizes without breaking the bank.',
+      icon: MapPin,
+      title: 'Local Courts & Schedule',
+      description: 'Discover courts near you and coordinate court time with the community. CourtConnect does not officially reserve courts.',
       color: 'primary',
     },
     {
-      icon: Users,
-      title: 'Hitting Partners',
-      description: 'Find players matched to your skill level and availability. Never hit alone again.',
-      color: 'accent',
+      icon: Calendar,
+      title: 'Community Events',
+      description: 'Affordable shootout tournaments and clinics for all skill levels. Compete, improve, and connect.',
+      color: 'navy',
+    },
+    {
+      icon: Heart,
+      title: 'Partner Matching',
+      description: 'Get matched with players at your level, with age-band safety built in from the ground up. Never hit alone again.',
+      color: 'primary',
     },
     {
       icon: Package,
       title: 'Gear Exchange',
-      description: 'Buy, sell, or trade tennis equipment with local players. Great deals, no shipping.',
-      color: 'primary',
-    },
-    {
-      icon: MapPin,
-      title: 'Local Courts',
-      description: 'Discover the best courts in your area. Find lights, surfaces, and booking info.',
-      color: 'accent',
+      description: 'Buy, sell, or trade tennis equipment locally. Great deals, no shipping, no fees.',
+      color: 'navy',
     },
   ];
 
@@ -114,11 +110,8 @@ function FeaturesSection() {
           {features.map((feature, i) => {
             const Icon = feature.icon;
             return (
-              <div
-                key={i}
-                className="card-hover p-6 group"
-              >
-                <div className={`w-14 h-14 rounded-2xl ${feature.color === 'primary' ? 'bg-primary-100 text-primary-600' : 'bg-accent-100 text-accent-600'} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
+              <div key={i} className="card-hover p-6 group">
+                <div className={`w-14 h-14 rounded-2xl ${feature.color === 'primary' ? 'bg-primary-50 text-primary-700' : 'bg-navy-50 text-navy-600'} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-semibold text-secondary-900 mb-3">{feature.title}</h3>
@@ -141,7 +134,7 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section className="section bg-secondary-50">
+    <section className="section" style={{ backgroundColor: 'var(--cc-surface-cream)' }}>
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-4">
@@ -155,7 +148,7 @@ function HowItWorksSection() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, i) => (
             <div key={i} className="relative">
-              <div className="text-6xl font-bold text-secondary-200 mb-4">{step.num}</div>
+              <div className="font-display text-6xl font-extrabold text-primary-100 mb-4">{step.num}</div>
               <h3 className="text-xl font-semibold text-secondary-900 mb-3">{step.title}</h3>
               <p className="text-secondary-600">{step.description}</p>
             </div>
@@ -239,7 +232,7 @@ function ImpactSection() {
         ) : (
           <div className="text-center py-8">
             <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-white/10 backdrop-blur border border-white/20">
-              <span className="w-3 h-3 rounded-full bg-accent-400 animate-pulse" />
+              <span className="w-3 h-3 rounded-full bg-white animate-pulse" />
               <span className="text-lg font-medium">Pilot launching soon</span>
             </div>
             <p className="text-primary-100 mt-4">Be the first to join our Livingston community!</p>
@@ -367,62 +360,50 @@ function EventsPreviewSection() {
   );
 }
 
-function TestimonialsSection() {
-  const testimonials = [
+function TrustSection() {
+  const points = [
     {
-      quote: "CourtConnect helped me find my regular hitting partner. We've been playing together for 6 months now and my game has improved so much!",
-      name: "Sarah Thompson",
-      role: "USTA League Player",
-      image: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100",
+      icon: Heart,
+      title: 'Safety built into the platform',
+      description: 'Partner matching keeps minors matched only with other minors, and adults only with other adults - enforced at the database level, not just in the app.',
     },
     {
-      quote: "Finally, affordable tournaments! I used to spend $100+ for club events. Now I play more often and spend way less.",
-      name: "Michael Chen",
-      role: "Competitive Player",
-      image: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100",
+      icon: Users,
+      title: 'Parent/guardian approval for minors',
+      description: 'Players under 18 need a parent or guardian to approve matching and chat before they can use those features at all.',
     },
     {
-      quote: "I bought a used racquet through the gear exchange and it was perfect. The seller lived 5 minutes away from me!",
-      name: "Emily Watson",
-      role: "Tennis Mom",
-      image: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100",
+      icon: MessageCircle,
+      title: 'Report and block, anytime',
+      description: 'Every match and chat can be reported or blocked in one tap. Blocking immediately closes any open match with that person.',
     },
   ];
 
   return (
-    <section className="section bg-secondary-900 text-white">
+    <section className="section bg-navy-800 text-white">
       <div className="container-custom">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Loved by the Tennis Community
+          <h2 className="font-display text-3xl md:text-4xl font-extrabold mb-4">
+            Built for a Trustworthy Community
           </h2>
-          <p className="text-lg text-secondary-300 max-w-2xl mx-auto">
-            Hear from players who are already benefiting from CourtConnect.
+          <p className="text-lg text-navy-100 max-w-2xl mx-auto">
+            We're a new, local platform - here's exactly how we keep matching and chat safe from day one.
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <div key={i} className="bg-secondary-800/50 p-8 rounded-2xl">
-              <div className="flex gap-1 mb-6">
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-5 h-5 text-accent-400 fill-accent-400" />
-                ))}
-              </div>
-              <p className="text-secondary-200 mb-6 leading-relaxed">"{t.quote}"</p>
-              <div className="flex items-center gap-4">
-                <img
-                  src={t.image}
-                  alt={t.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <div className="font-semibold">{t.name}</div>
-                  <div className="text-sm text-secondary-400">{t.role}</div>
+          {points.map((point, i) => {
+            const Icon = point.icon;
+            return (
+              <div key={i} className="bg-white/5 border border-white/10 p-8 rounded-2xl">
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-5">
+                  <Icon className="w-6 h-6 text-primary-300" />
                 </div>
+                <h3 className="font-semibold text-lg mb-2">{point.title}</h3>
+                <p className="text-navy-100 leading-relaxed">{point.description}</p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -433,8 +414,8 @@ function CTASection() {
   return (
     <section className="section bg-white">
       <div className="container-custom">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-500 to-primary-700 p-8 md:p-16 text-center text-white">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-30" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-navy-700 p-8 md:p-16 text-center text-white">
+          <div className="absolute inset-0 court-grid-bg-light opacity-60" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
               Ready to Join the Community?
@@ -444,7 +425,7 @@ function CTASection() {
             </p>
             <Link
               to="/auth/signup"
-              className="btn-lg bg-white text-primary-600 hover:bg-primary-50 font-semibold"
+              className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold"
             >
               Get Started Free
               <ArrowRight className="w-5 h-5" />

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Upload, Info } from 'lucide-react';
+import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Upload, Info, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
@@ -10,9 +11,9 @@ import { ReportButton } from '../components/ReportButton';
 
 function GearNoticeBanner() {
   return (
-    <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-      <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-      <p className="text-sm text-amber-800">
+    <div className="flex items-start gap-3 bg-clay-400/10 border border-clay-400/30 rounded-xl p-4 mb-6">
+      <Info className="w-5 h-5 text-clay-600 shrink-0 mt-0.5" />
+      <p className="text-sm text-secondary-700">
         CourtConnect does not process gear payments, provide shipping, or guarantee transactions. Buyers and sellers
         coordinate local exchanges directly and at their own risk. Meet in public places and inspect items before paying.
       </p>
@@ -362,16 +363,16 @@ export function GearDetailPage() {
           <div>
             <div className="card p-6 mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <span className="badge bg-secondary-100 text-secondary-700">{categoryLabels[listing.category]}</span>
+                <span className="badge-primary">{categoryLabels[listing.category]}</span>
                 <span className={`badge px-2 py-0.5 rounded-full text-xs font-medium border ${conditionColors[listing.condition]}`}>
                   {conditionLabels[listing.condition]}
                 </span>
               </div>
 
               <h1 className="text-2xl md:text-3xl font-bold text-secondary-900 mb-3">{listing.title}</h1>
-              <div className="text-3xl font-bold text-primary-600 mb-4">${listing.price}</div>
+              <div className="font-display text-3xl md:text-4xl font-extrabold text-primary-700 mb-4">${listing.price}</div>
 
-              <div className="flex items-center gap-4 text-sm text-secondary-600 mb-6">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-secondary-600 mb-6 pb-6 border-b border-secondary-100">
                 {listing.town && (
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
@@ -382,11 +383,17 @@ export function GearDetailPage() {
                   <Heart className="w-4 h-4" />
                   <span>{listing.interested_count || 0} interested</span>
                 </div>
+                {listing.created_at && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>Listed {formatDistanceToNow(new Date(listing.created_at), { addSuffix: true })}</span>
+                  </div>
+                )}
               </div>
 
               <button
                 onClick={handleInterest}
-                className={`btn w-full ${isInterested ? 'bg-green-500 text-white hover:bg-green-600' : 'btn-primary'}`}
+                className={`btn w-full ${isInterested ? 'bg-primary-400 text-white hover:bg-primary-500' : 'btn-primary'}`}
               >
                 <Heart className={`w-5 h-5 ${isInterested ? 'fill-current' : ''}`} />
                 {isInterested ? 'Interested' : "I'm Interested"}

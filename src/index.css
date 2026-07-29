@@ -2,17 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* CourtConnect brand tokens - mirrors tailwind.config.js theme.extend.colors.
+     Kept as CSS variables too for the handful of places (inline SVG fills,
+     gradients, canvas-ish backgrounds) that read color outside of a
+     Tailwind utility class. */
+  --cc-green: #0B5A2A;
+  --cc-green-light: #2FA84A;
+  --cc-green-deep: #063F1F;
+  --cc-navy: #0E3567;
+  --cc-navy-deep: #102B4F;
+  --cc-clay: #C96C32;
+  --cc-bg-app: #FAFAF8;
+  --cc-surface-green: #E7F6EA;
+  --cc-surface-navy: #EAF1FA;
+  --cc-surface-cream: #F6F3EA;
+  --cc-border-soft: #E5E7EB;
+  --cc-border-strong: #D9DDE2;
+  --cc-text-primary: #0B1020;
+  --cc-text-secondary: #334155;
+  --cc-text-muted: #64748B;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    @apply font-sans text-secondary-900 bg-gray-50;
+    @apply font-sans text-secondary-900;
+    background-color: var(--cc-bg-app);
   }
 
   * {
     @apply border-secondary-200;
+  }
+
+  /* Font + letter-spacing only - deliberately no color here. Most
+     headings set their own color explicitly; the ones that don't rely on
+     inheriting a dark-section ancestor's text-white, which a forced color
+     here would silently break. */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white;
   }
 }
 
@@ -22,15 +66,27 @@
   }
 
   .btn-primary {
-    @apply btn bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 shadow-sm hover:shadow-md active:scale-[0.98];
+    @apply btn text-white shadow-sm hover:shadow-md active:scale-[0.98];
+    background-color: var(--cc-green);
+  }
+  .btn-primary:hover {
+    background-color: var(--cc-green-deep);
+  }
+  .btn-primary:focus-visible {
+    @apply ring-primary-500;
   }
 
   .btn-secondary {
-    @apply btn bg-secondary-900 text-white hover:bg-secondary-800 focus:ring-secondary-500 shadow-sm hover:shadow-md active:scale-[0.98];
+    @apply btn text-white shadow-sm hover:shadow-md active:scale-[0.98] focus:ring-navy-500;
+    background-color: var(--cc-navy);
+  }
+  .btn-secondary:hover {
+    background-color: var(--cc-navy-deep);
   }
 
   .btn-outline {
-    @apply btn border-2 border-primary-500 text-primary-600 hover:bg-primary-50 focus:ring-primary-500 active:scale-[0.98];
+    @apply btn border-2 text-primary-700 hover:bg-primary-50 focus:ring-primary-500 active:scale-[0.98];
+    border-color: var(--cc-green);
   }
 
   .btn-ghost {
@@ -58,7 +114,7 @@
   }
 
   .label {
-    @apply block text-sm font-medium text-secondary-700 mb-1.5;
+    @apply block text-sm font-semibold text-secondary-700 mb-1.5;
   }
 
   .card {
@@ -66,7 +122,7 @@
   }
 
   .card-hover {
-    @apply card hover:shadow-elevated hover:border-secondary-200 hover:-translate-y-1;
+    @apply card hover:shadow-elevated hover:border-primary-100 hover:-translate-y-1;
   }
 
   .card-glass {
@@ -74,11 +130,11 @@
   }
 
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
   }
 
   .badge-primary {
-    @apply badge bg-primary-100 text-primary-700;
+    @apply badge bg-primary-50 text-primary-700;
   }
 
   .badge-secondary {
@@ -116,6 +172,30 @@
   .skeleton {
     @apply animate-pulse bg-secondary-200 rounded-lg;
   }
+
+  /* Very subtle tennis-court line grid, used as a background texture on
+     hero/section wrappers. Deliberately faint - a texture, not a pattern
+     you're meant to consciously notice. */
+  .court-grid-bg {
+    background-image:
+      linear-gradient(rgba(11, 90, 42, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(11, 90, 42, 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .court-grid-bg-light {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  /* Thin court-line style section divider, used in place of a plain
+     border where a section transition wants a bit more character. */
+  .court-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cc-border-strong) 20%, var(--cc-border-strong) 80%, transparent);
+  }
 }
 
 @layer utilities {
@@ -131,6 +211,11 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .animate-stagger-1 { animation-delay: 80ms; }
+  .animate-stagger-2 { animation-delay: 160ms; }
+  .animate-stagger-3 { animation-delay: 240ms; }
+  .animate-stagger-4 { animation-delay: 320ms; }
 }
 
 /* Custom scrollbar */
