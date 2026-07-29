@@ -666,10 +666,11 @@ export function SchedulingPage() {
 
 function NoticeBanner() {
   return (
-    <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-      <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-      <p className="text-sm text-amber-800">
-        CourtConnect does not officially reserve public courts. This schedule is for community coordination only.
+    <div className="flex items-start gap-3 rounded-xl p-4 border" style={{ backgroundColor: 'var(--cc-surface-navy)', borderColor: '#CBDBEF' }}>
+      <Info className="w-5 h-5 text-navy-600 shrink-0 mt-0.5" />
+      <p className="text-sm text-navy-700">
+        CourtConnect does not officially reserve public courts. This schedule is for community coordination only -
+        not a reservation system.
       </p>
     </div>
   );

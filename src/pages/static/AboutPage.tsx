@@ -31,35 +31,35 @@ export function AboutPage() {
             <p className="text-secondary-600">We prioritize building genuine connections between players over profit.</p>
           </div>
           <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-accent-100 flex items-center justify-center mb-4">
-              <Users className="w-6 h-6 text-accent-600" />
+            <div className="w-12 h-12 rounded-xl bg-navy-50 flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-navy-600" />
             </div>
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">Inclusive for All</h3>
             <p className="text-secondary-600">From beginners to elite players, everyone has a place in our community.</p>
           </div>
           <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mb-4">
+              <Zap className="w-6 h-6 text-primary-700" />
             </div>
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">Affordable Access</h3>
             <p className="text-secondary-600">Our events and programs are designed to be budget-friendly for everyone.</p>
           </div>
           <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-xl bg-navy-50 flex items-center justify-center mb-4">
+              <Shield className="w-6 h-6 text-navy-600" />
             </div>
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">Safe & Trusted</h3>
-            <p className="text-secondary-600">We verify members and moderate content to keep our community safe.</p>
+            <p className="text-secondary-600">We moderate content and give every member tools to report and block anyone who makes them uncomfortable.</p>
           </div>
         </div>
 
-        <div className="card p-8 bg-gradient-to-br from-primary-600 to-primary-800 text-white">
+        <div className="card p-8 bg-gradient-to-br from-primary-600 to-navy-700 text-white">
           <h2 className="text-2xl font-bold mb-4">Join Our Community</h2>
           <p className="text-primary-100 mb-6">
             Whether you're looking to compete, find hitting partners, or just get more time on the court,
             CourtConnect is here to help. Sign up today and start connecting with local players.
           </p>
-          <a href="/auth/signup" className="btn-lg bg-white text-primary-600 hover:bg-primary-50 font-semibold">
+          <a href="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
             Get Started Free
           </a>
         </div>
