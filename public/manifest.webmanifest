@@ -1,0 +1,29 @@
+{
+  "name": "CourtConnect",
+  "short_name": "CourtConnect",
+  "description": "A local tennis community platform for Livingston players.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0B5A2A",
+  "background_color": "#FAFAF8",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
