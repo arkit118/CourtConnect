@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Trophy, Clock, Edit2, User, ChevronRight, Camera, X, Upload } from 'lucide-react';
+import { MapPin, Trophy, Clock, Edit2, User, ChevronRight, Camera, Upload } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';

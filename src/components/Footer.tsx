@@ -40,7 +40,8 @@ export function Footer() {
               <Logo variant="lockup" className="h-7" />
             </Link>
             <p className="text-secondary-400 text-sm mb-6">
-              Connecting local tennis communities through affordable tournaments, partner matching, and gear exchange.
+              A Livingston tennis community pilot for finding hitting partners, joining local events, coordinating
+              court time, and trading gear.
             </p>
             <div className="flex gap-3">
               <span

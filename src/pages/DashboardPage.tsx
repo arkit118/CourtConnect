@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Package, Settings, User, DollarSign, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, GearListing, Registration, ImpactMetric } from '../lib/supabase';
+import { supabase, GearListing, Registration } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 
 export function DashboardPage() {

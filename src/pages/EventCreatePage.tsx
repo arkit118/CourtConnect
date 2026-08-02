@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Upload, X } from 'lucide-react';
+import { ArrowLeft, Camera, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
@@ -11,7 +11,7 @@ const towns = ['Bloomfield', 'Caldwell', 'Livingston', 'Maplewood', 'Millburn', 
 
 export function EventCreatePage() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { addToast } = useToastStore();
   const canProceed = useActionGate();
   const [loading, setLoading] = useState(false);
