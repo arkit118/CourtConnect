@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MapPin, Lightbulb, ExternalLink, Search, AlertCircle } from 'lucide-react';
+import { MapPin, Lightbulb, ExternalLink, Search, AlertCircle, Info } from 'lucide-react';
 import { supabase, Court } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
 
@@ -24,6 +24,24 @@ const surfaceColors: Record<string, string> = {
 
 const towns = ['Livingston']; // Pilot launch - more towns coming soon
 const surfaces = ['hard', 'clay', 'grass', 'synthetic', 'carpet', 'other'];
+
+// Same visual pattern as GearPage's notice banner. Added because user
+// feedback found the court count ("6 courts") read as "6 courts currently
+// available" rather than "6 total courts at this facility" - CourtConnect
+// has no real-time occupancy data at all, so this makes that explicit
+// rather than relying on card copy alone.
+function CourtsNoticeBanner() {
+  return (
+    <div className="flex items-start gap-3 bg-clay-400/10 border border-clay-400/30 rounded-xl p-4 mb-6">
+      <Info className="w-5 h-5 text-clay-600 shrink-0 mt-0.5" />
+      <p className="text-sm text-secondary-700">
+        Court counts below show total courts at each location, not live availability. CourtConnect does not track
+        whether a court is currently in use - scheduling here is for community coordination only, not an official
+        reservation.
+      </p>
+    </div>
+  );
+}
 
 export function CourtsPage() {
   const [courts, setCourts] = useState<Court[]>([]);
@@ -80,6 +98,8 @@ export function CourtsPage() {
           <p className="text-secondary-600">Find courts near you in Livingston</p>
         </div>
 
+        <CourtsNoticeBanner />
+
         {/* Filters */}
         <div className="card p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -118,7 +138,7 @@ export function CourtsPage() {
               onChange={(e) => setHasLights(e.target.value === '' ? null : e.target.value === 'yes')}
               className="input w-auto"
             >
-              <option value="">Lights</option>
+              <option value="">All Lighting</option>
               <option value="yes">Has Lights</option>
               <option value="no">No Lights</option>
             </select>
@@ -217,7 +237,7 @@ export function CourtsPage() {
                     <div className="w-6 h-6 rounded-lg bg-primary-100 flex items-center justify-center">
                       <span className="text-xs font-bold text-primary-600">{court.num_courts}</span>
                     </div>
-                    <span>court{court.num_courts !== 1 ? 's' : ''}</span>
+                    <span>total court{court.num_courts !== 1 ? 's' : ''}</span>
                   </div>
                   {court.has_lights && (
                     <div className="flex items-center gap-1 text-accent-600">
@@ -339,7 +359,7 @@ export function CourtDetailPage() {
           <div className="grid sm:grid-cols-3 gap-4 mb-6">
             <div className="p-4 rounded-xl bg-secondary-50">
               <div className="text-2xl font-bold text-secondary-900">{court.num_courts}</div>
-              <div className="text-sm text-secondary-500">Courts</div>
+              <div className="text-sm text-secondary-500">Total Courts</div>
             </div>
             <div className="p-4 rounded-xl bg-secondary-50">
               <div className="text-2xl font-bold text-secondary-900">{court.surface_type ? (surfaceLabels[court.surface_type] || court.surface_type) : 'N/A'}</div>

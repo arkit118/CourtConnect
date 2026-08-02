@@ -64,13 +64,7 @@ export function SocialOnboardingGate({ status }: Props) {
   }
 
   if (status === 'pending_consent') {
-    return (
-      <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
-        We've sent your parent or guardian an email asking them to approve partner matching and chat for your
-        account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
-        CourtConnect - you can still browse courts, events, and the schedule.
-      </SafetyCard>
-    );
+    return <PendingConsentStep />;
   }
 
   if (status === 'consent_declined') {
@@ -228,18 +222,55 @@ function AdultActivationStep() {
   );
 }
 
+// Invokes the Edge Function and normalizes its outcome into a plain
+// ok/message result. Never throws. Shared by the initial request
+// (ParentEmailStep) and any later resend (also ParentEmailStep, reused by
+// PendingConsentStep) so both paths log and interpret failures identically.
+async function invokeSendConsentEmail(
+  token: string,
+  parentEmail: string,
+  childName: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+
+  try {
+    const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-parent-consent-email', {
+      body: { token, parentEmail, childName },
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    });
+
+    if (emailError || emailResult?.ok !== true) {
+      console.error('send-parent-consent-email failed', { token, parentEmail, emailError, emailResult });
+      const notConfigured = emailResult?.configured === false;
+      return {
+        ok: false,
+        message: notConfigured
+          ? 'The consent email could not be sent because email sending is not configured yet on our end. Please contact support.'
+          : (emailResult?.error || 'We could not send the consent email. Please try again.'),
+      };
+    }
+
+    return { ok: true };
+  } catch (err: any) {
+    console.error('send-parent-consent-email: invoke threw', { token, parentEmail, err });
+    return { ok: false, message: 'We could not send the consent email. Check your connection and try again.' };
+  }
+}
+
 function ParentEmailStep() {
   const { profile, refreshProfile } = useAuth();
   const { addToast } = useToastStore();
   const [parentEmail, setParentEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailWarning, setEmailWarning] = useState<string | null>(null);
+  const [emailFailure, setEmailFailure] = useState<{ token: string; parentEmail: string; message: string } | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setEmailWarning(null);
+    setEmailFailure(null);
 
     if (!parentEmail.trim()) {
       setError('Please enter a parent or guardian email address.');
@@ -256,30 +287,21 @@ function ParentEmailStep() {
         throw new Error('Could not start the parent/guardian approval request.');
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      try {
-        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-parent-consent-email', {
-          body: { token: data.token, parentEmail: parentEmail.trim(), childName: profile?.name || 'Your child' },
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        });
-
-        if (emailError || emailResult?.ok === false) {
-          console.error('Error sending parent consent email:', emailError || emailResult);
-          setEmailWarning(
-            emailResult?.configured === false
-              ? 'Your request was saved, but the consent email could not be sent yet because email sending is not configured. Contact support to complete this step.'
-              : 'Your request was saved, but we could not send the consent email. Please contact support.'
-          );
-        }
-      } catch (emailErr: any) {
-        console.error('Error invoking send-parent-consent-email:', emailErr);
-        setEmailWarning('Your request was saved, but we could not send the consent email. Please contact support.');
-      }
-
+      const childName = profile?.name || 'Your child';
+      const result = await invokeSendConsentEmail(data.token, parentEmail.trim(), childName);
       await refreshProfile();
-      addToast({ type: 'success', message: 'Parent/guardian approval requested.' });
+
+      // Only ever tell the user the email was sent when it actually was.
+      // The request row itself is always saved by this point regardless
+      // (that's the RPC above, already succeeded) - but "we emailed your
+      // parent" and "we saved your request" are two different facts, and
+      // conflating them (showing a success toast even when the email
+      // failed) is exactly the bug this fixes.
+      if (result.ok) {
+        addToast({ type: 'success', message: 'Parent/guardian approval email sent.' });
+      } else {
+        setEmailFailure({ token: data.token, parentEmail: parentEmail.trim(), message: result.message });
+      }
     } catch (err: any) {
       console.error('Error requesting parent consent:', err);
       setError(err.message || 'Something went wrong. Please try again.');
@@ -288,6 +310,50 @@ function ParentEmailStep() {
       setSubmitting(false);
     }
   };
+
+  const handleRetry = async () => {
+    if (!emailFailure) return;
+    setRetrying(true);
+    const childName = profile?.name || 'Your child';
+    const result = await invokeSendConsentEmail(emailFailure.token, emailFailure.parentEmail, childName);
+    setRetrying(false);
+
+    if (result.ok) {
+      setEmailFailure(null);
+      await refreshProfile();
+      addToast({ type: 'success', message: 'Parent/guardian approval email sent.' });
+    } else {
+      setEmailFailure({ ...emailFailure, message: result.message });
+    }
+  };
+
+  if (emailFailure) {
+    return (
+      <div className="card p-8 max-w-md mx-auto">
+        <div className="flex items-center gap-3 mb-3">
+          <AlertTriangle className="w-6 h-6 text-red-600" />
+          <h3 className="text-lg font-bold text-secondary-900">Couldn't send the consent email</h3>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 mb-4">
+          {emailFailure.message}
+        </div>
+        <p className="text-sm text-secondary-600 mb-6">
+          Your request was saved, but the email to <strong>{emailFailure.parentEmail}</strong> hasn't gone out yet.
+          You can try sending it again.
+        </p>
+        <button type="button" className="btn-primary w-full" onClick={handleRetry} disabled={retrying}>
+          {retrying ? 'Retrying...' : 'Retry Sending Email'}
+        </button>
+        <button
+          type="button"
+          className="text-sm text-secondary-500 underline w-full text-center mt-4"
+          onClick={() => setEmailFailure(null)}
+        >
+          Use a different email address instead
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="card p-8 max-w-md mx-auto">
@@ -313,13 +379,34 @@ function ParentEmailStep() {
           />
         </div>
         {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
-        {emailWarning && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">{emailWarning}</div>
-        )}
         <button type="submit" className="btn-primary w-full" disabled={submitting}>
           {submitting ? 'Sending request...' : 'Request Parent/Guardian Approval'}
         </button>
       </form>
     </div>
+  );
+}
+
+// status === 'pending_consent' means the *request* was saved, not
+// necessarily that the email actually reached the parent/guardian -
+// profile.parent_consent_email_sent_at (set only by the Edge Function,
+// only after Resend confirms success - see the 017 migration) is the
+// durable signal that distinguishes them. Without this check, a failed
+// send left the user staring at "we've sent your parent an email" forever,
+// with no way to retry once they left the page (the real-world bug this
+// fixes).
+function PendingConsentStep() {
+  const { profile } = useAuth();
+
+  if (!profile?.parent_consent_email_sent_at) {
+    return <ParentEmailStep />;
+  }
+
+  return (
+    <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
+      We've sent your parent or guardian an email asking them to approve partner matching and chat for your
+      account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
+      CourtConnect - you can still browse courts, events, and the schedule.
+    </SafetyCard>
   );
 }

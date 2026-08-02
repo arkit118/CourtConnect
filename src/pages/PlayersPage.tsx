@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Filter, Clock, User, ChevronDown, Info } from 'lucide-react';
+import { Search, MapPin, Filter, Clock, User, Info } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
 
 const skillLevelLabels: Record<string, string> = {
   beginner: 'Beginner',
@@ -32,7 +31,6 @@ export function PlayersPage() {
   const [selectedTowns, setSelectedTowns] = useState<string[]>([]);
   const [utrRange, setUtrRange] = useState<[number, number]>([1, 10]);
   const [showFilters, setShowFilters] = useState(false);
-  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     fetchPlayers();

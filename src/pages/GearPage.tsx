@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Upload, Info, Clock } from 'lucide-react';
+import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Info, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';

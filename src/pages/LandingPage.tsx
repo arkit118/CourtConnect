@@ -41,8 +41,8 @@ function HeroSection() {
           </h1>
 
           <p className="text-lg sm:text-xl text-white/75 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Find courts, join events, coordinate court time, match with hitting partners, and exchange gear &mdash;
-            all in one place. Starting in Livingston, with plans to grow across Essex County. No club membership
+            Match up with hitting partners, join community events, coordinate court time, and trade gear &mdash; all
+            in one place. Starting in Livingston, with plans to grow across Essex County. No club membership
             required.
           </p>
 
@@ -69,9 +69,9 @@ function HeroSection() {
 function FeaturesSection() {
   const features = [
     {
-      icon: MapPin,
-      title: 'Local Courts & Schedule',
-      description: 'Discover courts near you and coordinate court time with the community. CourtConnect does not officially reserve courts.',
+      icon: Heart,
+      title: 'Partner Matching',
+      description: 'Get matched with players at your level, with age-band safety built in from the ground up. Chat once you\'re matched. Never hit alone again.',
       color: 'primary',
     },
     {
@@ -81,10 +81,10 @@ function FeaturesSection() {
       color: 'navy',
     },
     {
-      icon: Heart,
-      title: 'Partner Matching',
-      description: 'Get matched with players at your level, with age-band safety built in from the ground up. Never hit alone again.',
-      color: 'primary',
+      icon: MapPin,
+      title: 'Court Coordination',
+      description: 'See the courts in the CourtConnect community (Livingston to start) and coordinate court time with other members. Not an official reservation system.',
+      color: 'clay',
     },
     {
       icon: Package,
@@ -99,10 +99,12 @@ function FeaturesSection() {
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-4">
-            Everything You Need to Play More Tennis
+            A Local Tennis Community Pilot
           </h2>
           <p className="text-lg text-secondary-600 max-w-2xl mx-auto">
-            CourtConnect brings together all the tools you need to find games, improve your skills, and connect with the local tennis community.
+            CourtConnect is a Livingston tennis community pilot: find people to play with, join local events,
+            coordinate court time, and trade gear with other members &mdash; all built for a community, not a
+            business.
           </p>
         </div>
 
@@ -111,7 +113,7 @@ function FeaturesSection() {
             const Icon = feature.icon;
             return (
               <div key={i} className="card-hover p-6 group">
-                <div className={`w-14 h-14 rounded-2xl ${feature.color === 'primary' ? 'bg-primary-50 text-primary-700' : 'bg-navy-50 text-navy-600'} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-14 h-14 rounded-2xl ${feature.color === 'primary' ? 'bg-primary-50 text-primary-700' : feature.color === 'clay' ? 'bg-clay-400/10 text-clay-600' : 'bg-navy-50 text-navy-600'} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-semibold text-secondary-900 mb-3">{feature.title}</h3>

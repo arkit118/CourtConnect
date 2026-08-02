@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Calendar, Package, Flag, BarChart3, Settings, AlertTriangle, Check, X, Search } from 'lucide-react';
 import { supabase, Profile, Event, GearListing, Comment } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 
 const tabs = [
@@ -14,7 +13,6 @@ const tabs = [
 ];
 
 export function AdminPage() {
-  const { user } = useAuth();
   const { addToast } = useToastStore();
   const [activeTab, setActiveTab] = useState('overview');
   const [search, setSearch] = useState('');

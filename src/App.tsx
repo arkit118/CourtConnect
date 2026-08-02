@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
 import { LegalGateModal } from './components/LegalGateModal';
+import { ScrollToTop } from './components/ScrollToTop';
 import { CONTACT_EMAIL } from './lib/legal';
 
 // Pages
@@ -128,6 +129,7 @@ function ProfileErrorBanner() {
 function AppRoutes() {
   return (
     <>
+      <ScrollToTop />
       <Header />
       <ProfileErrorBanner />
       <BannedBanner />

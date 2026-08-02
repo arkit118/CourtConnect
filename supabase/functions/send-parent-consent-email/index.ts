@@ -187,11 +187,32 @@ Deno.serve(async (req) => {
 
     if (!resendResponse.ok) {
       const errText = await resendResponse.text();
-      console.error('send-parent-consent-email: Resend error', resendResponse.status, errText);
+      console.error('send-parent-consent-email: Resend error', {
+        status: resendResponse.status,
+        body: errText,
+        token,
+        parentEmail,
+      });
       return new Response(
         JSON.stringify({ ok: false, error: 'Failed to send the consent email. Please try again.' }),
         { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Record that the email genuinely sent - this is what lets the frontend
+    // (useSocialEligibility / SocialOnboardingGate) tell "we're waiting on
+    // your parent" apart from "we couldn't confirm the email went out,
+    // please retry" on a page reload, instead of always claiming the
+    // former regardless of what actually happened. Non-fatal if it fails:
+    // Resend already accepted the email, so this function still reports
+    // success to the caller, but logs loudly since it means the DB and
+    // reality have now diverged and is worth investigating.
+    const { error: markError } = await supabase.rpc('mark_parent_consent_email_sent', { p_token: token });
+    if (markError) {
+      console.error('send-parent-consent-email: email sent but mark_parent_consent_email_sent failed', {
+        token,
+        markError,
+      });
     }
 
     return new Response(JSON.stringify({ ok: true }), {

@@ -7,19 +7,25 @@ export function AboutPage() {
       <div className="container-custom max-w-4xl">
         <h1 className="text-4xl font-bold text-secondary-900 mb-6 text-center">About CourtConnect</h1>
         <p className="text-xl text-secondary-600 text-center mb-12 max-w-2xl mx-auto">
-          Making competitive tennis affordable and accessible for everyone in Essex County
+          A Livingston tennis community pilot built to help local players match up, coordinate court time, join
+          events, and exchange gear.
         </p>
 
         <div className="card p-8 mb-8">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">Our Mission</h2>
+          <h2 className="text-2xl font-bold text-secondary-900 mb-4">What CourtConnect Actually Does</h2>
           <p className="text-secondary-600 leading-relaxed mb-6">
-            CourtConnect was founded with a simple belief: competitive tennis shouldn't require expensive club memberships
-            or tournament entry fees that keep players away. We're building a platform that connects local tennis players,
-            hosts affordable community events, and makes it easier than ever to find people to play with.
+            CourtConnect is a local tennis community platform, currently piloting in Livingston, NJ. Once you create
+            a profile, you can send and accept partner match requests, then chat with anyone you've matched with;
+            browse and register for local events and tournaments; coordinate court time with other members on the
+            schedule; and buy, sell, or trade tennis gear locally. Players under 18 need a parent or guardian to
+            approve matching and chat before using those two features specifically - everything else is open right
+            away.
           </p>
           <p className="text-secondary-600 leading-relaxed">
-            Based in Essex County, New Jersey, we serve the local tennis community by providing the tools and connections
-            players need to improve their game, meet others, and enjoy tennis at any skill level.
+            We're starting small and deliberately - Livingston first, with plans to expand across Essex County as
+            the community grows. CourtConnect doesn't require a club membership or tournament entry fees, and it
+            doesn't process payments of any kind - gear exchanges and any event fees are handled directly between
+            members.
           </p>
         </div>
 
