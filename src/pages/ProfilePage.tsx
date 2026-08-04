@@ -7,6 +7,7 @@ import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { uploadImage, validateImageFile, compressImageForUpload } from '../lib/storage';
 import { ReportButton } from '../components/ReportButton';
+import { CourtCorner } from '../components/brand/CourtMotif';
 
 const skillLevelLabels: Record<string, string> = {
   beginner: 'Beginner',
@@ -17,11 +18,11 @@ const skillLevelLabels: Record<string, string> = {
 };
 
 const skillLevelColors: Record<string, string> = {
-  beginner: 'bg-blue-50 text-blue-700 border-blue-200',
-  intermediate: 'bg-green-50 text-green-700 border-green-200',
-  advanced: 'bg-purple-50 text-purple-700 border-purple-200',
-  varsity: 'bg-orange-50 text-orange-700 border-orange-200',
-  elite: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  beginner: 'bg-navy-50 text-navy-700 border-navy-200',
+  intermediate: 'bg-primary-50 text-primary-700 border-primary-200',
+  advanced: 'bg-clay-400/10 text-clay-600 border-clay-400/30',
+  varsity: 'bg-accent-50 text-accent-700 border-accent-200',
+  elite: 'bg-secondary-100 text-secondary-800 border-secondary-300',
 };
 
 export function ProfilePage() {
@@ -178,9 +179,10 @@ export function ProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">{error}</h2>
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center px-4">
+        <div className="rounded-3xl bg-white border border-secondary-200 p-10 text-center max-w-md">
+          <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
+          <h2 className="font-display text-xl font-bold text-secondary-900 mb-4">{error}</h2>
           {!user && <Link to="/auth/login" className="btn-primary">Sign In</Link>}
           {user && <Link to="/players" className="btn-primary">Browse Players</Link>}
         </div>
@@ -190,9 +192,10 @@ export function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">Profile not found</h2>
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center px-4">
+        <div className="rounded-3xl bg-white border border-secondary-200 p-10 text-center max-w-md">
+          <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
+          <h2 className="font-display text-xl font-bold text-secondary-900 mb-4">Profile not found</h2>
           {!user && <Link to="/auth/login" className="btn-primary">Sign In</Link>}
           {user && <Link to="/players" className="btn-primary">Browse Players</Link>}
         </div>
@@ -206,7 +209,7 @@ export function ProfilePage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container-custom">
         {/* Header */}
-        <div className="card p-6 md:p-8 mb-6">
+        <div className="rounded-3xl bg-white border border-secondary-200 p-6 md:p-8 mb-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="relative">
               {avatarPreviewUrl || displayProfile.avatar_url ? (
@@ -245,7 +248,7 @@ export function ProfilePage() {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-secondary-900">{displayProfile.name}</h1>
+                  <h1 className="font-display text-2xl md:text-3xl font-bold text-secondary-900">{displayProfile.name}</h1>
                   {displayProfile.home_town && (
                     <div className="flex items-center gap-1 text-secondary-600 mt-1">
                       <MapPin className="w-4 h-4" />
@@ -508,7 +511,7 @@ export function ProfileEditPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container-custom max-w-2xl">
         <div className="card p-6 md:p-8">
-          <h1 className="text-2xl font-bold text-secondary-900 mb-8">Edit Profile</h1>
+          <h1 className="font-display text-2xl font-bold text-secondary-900 mb-8">Edit Profile</h1>
 
           {/* Avatar Upload */}
           <div className="flex items-center gap-6 mb-8">

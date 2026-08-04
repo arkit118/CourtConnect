@@ -8,6 +8,8 @@ import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Event, Profile, Registration } from '../lib/supabase';
 import { ReportButton } from '../components/ReportButton';
 import { withTimeout } from '../lib/withTimeout';
+import { PageHero } from '../components/brand/PageHero';
+import { CourtCorner } from '../components/brand/CourtMotif';
 
 function EventsNoticeBanner() {
   return (
@@ -79,19 +81,17 @@ export function EventsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Events & Tournaments</h1>
-            <p className="text-secondary-600">Find and register for tennis events near you</p>
-          </div>
-          <Link to="/events/create" className="btn-primary hidden md:inline-flex">
-            Create Event
-          </Link>
-        </div>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        eyebrow="Community events"
+        title="Events & Tournaments"
+        description="Find and register for local tennis events."
+      >
+        <Link to="/events/create" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold mt-6 inline-flex">
+          Create Event
+        </Link>
+      </PageHero>
+      <div className="container-custom py-8">
         <EventsNoticeBanner />
 
         {/* Search and Filters */}
@@ -146,16 +146,16 @@ export function EventsPage() {
             ))}
           </div>
         ) : sortedEvents.length === 0 ? (
-          <div className="text-center py-12">
-            <Calendar className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">No events found</h3>
-            <p className="text-secondary-600 mb-4">Try adjusting your filters or check back later</p>
+          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
+            <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No events found</h3>
+            <p className="text-secondary-600 mb-4">Try adjusting your filters, or check back later.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedEvents.map((event) => (
               <Link key={event.id} to={`/events/${event.id}`}>
-                <div className="card-hover overflow-hidden group">
+                <div className="rounded-3xl overflow-hidden bg-white border border-secondary-200 hover:border-primary-300 transition-colors group">
                   <div className="aspect-video overflow-hidden relative">
                     <img
                       src={event.image_url || defaultImage}

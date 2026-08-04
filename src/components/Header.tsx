@@ -59,7 +59,7 @@ export function Header() {
                   to={link.to}
                   className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 ${
                     isActive(link.to)
-                      ? 'bg-primary-50 text-primary-700'
+                      ? 'bg-primary-600 text-white'
                       : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                   }`}
                 >
@@ -171,7 +171,7 @@ export function Header() {
                   to={link.to}
                   className={`px-4 py-3 rounded-xl text-[15px] font-semibold transition-colors duration-200 ${
                     isActive(link.to)
-                      ? 'bg-primary-50 text-primary-700'
+                      ? 'bg-primary-600 text-white'
                       : 'text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50 active:bg-secondary-100'
                   }`}
                   onClick={() => setIsMenuOpen(false)}

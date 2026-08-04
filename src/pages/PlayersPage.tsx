@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Filter, Clock, User, Info } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
+import { PageHero } from '../components/brand/PageHero';
+import { CourtCorner } from '../components/brand/CourtMotif';
 
 const skillLevelLabels: Record<string, string> = {
   beginner: 'Beginner',
@@ -14,14 +16,17 @@ const skillLevelLabels: Record<string, string> = {
 const skillLevelOrder = ['beginner', 'intermediate', 'advanced', 'varsity', 'elite'];
 
 const skillLevelColors: Record<string, string> = {
-  beginner: 'bg-blue-50 text-blue-700 border-blue-200',
-  intermediate: 'bg-green-50 text-green-700 border-green-200',
-  advanced: 'bg-purple-50 text-purple-700 border-purple-200',
-  varsity: 'bg-orange-50 text-orange-700 border-orange-200',
-  elite: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  beginner: 'bg-navy-50 text-navy-700 border-navy-200',
+  intermediate: 'bg-primary-50 text-primary-700 border-primary-200',
+  advanced: 'bg-clay-400/10 text-clay-600 border-clay-400/30',
+  varsity: 'bg-accent-50 text-accent-700 border-accent-200',
+  elite: 'bg-secondary-100 text-secondary-800 border-secondary-300',
 };
 
-const towns = ['Bloomfield', 'Caldwell', 'Glen Ridge', 'Livingston', 'Maplewood', 'Millburn', 'Montclair', 'Nutley', 'South Orange', 'West Orange'];
+// Pilot launch - one town today, matching Courts/Events/Schedule (see
+// PRODUCT.md: don't imply Essex-County-wide reach the product doesn't
+// have yet).
+const towns = ['Livingston'];
 
 export function PlayersPage() {
   const [players, setPlayers] = useState<Profile[]>([]);
@@ -92,14 +97,13 @@ export function PlayersPage() {
   const hasActiveFilters = selectedSkillLevels.length > 0 || selectedTowns.length > 0 || search || utrRange[0] !== 1 || utrRange[1] !== 10;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Player Directory</h1>
-          <p className="text-secondary-600">Find hitting partners and connect with the community</p>
-        </div>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        eyebrow="Livingston"
+        title="Player Directory"
+        description="Browse the community and find hitting partners."
+      />
+      <div className="container-custom py-8">
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
           <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800">
@@ -242,7 +246,7 @@ export function PlayersPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPlayers.map((player) => (
               <Link key={player.id} to={`/players/${player.id}`}>
-                <div className="card-hover p-6 group">
+                <div className="rounded-3xl bg-white border border-secondary-200 hover:border-primary-300 transition-colors p-6 group">
                   <div className="flex items-start gap-4 mb-4">
                     {player.avatar_url ? (
                       <img
@@ -298,10 +302,10 @@ export function PlayersPage() {
         )}
 
         {filteredPlayers.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <User className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">No players found</h3>
-            <p className="text-secondary-600 mb-4">Try adjusting your filters</p>
+          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
+            <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No players found</h3>
+            <p className="text-secondary-600 mb-4">Try adjusting your filters.</p>
             <button onClick={clearFilters} className="btn-outline">Clear Filters</button>
           </div>
         )}

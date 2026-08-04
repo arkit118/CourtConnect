@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
-import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Calendar } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Calendar } from 'lucide-react';
 import { calculateAge, ageBandForAge, MIN_SIGNUP_AGE } from '../lib/legal';
+import { AuthLayout } from '../components/brand/AuthLayout';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -32,79 +33,70 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-2 text-secondary-600 hover:text-secondary-900 mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
+    <AuthLayout backTo="/" backLabel="Back to home" tagline="Your local court for Livingston tennis.">
+      <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Welcome back</h1>
+      <p className="text-secondary-600 mb-8">Sign in to your CourtConnect account</p>
 
-        <div className="card p-8">
-          <h1 className="text-2xl font-bold text-secondary-900 mb-2">Welcome back</h1>
-          <p className="text-secondary-600 mb-8">Sign in to your CourtConnect account</p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="label">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input pl-10"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="label">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input pl-10 pr-10"
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" className="rounded border-secondary-300" />
-                <span className="text-sm text-secondary-600">Remember me</span>
-              </label>
-              <Link to="/auth/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
-                Forgot password?
-              </Link>
-            </div>
-
-            <button type="submit" className="btn-primary w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-
-          <p className="text-center text-secondary-600 mt-8">
-            Don't have an account?{' '}
-            <Link to="/auth/signup" className="text-primary-600 font-semibold hover:text-primary-700">
-              Sign up
-            </Link>
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="label">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input pl-10"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div>
+          <label className="label">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input pl-10 pr-10"
+              placeholder="Enter your password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" className="rounded border-secondary-300" />
+            <span className="text-sm text-secondary-600">Remember me</span>
+          </label>
+          <Link to="/auth/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
+            Forgot password?
+          </Link>
+        </div>
+
+        <button type="submit" className="btn-primary w-full" disabled={loading}>
+          {loading ? 'Signing in...' : 'Sign In'}
+        </button>
+      </form>
+
+      <p className="text-center text-secondary-600 mt-8">
+        Don't have an account?{' '}
+        <Link to="/auth/signup" className="text-primary-600 font-semibold hover:text-primary-700">
+          Sign up
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
 
@@ -157,18 +149,11 @@ export function SignupPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-2 text-secondary-600 hover:text-secondary-900 mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
+    <AuthLayout backTo="/" backLabel="Back to home" tagline="Find hitting partners, events, and gear - built for Livingston.">
+      <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Create your account</h1>
+      <p className="text-secondary-600 mb-8">Join the CourtConnect community</p>
 
-        <div className="card p-8">
-          <h1 className="text-2xl font-bold text-secondary-900 mb-2">Create your account</h1>
-          <p className="text-secondary-600 mb-8">Join the CourtConnect community</p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="label">Full Name</label>
               <div className="relative">
@@ -271,15 +256,13 @@ export function SignupPage() {
             </button>
           </form>
 
-          <p className="text-center text-secondary-600 mt-8">
-            Already have an account?{' '}
-            <Link to="/auth/login" className="text-primary-600 font-semibold hover:text-primary-700">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+      <p className="text-center text-secondary-600 mt-8">
+        Already have an account?{' '}
+        <Link to="/auth/login" className="text-primary-600 font-semibold hover:text-primary-700">
+          Sign in
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
 
@@ -306,59 +289,48 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
-        <div className="w-full max-w-md">
-          <div className="card p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-6">
-              <Mail className="w-8 h-8 text-primary-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-secondary-900 mb-2">Check your email</h1>
-            <p className="text-secondary-600 mb-8">
-              We've sent password reset instructions to <strong>{email}</strong>
-            </p>
-            <Link to="/auth/login" className="btn-primary w-full">
-              Back to Sign In
-            </Link>
+      <AuthLayout backTo="/auth/login" backLabel="Back to sign in" tagline="Almost there - check your inbox.">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-primary-600" />
           </div>
+          <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Check your email</h1>
+          <p className="text-secondary-600 mb-8">
+            We've sent password reset instructions to <strong>{email}</strong>
+          </p>
+          <Link to="/auth/login" className="btn-primary w-full">
+            Back to Sign In
+          </Link>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <Link to="/auth/login" className="inline-flex items-center gap-2 text-secondary-600 hover:text-secondary-900 mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to sign in
-        </Link>
+    <AuthLayout backTo="/auth/login" backLabel="Back to sign in" tagline="Forgot your password? No problem.">
+      <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Reset your password</h1>
+      <p className="text-secondary-600 mb-8">Enter your email and we'll send you a reset link</p>
 
-        <div className="card p-8">
-          <h1 className="text-2xl font-bold text-secondary-900 mb-2">Reset your password</h1>
-          <p className="text-secondary-600 mb-8">Enter your email and we'll send you a reset link</p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="label">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input pl-10"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn-primary w-full" disabled={loading}>
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
-          </form>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="label">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input pl-10"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
         </div>
-      </div>
-    </div>
+
+        <button type="submit" className="btn-primary w-full" disabled={loading}>
+          {loading ? 'Sending...' : 'Send Reset Link'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

@@ -5,6 +5,9 @@
 // change the line below to `export const MAINTENANCE_MODE_ENABLED = false;`
 // That is the only change required - nothing else in the app needs to be
 // touched, and no env var needs to be set on any deploy target.
+//
+// BEFORE FINAL PRODUCTION MERGE, SET MAINTENANCE_MODE_ENABLED TO FALSE
+// UNLESS INTENTIONALLY KEEPING SITE DOWN.
 // ============================================================================
 export const MAINTENANCE_MODE_ENABLED = true;
 

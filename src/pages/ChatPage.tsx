@@ -180,9 +180,9 @@ export function ChatPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container-custom max-w-lg">
-          <div className="card p-12 text-center">
+          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
             <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-4" />
-            <p className="text-secondary-900 font-semibold mb-1">Couldn't load this chat</p>
+            <p className="font-display text-secondary-900 font-semibold mb-1">Couldn't load this chat</p>
             <p className="text-secondary-600 text-sm mb-4">{error}</p>
             <Link to="/matches" className="btn-outline">Back to Matches</Link>
           </div>
@@ -232,7 +232,7 @@ export function ChatPage() {
         <div className="container-custom max-w-3xl flex-1 flex items-center justify-center pb-12">
           <div className="card p-8 text-center max-w-md">
             <Lock className="w-10 h-10 text-secondary-400 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-secondary-900 mb-2">
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">
               {match.status === 'pending' && 'This match is not active yet'}
               {match.status === 'declined' && 'This match was declined'}
               {match.status === 'ended' && 'This match has ended'}

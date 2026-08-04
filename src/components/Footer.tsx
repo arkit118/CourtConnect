@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Instagram } from 'lucide-react';
 import { CONTACT_EMAIL } from '../lib/legal';
 import { Logo } from './brand/Logo';
+import { CourtLines } from './brand/CourtMotif';
 
 const footerLinks = {
   community: [
@@ -32,20 +33,21 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="bg-secondary-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+    <footer className="relative overflow-hidden bg-navy-900 text-white">
+      <CourtLines className="absolute -left-16 -bottom-24 h-72 w-72 text-white" strokeOpacity={0.06} />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="inline-flex items-center mb-4 bg-white rounded-lg px-3 py-2">
               <Logo variant="lockup" className="h-7" />
             </Link>
-            <p className="text-secondary-400 text-sm mb-6">
+            <p className="text-navy-200 text-sm mb-6">
               A Livingston tennis community pilot for finding hitting partners, joining local events, coordinating
               court time, and trading gear.
             </p>
             <div className="flex gap-3">
               <span
-                className="w-10 h-10 rounded-lg bg-secondary-800/60 text-secondary-500 flex items-center justify-center cursor-not-allowed"
+                className="w-10 h-10 rounded-lg bg-white/5 text-navy-300 flex items-center justify-center cursor-not-allowed"
                 title="Instagram coming soon"
                 aria-label="Instagram - coming soon"
               >
@@ -55,13 +57,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Community</h4>
+            <h4 className="font-display font-bold mb-4">Community</h4>
             <ul className="space-y-3">
               {footerLinks.community.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-secondary-400 hover:text-white text-sm transition-colors"
+                    className="text-navy-200 hover:text-white text-sm transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -71,13 +73,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
+            <h4 className="font-display font-bold mb-4">Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-secondary-400 hover:text-white text-sm transition-colors"
+                    className="text-navy-200 hover:text-white text-sm transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -87,13 +89,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
+            <h4 className="font-display font-bold mb-4">Legal</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-secondary-400 hover:text-white text-sm transition-colors"
+                    className="text-navy-200 hover:text-white text-sm transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -103,16 +105,16 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-secondary-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-secondary-500 text-sm text-center md:text-left">
+        <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-navy-300 text-sm text-center md:text-left">
             © {new Date().getFullYear()} CourtConnect. All rights reserved.{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-white transition-colors">
               {CONTACT_EMAIL}
             </a>
           </p>
-          <div className="flex items-center gap-2 text-sm text-secondary-500">
-            <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
-            Serving Essex County, New Jersey
+          <div className="flex items-center gap-2 text-sm text-navy-300">
+            <span className="w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
+            Piloting in Livingston, New Jersey
           </div>
         </div>
       </div>

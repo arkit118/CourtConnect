@@ -125,7 +125,7 @@ export function EventCreatePage() {
         </Link>
 
         <div className="card p-6 md:p-8">
-          <h1 className="text-2xl font-bold text-secondary-900 mb-2">Create an Event</h1>
+          <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Create an Event</h1>
           <p className="text-secondary-600 mb-8">Host a tournament, clinic, or social event for the community</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
