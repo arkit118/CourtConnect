@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Check, X, MessageCircle, Clock, AlertCircle } from 'lucide-react';
+import { PageHero } from '../components/brand/PageHero';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
@@ -137,11 +138,9 @@ export function MatchesPage() {
 
   if (eligibility !== 'eligible') {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container-custom max-w-lg">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-secondary-900 mb-2">Matches</h1>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        <PageHero title="Matches" description="Your partner match requests and active chats, in one place." />
+        <div className="container-custom max-w-lg py-8">
           <SocialOnboardingGate status={eligibility} />
         </div>
       </div>
@@ -154,13 +153,9 @@ export function MatchesPage() {
   const other = matches.filter((m) => ['declined', 'ended', 'blocked'].includes(m.status));
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Matches</h1>
-          <p className="text-secondary-600">Manage your partner match requests and active chats</p>
-        </div>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero title="Matches" description="Your partner match requests and active chats, in one place." />
+      <div className="container-custom max-w-3xl py-8">
         <div className="mb-6">
           <SocialSafetyBanner />
         </div>
@@ -179,7 +174,7 @@ export function MatchesPage() {
           <div className="space-y-8">
             <MatchSection title={`Requests Received (${receivedPending.length})`}>
               {receivedPending.length === 0 ? (
-                <EmptyRow>No pending requests</EmptyRow>
+                <EmptyRow>No one has requested a match yet - they'll show up here.</EmptyRow>
               ) : (
                 receivedPending.map((m) => (
                   <MatchCard key={m.id} match={m}>
@@ -197,7 +192,9 @@ export function MatchesPage() {
 
             <MatchSection title={`Requests Sent (${sentPending.length})`}>
               {sentPending.length === 0 ? (
-                <EmptyRow>No outgoing requests</EmptyRow>
+                <EmptyRow>
+                  You haven't sent any match requests. <Link to="/partners" className="text-primary-600 font-semibold underline underline-offset-2">Find players &rarr;</Link>
+                </EmptyRow>
               ) : (
                 sentPending.map((m) => (
                   <MatchCard key={m.id} match={m}>
@@ -209,7 +206,7 @@ export function MatchesPage() {
 
             <MatchSection title={`Active Matches (${active.length})`}>
               {active.length === 0 ? (
-                <EmptyRow>No active matches yet</EmptyRow>
+                <EmptyRow>Accepted matches - and their chat - will show up here.</EmptyRow>
               ) : (
                 active.map((m) => (
                   <MatchCard key={m.id} match={m}>
@@ -244,7 +241,7 @@ export function MatchesPage() {
 function MatchSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-secondary-900 mb-3">{title}</h2>
+      <h2 className="font-display text-lg font-bold text-secondary-900 mb-3">{title}</h2>
       <div className="space-y-3">{children}</div>
     </div>
   );
@@ -252,13 +249,15 @@ function MatchSection({ title, children }: { title: string; children: React.Reac
 
 function EmptyRow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="card p-6 text-center text-secondary-500 text-sm">{children}</div>
+    <div className="rounded-2xl border border-dashed border-secondary-300 p-6 text-center text-secondary-500 text-sm">
+      {children}
+    </div>
   );
 }
 
 function MatchCard({ match, children }: { match: MatchWithOther; children: React.ReactNode }) {
   return (
-    <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="rounded-2xl bg-white border border-secondary-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0">
         {match.other?.avatar_url ? (
           <img src={match.other.avatar_url} alt={match.other.name} className="w-11 h-11 rounded-xl object-cover" />

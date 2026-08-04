@@ -8,6 +8,17 @@ import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Court, CourtBooking } from '../lib/supabase';
 import { ReportButton } from '../components/ReportButton';
 import { withTimeout } from '../lib/withTimeout';
+import { PageHero } from '../components/brand/PageHero';
+
+function ScheduleHero() {
+  return (
+    <PageHero
+      eyebrow="Community coordination, not a reservation system"
+      title="Court Schedule"
+      description="See when players plan to use a court, and add your own time so others know you're headed out."
+    />
+  );
+}
 
 const matchTypes = ['Singles', 'Doubles', 'Practice', 'Hitting'] as const;
 
@@ -304,12 +315,9 @@ export function SchedulingPage() {
   // Loading state — courts load independently of auth state
   if (loadingCourts) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container-custom max-w-5xl">
-          <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
-            <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        <ScheduleHero />
+        <div className="container-custom max-w-5xl py-8">
           <NoticeBanner />
           <div className="card p-12 text-center mt-6">
             <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-4" />
@@ -323,12 +331,9 @@ export function SchedulingPage() {
   // Error state
   if (error && courts.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container-custom max-w-5xl">
-          <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
-            <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        <ScheduleHero />
+        <div className="container-custom max-w-5xl py-8">
           <NoticeBanner />
           <div className="card p-12 text-center mt-6">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
@@ -342,12 +347,9 @@ export function SchedulingPage() {
   // No courts
   if (courts.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container-custom max-w-5xl">
-          <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
-            <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
-          </div>
+      <div className="min-h-screen bg-gray-50">
+        <ScheduleHero />
+        <div className="container-custom max-w-5xl py-8">
           <NoticeBanner />
           <div className="card p-12 text-center mt-6">
             <MapPin className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
@@ -359,14 +361,9 @@ export function SchedulingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom max-w-5xl">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Court Schedule</h1>
-          <p className="text-secondary-600">See when players plan to use a court and add your own time.</p>
-        </div>
-
+    <div className="min-h-screen bg-gray-50">
+      <ScheduleHero />
+      <div className="container-custom max-w-5xl py-8">
         <NoticeBanner />
 
         {/* Selectors */}
@@ -412,7 +409,7 @@ export function SchedulingPage() {
               </span>
               <span className="inline-flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                {selectedCourt.num_courts} court{selectedCourt.num_courts !== 1 ? 's' : ''}
+                {selectedCourt.num_courts} total court{selectedCourt.num_courts !== 1 ? 's' : ''}
               </span>
               {selectedCourt.surface_type && (
                 <span className="inline-flex items-center gap-1 capitalize">
@@ -428,7 +425,7 @@ export function SchedulingPage() {
             </div>
           )}
 
-          <div className="mt-5 flex flex-col sm:flex-row gap-3">
+          <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:items-center">
             <button onClick={handleOpenForm} className="btn-primary w-full sm:w-auto">
               <Plus className="w-4 h-4" />
               Add a Time
@@ -436,6 +433,9 @@ export function SchedulingPage() {
             <button onClick={fetchBookings} className="btn-outline w-full sm:w-auto">
               Refresh
             </button>
+            <p className="text-xs text-secondary-500 sm:ml-1">
+              Let others know when you'll be on this court so they can plan around you.
+            </p>
           </div>
         </div>
 

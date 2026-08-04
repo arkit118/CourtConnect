@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, MapPin, Users, Package, Flag, ShieldAlert } from 'lucide-react';
 import { CONTACT_EMAIL } from '../../lib/legal';
 import { ReportButton } from '../../components/ReportButton';
+import { PageHero } from '../../components/brand/PageHero';
 
 const EFFECTIVE_DATE = 'July 27, 2026';
 
@@ -260,11 +261,9 @@ export function PrivacyPage() {
 
 export function SafetyPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8 md:py-12">
-      <div className="container-custom max-w-3xl">
-        <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Safety</h1>
-        <p className="text-secondary-600 mb-8">Practical guidance for staying safe while using CourtConnect.</p>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero title="Safety" description="Practical guidance for staying safe while using CourtConnect." />
+      <div className="container-custom max-w-3xl py-8 md:py-12">
         <div className="space-y-6">
           <div className="card p-6 md:p-8">
             <div className="flex items-center gap-3 mb-3">

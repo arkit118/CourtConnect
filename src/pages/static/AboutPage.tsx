@@ -1,75 +1,93 @@
-import { Heart, Users, Zap, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShieldCheck, Users2, MessageCircleWarning } from 'lucide-react';
 import { CONTACT_EMAIL } from '../../lib/legal';
+import { PageHero } from '../../components/brand/PageHero';
+import { CourtCorner } from '../../components/brand/CourtMotif';
 
 export function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container-custom max-w-4xl">
-        <h1 className="text-4xl font-bold text-secondary-900 mb-6 text-center">About CourtConnect</h1>
-        <p className="text-xl text-secondary-600 text-center mb-12 max-w-2xl mx-auto">
-          A Livingston tennis community pilot built to help local players match up, coordinate court time, join
-          events, and exchange gear.
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        eyebrow="Livingston, NJ"
+        title="About CourtConnect"
+        description="A local tennis community pilot - not a business, not a club, not a booking platform."
+      />
 
-        <div className="card p-8 mb-8">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">What CourtConnect Actually Does</h2>
-          <p className="text-secondary-600 leading-relaxed mb-6">
-            CourtConnect is a local tennis community platform, currently piloting in Livingston, NJ. Once you create
-            a profile, you can send and accept partner match requests, then chat with anyone you've matched with;
-            browse and register for local events and tournaments; coordinate court time with other members on the
-            schedule; and buy, sell, or trade tennis gear locally. Players under 18 need a parent or guardian to
-            approve matching and chat before using those two features specifically - everything else is open right
-            away.
+      <div className="container-custom max-w-3xl py-12 space-y-10">
+        <section>
+          <h2 className="font-display text-2xl font-bold text-secondary-900 mb-4">What it actually does</h2>
+          <p className="text-secondary-700 leading-relaxed mb-4">
+            CourtConnect is a local tennis community platform, currently piloting in Livingston. Create a profile
+            and you can send and accept partner match requests, then chat with anyone you've matched with; browse
+            and register for local events; coordinate court time with other members on the Schedule page; and buy,
+            sell, or trade tennis gear locally. Players under 18 need a parent or guardian to approve matching and
+            chat specifically - everything else is open right away.
           </p>
-          <p className="text-secondary-600 leading-relaxed">
-            We're starting small and deliberately - Livingston first, with plans to expand across Essex County as
-            the community grows. CourtConnect doesn't require a club membership or tournament entry fees, and it
-            doesn't process payments of any kind - gear exchanges and any event fees are handled directly between
-            members.
+          <p className="text-secondary-700 leading-relaxed">
+            We're starting small and deliberately: Livingston first, one real court location today. CourtConnect
+            doesn't require a club membership, doesn't process payments of any kind, and doesn't track live court
+            availability - gear exchanges and any event fees are handled directly between members.
           </p>
-        </div>
+        </section>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mb-4">
-              <Heart className="w-6 h-6 text-primary-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">Community First</h3>
-            <p className="text-secondary-600">We prioritize building genuine connections between players over profit.</p>
+        <section className="rounded-3xl bg-navy-900 text-white p-8">
+          <h2 className="font-display text-2xl font-bold mb-6">How safety works here</h2>
+          <div className="space-y-6">
+            <SafetyPoint
+              icon={ShieldCheck}
+              title="Age-band separation is enforced in the database"
+              description="Minors are only ever matched with other minors, adults only with adults - checked at the database level, not just the interface."
+            />
+            <SafetyPoint
+              icon={Users2}
+              title="Parent/guardian approval for minors"
+              description="Players under 18 need a parent or guardian to approve partner matching and chat before either unlocks."
+            />
+            <SafetyPoint
+              icon={MessageCircleWarning}
+              title="Report and block, anytime"
+              description="Every match, chat, and listing can be reported or blocked in one tap. See our Safety page for the full picture."
+            />
           </div>
-          <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-navy-50 flex items-center justify-center mb-4">
-              <Users className="w-6 h-6 text-navy-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">Inclusive for All</h3>
-            <p className="text-secondary-600">From beginners to elite players, everyone has a place in our community.</p>
-          </div>
-          <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-primary-700" />
-            </div>
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">Affordable Access</h3>
-            <p className="text-secondary-600">Our events and programs are designed to be budget-friendly for everyone.</p>
-          </div>
-          <div className="card p-6">
-            <div className="w-12 h-12 rounded-xl bg-navy-50 flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-navy-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">Safe & Trusted</h3>
-            <p className="text-secondary-600">We moderate content and give every member tools to report and block anyone who makes them uncomfortable.</p>
-          </div>
-        </div>
+          <Link
+            to="/safety"
+            className="inline-block mt-6 text-sm font-semibold text-primary-300 hover:text-primary-200 underline underline-offset-2"
+          >
+            Read the full Safety page &rarr;
+          </Link>
+        </section>
 
-        <div className="card p-8 bg-gradient-to-br from-primary-600 to-navy-700 text-white">
-          <h2 className="text-2xl font-bold mb-4">Join Our Community</h2>
-          <p className="text-primary-100 mb-6">
-            Whether you're looking to compete, find hitting partners, or just get more time on the court,
-            CourtConnect is here to help. Sign up today and start connecting with local players.
+        <section className="relative overflow-hidden rounded-3xl bg-primary-600 text-white p-8 md:p-10">
+          <CourtCorner className="absolute top-6 right-6 w-8 h-8 text-white/30" />
+          <h2 className="font-display text-2xl font-bold mb-3">Join the pilot</h2>
+          <p className="text-primary-100 mb-6 max-w-lg">
+            Whether you're looking for a hitting partner, a community event, or just more time on the court,
+            CourtConnect is built for Livingston players.
           </p>
-          <a href="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
+          <Link to="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
             Get Started Free
-          </a>
-        </div>
+          </Link>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function SafetyPoint({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof ShieldCheck;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex gap-4">
+      <Icon className="w-6 h-6 text-primary-300 shrink-0" strokeWidth={1.75} />
+      <div>
+        <h3 className="font-semibold mb-1">{title}</h3>
+        <p className="text-navy-100 text-sm leading-relaxed">{description}</p>
       </div>
     </div>
   );
@@ -77,14 +95,10 @@ export function AboutPage() {
 
 export function ContactPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container-custom max-w-2xl">
-        <h1 className="text-4xl font-bold text-secondary-900 mb-6 text-center">Contact Us</h1>
-        <p className="text-xl text-secondary-600 text-center mb-12">
-          Have a question or feedback? We'd love to hear from you.
-        </p>
-
-        <div className="card p-8 text-center">
+    <div className="min-h-screen bg-gray-50">
+      <PageHero title="Contact Us" description="Have a question or feedback? We'd love to hear from you." />
+      <div className="container-custom max-w-xl py-12">
+        <div className="rounded-3xl bg-white border border-secondary-200 p-8 text-center">
           <p className="text-secondary-600 mb-6">
             The best way to reach us right now is by email. Include your account email and as much detail as you
             can, and we'll get back to you.

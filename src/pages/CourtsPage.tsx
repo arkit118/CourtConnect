@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { MapPin, Lightbulb, ExternalLink, Search, AlertCircle, Info } from 'lucide-react';
 import { supabase, Court } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
+import { PageHero } from '../components/brand/PageHero';
+import { CourtCorner } from '../components/brand/CourtMotif';
 
 const surfaceLabels: Record<string, string> = {
   hard: 'Hard',
@@ -14,11 +16,11 @@ const surfaceLabels: Record<string, string> = {
 };
 
 const surfaceColors: Record<string, string> = {
-  hard: 'bg-blue-50 text-blue-700 border-blue-200',
-  clay: 'bg-orange-50 text-orange-700 border-orange-200',
-  grass: 'bg-green-50 text-green-700 border-green-200',
-  synthetic: 'bg-purple-50 text-purple-700 border-purple-200',
-  carpet: 'bg-purple-50 text-purple-700 border-purple-200',
+  hard: 'bg-navy-50 text-navy-700 border-navy-200',
+  clay: 'bg-clay-400/10 text-clay-600 border-clay-400/30',
+  grass: 'bg-primary-50 text-primary-700 border-primary-200',
+  synthetic: 'bg-secondary-100 text-secondary-700 border-secondary-200',
+  carpet: 'bg-secondary-100 text-secondary-700 border-secondary-200',
   other: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
@@ -90,14 +92,13 @@ export function CourtsPage() {
   const hasFilters = search || selectedTown || selectedSurface || hasLights !== null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Tennis Courts</h1>
-          <p className="text-secondary-600">Find courts near you in Livingston</p>
-        </div>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        eyebrow="Livingston"
+        title="Tennis Courts"
+        description="Known court locations in the CourtConnect community. Not a live availability tracker."
+      />
+      <div className="container-custom py-8">
         <CourtsNoticeBanner />
 
         {/* Filters */}
@@ -138,9 +139,9 @@ export function CourtsPage() {
               onChange={(e) => setHasLights(e.target.value === '' ? null : e.target.value === 'yes')}
               className="input w-auto"
             >
-              <option value="">All Lighting</option>
-              <option value="yes">Has Lights</option>
-              <option value="no">No Lights</option>
+              <option value="">All lighting</option>
+              <option value="yes">Has lights</option>
+              <option value="no">No lights</option>
             </select>
           </div>
         </div>
@@ -212,10 +213,11 @@ export function CourtsPage() {
         {!loading && !error && filteredCourts.length > 0 && (
           <div className="grid md:grid-cols-2 gap-6">
             {filteredCourts.map((court) => (
-              <div key={court.id} className="card-hover p-6">
-                <div className="flex items-start justify-between mb-4">
+              <div key={court.id} className="relative rounded-3xl bg-white border border-secondary-200 hover:border-primary-300 transition-colors p-6">
+                <CourtCorner className="absolute top-5 right-5 w-6 h-6 text-secondary-200" />
+                <div className="flex items-start justify-between mb-4 pr-8">
                   <div>
-                    <h3 className="text-lg font-semibold text-secondary-900">{court.name}</h3>
+                    <h3 className="font-display text-lg font-bold text-secondary-900">{court.name}</h3>
                     <div className="flex items-center gap-1 text-sm text-secondary-500 mt-1">
                       <MapPin className="w-4 h-4" />
                       <span>{court.town}</span>
@@ -233,12 +235,9 @@ export function CourtsPage() {
                 <p className="text-sm text-secondary-600 mb-4">{court.address}</p>
 
                 <div className="flex flex-wrap items-center gap-4 text-sm text-secondary-600 mb-4">
-                  <div className="flex items-center gap-1">
-                    <div className="w-6 h-6 rounded-lg bg-primary-100 flex items-center justify-center">
-                      <span className="text-xs font-bold text-primary-600">{court.num_courts}</span>
-                    </div>
-                    <span>total court{court.num_courts !== 1 ? 's' : ''}</span>
-                  </div>
+                  <span className="font-semibold text-secondary-900">
+                    {court.num_courts} total court{court.num_courts !== 1 ? 's' : ''} at this location
+                  </span>
                   {court.has_lights && (
                     <div className="flex items-center gap-1 text-accent-600">
                       <Lightbulb className="w-4 h-4" />

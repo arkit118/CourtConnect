@@ -8,7 +8,8 @@ import { SocialSafetyBanner } from '../components/SocialSafetyBanner';
 import { ReportButton } from '../components/ReportButton';
 import { supabase, MatchCandidate } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
-import { User, Check, Heart, Loader2 } from 'lucide-react';
+import { User, Check, Heart, Loader2, MessageCircle, ShieldCheck, UserCheck } from 'lucide-react';
+import { PageHero } from '../components/brand/PageHero';
 
 // The old partner_requests / "Browse Players" / "Request to Hit" flow has
 // been retired: it let any signed-in user request any other user
@@ -20,19 +21,46 @@ import { User, Check, Heart, Loader2 } from 'lucide-react';
 // (unused, harmless) rather than dropped, since this is a frontend-only
 // retirement and dropping a table is a destructive schema change outside
 // this fix's scope.
+const HOW_IT_WORKS = [
+  { icon: Heart, text: 'Find players near your level and send a match request.' },
+  { icon: MessageCircle, text: 'Once a match is accepted, chat unlocks for both players.' },
+  { icon: UserCheck, text: "Under 18? A parent or guardian approves matching first." },
+  { icon: ShieldCheck, text: 'Adults and minors are always matched separately.' },
+];
+
+function HowItWorksStrip() {
+  return (
+    <div className="rounded-3xl bg-white border border-secondary-200 p-6 md:p-8 mb-8">
+      <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-4">
+        {HOW_IT_WORKS.map((step, i) => {
+          const Icon = step.icon;
+          return (
+            <div key={step.text} className="flex md:flex-col items-start gap-3 md:gap-2 flex-1">
+              <Icon className="w-5 h-5 text-primary-600 shrink-0" strokeWidth={1.75} />
+              <p className="text-sm text-secondary-700 leading-relaxed">{step.text}</p>
+              {i < HOW_IT_WORKS.length - 1 && (
+                <div className="hidden md:block w-full h-px bg-secondary-100 mt-2" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function PartnersPage() {
   const eligibility = useSocialEligibility();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Partner Matching</h1>
-          <p className="text-secondary-600">
-            Safe, age-banded partner matching for community tennis. Minors are only ever matched with other minors,
-            and adults only with other adults.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        eyebrow="Core feature"
+        title="Partner Matching"
+        description="The heart of CourtConnect - get matched with Livingston players near your level."
+      />
+      <div className="container-custom py-8">
+        <HowItWorksStrip />
 
         {eligibility !== 'eligible' ? <SocialOnboardingGate status={eligibility} /> : <MatchCandidatesList />}
       </div>
@@ -137,7 +165,7 @@ function MatchCandidatesList() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {candidates.map((candidate) => (
-            <div key={candidate.id} className="card-hover p-6">
+            <div key={candidate.id} className="rounded-3xl bg-white border border-secondary-200 hover:border-primary-300 transition-colors p-6">
               <div className="flex items-center gap-4 mb-4">
                 {candidate.avatar_url ? (
                   <img src={candidate.avatar_url} alt={candidate.name} className="w-16 h-16 rounded-xl object-cover" />

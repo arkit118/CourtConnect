@@ -8,6 +8,7 @@ import { useActionGate } from '../hooks/useActionGate';
 import { supabase, GearListing, Profile } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
 import { ReportButton } from '../components/ReportButton';
+import { PageHero } from '../components/brand/PageHero';
 
 function GearNoticeBanner() {
   return (
@@ -97,18 +98,17 @@ export function GearPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Gear Exchange</h1>
-            <p className="text-secondary-600">Buy, sell, and trade tennis equipment locally</p>
-          </div>
-          <Link to="/gear/create" className="btn-primary">
-            List Your Gear
-          </Link>
-        </div>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        eyebrow="Local gear board"
+        title="Gear Exchange"
+        description="Listed by Livingston players, for Livingston players. Coordinate directly - CourtConnect never touches payment or shipping."
+      >
+        <Link to="/gear/create" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold mt-6 inline-flex">
+          List Your Gear
+        </Link>
+      </PageHero>
+      <div className="container-custom py-8">
         <GearNoticeBanner />
 
         <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-6">
