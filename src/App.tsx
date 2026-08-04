@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
 import { LegalGateModal } from './components/LegalGateModal';
+import { MaintenanceGate } from './components/MaintenanceGate';
 import { CONTACT_EMAIL } from './lib/legal';
 
 // Pages
@@ -209,11 +210,13 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-gray-50">
-          <AppRoutes />
-        </div>
-      </AuthProvider>
+      <MaintenanceGate>
+        <AuthProvider>
+          <div className="min-h-screen flex flex-col bg-gray-50">
+            <AppRoutes />
+          </div>
+        </AuthProvider>
+      </MaintenanceGate>
     </Router>
   );
 }
