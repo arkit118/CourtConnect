@@ -10,6 +10,7 @@ import { supabase, MatchCandidate } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
 import { User, Check, Heart, Loader2, MessageCircle, ShieldCheck, UserCheck } from 'lucide-react';
 import { PageHero } from '../components/brand/PageHero';
+import { BallArc } from '../components/brand/CourtMotif';
 
 // The old partner_requests / "Browse Players" / "Request to Hit" flow has
 // been retired: it let any signed-in user request any other user
@@ -157,10 +158,10 @@ function MatchCandidatesList() {
           <p className="text-secondary-600 text-sm">{error}</p>
         </div>
       ) : candidates.length === 0 ? (
-        <div className="text-center py-12">
-          <Heart className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-secondary-900 mb-2">No match candidates right now</h3>
-          <p className="text-secondary-600">Check back soon as more members join.</p>
+        <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
+          <BallArc className="w-12 h-12 text-clay-400 mx-auto mb-4" />
+          <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No match candidates right now</h3>
+          <p className="text-secondary-600">Check back soon as more Livingston players join.</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

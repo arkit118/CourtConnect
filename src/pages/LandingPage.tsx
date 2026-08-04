@@ -24,7 +24,7 @@ import { ArrowRight, ShieldCheck, Users2, MessageCircleWarning } from 'lucide-re
 import { supabase, Event } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { withTimeout } from '../lib/withTimeout';
-import { CourtLines, CourtCorner } from '../components/brand/CourtMotif';
+import { CourtLines, CourtCorner, CourtDivider, BallArc } from '../components/brand/CourtMotif';
 
 export function LandingPage() {
   return (
@@ -50,8 +50,10 @@ function HeroSection() {
 
       <div className="relative z-10 container-custom py-20 md:py-28 lg:py-36">
         <div className="max-w-2xl">
-          <p className="font-display text-sm font-bold tracking-[0.14em] text-primary-300 uppercase mb-5">
-            Livingston, NJ &middot; Community pilot
+          <p className="font-display text-sm font-bold tracking-[0.14em] text-primary-300 uppercase mb-5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span>Livingston, NJ</span>
+            <span className="text-primary-300/40 normal-case font-normal">/</span>
+            <span>Community Pilot</span>
           </p>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.03] tracking-tight mb-6">
             The local court for
@@ -70,7 +72,7 @@ function HeroSection() {
           </h1>
           <p className="text-lg sm:text-xl text-navy-100 leading-relaxed mb-10 max-w-xl">
             CourtConnect helps Livingston players find hitting partners, join community events, coordinate court
-            time, and pass along gear &mdash; one local pilot, built for the community, not a business.
+            time, and pass along gear. One local pilot, built for the community, not a business.
           </p>
 
           <div className="flex flex-wrap gap-4">
@@ -116,7 +118,7 @@ function WhatItIsSection() {
             What CourtConnect actually is
           </h2>
           <p className="text-lg text-secondary-600 leading-relaxed">
-            A Livingston tennis community pilot &mdash; not a booking platform, not a coaching marketplace. Four
+            A Livingston tennis community pilot, not a booking platform, not a coaching marketplace. Four
             things it does, today, for local players.
           </p>
         </div>
@@ -133,7 +135,7 @@ function WhatItIsSection() {
               <p className="text-navy-100 leading-relaxed max-w-md">
                 The core of CourtConnect: get matched with players near your level, send a request, and chat once
                 you're both in. Minors and adults are matched separately, and minors need parent/guardian approval
-                before matching or chat unlock &mdash; enforced at the database level.
+                before matching or chat unlock (enforced at the database level).
               </p>
             </div>
             <span className="relative z-10 mt-8 inline-flex items-center gap-2 font-semibold text-primary-300 group-hover:gap-3 transition-all">
@@ -159,11 +161,13 @@ function WhatItIsSection() {
             <FeatureTile
               to="/gear"
               title="Gear Exchange"
-              description="List, browse, and trade used tennis gear locally &mdash; no payments, no shipping. Just a local board for saying you're interested."
+              description="List, browse, and trade used tennis gear locally: no payments, no shipping. Just a local board for saying you're interested."
               wide
             />
           </div>
         </div>
+
+        <CourtDivider className="text-secondary-300 mt-14" />
       </div>
     </section>
   );
@@ -359,7 +363,7 @@ function TrustSection() {
         <div className="max-w-xl mb-14">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Built for a trustworthy community</h2>
           <p className="text-lg text-navy-100 leading-relaxed">
-            We're a new, local platform &mdash; here's exactly how matching and chat stay safe from day one.
+            We're a new, local platform. Here's exactly how matching and chat stay safe from day one.
           </p>
         </div>
 
@@ -386,6 +390,7 @@ function CTASection() {
       <div className="container-custom">
         <div className="relative overflow-hidden rounded-3xl bg-primary-600 p-10 md:p-16 text-white">
           <CourtLines className="absolute -left-16 -bottom-20 h-80 w-80 text-white" strokeOpacity={0.1} />
+          <BallArc className="absolute right-8 top-8 h-20 w-20 text-clay-300" />
           <div className="relative z-10 max-w-xl">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-5">Ready to join the community?</h2>
             <p className="text-lg text-primary-100 mb-8 leading-relaxed">

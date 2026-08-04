@@ -1,15 +1,14 @@
-// Maintenance-mode switch for the courtconnect-redesign-v2 branch.
+// Maintenance-mode switch for CourtConnect. The maintenance page,
+// MaintenanceGate wrapper, and the bypass mechanism below are all kept in
+// the codebase permanently and reused whenever the site needs to go down
+// again - only this flag controls whether they're active.
 //
 // ============================================================================
-// TO TURN MAINTENANCE MODE OFF (e.g. before merging this branch to main):
-// change the line below to `export const MAINTENANCE_MODE_ENABLED = false;`
-// That is the only change required - nothing else in the app needs to be
-// touched, and no env var needs to be set on any deploy target.
-//
-// BEFORE FINAL PRODUCTION MERGE, SET MAINTENANCE_MODE_ENABLED TO FALSE
-// UNLESS INTENTIONALLY KEEPING SITE DOWN.
+// To put CourtConnect back into maintenance mode, set MAINTENANCE_MODE_ENABLED
+// to true and deploy. That is the only change required - nothing else in the
+// app needs to be touched, and no env var needs to be set on any deploy target.
 // ============================================================================
-export const MAINTENANCE_MODE_ENABLED = true;
+export const MAINTENANCE_MODE_ENABLED = false;
 
 // Bypass query params (see MaintenanceGate.tsx):
 //   ?cc_bypass=arkit-dev      sets a persistent local bypass

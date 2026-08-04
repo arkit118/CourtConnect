@@ -19,11 +19,9 @@ function LegalSection({ number, title, children }: { number: number; title: stri
 
 export function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8 md:py-12">
-      <div className="container-custom max-w-3xl">
-        <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Terms of Service</h1>
-        <p className="text-secondary-500 mb-8">Version v1 &middot; Effective Date: {EFFECTIVE_DATE}</p>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero title="Terms of Service" description={`Version v1, effective ${EFFECTIVE_DATE}.`} />
+      <div className="container-custom max-w-3xl py-8 md:py-12">
         <div className="card p-6 md:p-8">
           <LegalSection number={1} title="What CourtConnect Is">
             <p>
@@ -61,7 +59,7 @@ export function TermsPage() {
 
           <LegalSection number={5} title="Court Scheduling Disclaimer">
             <p>CourtConnect does not officially reserve courts and does not control access to public, school, town, or private courts.</p>
-            <p>The Schedule page is only for community coordination among players &mdash; it is not a reservation system.</p>
+            <p>The Schedule page is only for community coordination among players. It is not a reservation system.</p>
             <p>You must follow all town, school, park, facility, and posted court rules. Court availability is never guaranteed.</p>
           </LegalSection>
 
@@ -88,7 +86,7 @@ export function TermsPage() {
 
           <LegalSection number={9} title="Safety">
             <p>Meet at public courts, in daylight when possible. Minors should involve a parent or guardian.</p>
-            <p>Do not share sensitive personal information publicly. In an emergency, contact local emergency services directly &mdash; not CourtConnect.</p>
+            <p>Do not share sensitive personal information publicly. In an emergency, contact local emergency services directly, not CourtConnect.</p>
           </LegalSection>
 
           <LegalSection number={10} title="Partner Matching and Chat">
@@ -163,11 +161,9 @@ export function TermsPage() {
 
 export function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8 md:py-12">
-      <div className="container-custom max-w-3xl">
-        <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Privacy Policy</h1>
-        <p className="text-secondary-500 mb-8">Version v1 &middot; Effective Date: {EFFECTIVE_DATE}</p>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero title="Privacy Policy" description={`Version v1, effective ${EFFECTIVE_DATE}.`} />
+      <div className="container-custom max-w-3xl py-8 md:py-12">
         <div className="card p-6 md:p-8">
           <LegalSection number={1} title="Information We Collect">
             <p>We collect information such as:</p>
@@ -277,7 +273,7 @@ export function SafetyPage() {
               <li>Follow all local and facility rules</li>
               <li>Be respectful if courts are already full</li>
               <li>Do not monopolize public courts</li>
-              <li>Keep slots reasonable &mdash; ideally no more than 2 hours</li>
+              <li>Keep slots reasonable (ideally no more than 2 hours)</li>
             </ul>
           </div>
 
@@ -359,7 +355,7 @@ export function SafetyPage() {
             </p>
             <p className="text-secondary-600 flex items-start gap-2 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-              <span>Emergency situations should be handled by calling local emergency services (911) directly &mdash; not through CourtConnect.</span>
+              <span>Emergency situations should be handled by calling local emergency services (911) directly, not through CourtConnect.</span>
             </p>
             <p className="text-secondary-600 mb-3">
               Have a general safety concern that isn't tied to a specific listing, booking, or profile? Report it directly:
@@ -395,13 +391,12 @@ export function CommunityGuidelinesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 md:py-12">
-      <div className="container-custom max-w-3xl">
-        <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Community Guidelines</h1>
-        <p className="text-secondary-600 mb-8">
-          Simple rules that keep CourtConnect useful and safe for the whole local tennis community.
-        </p>
-
+    <div className="min-h-screen bg-gray-50">
+      <PageHero
+        title="Community Guidelines"
+        description="Simple rules that keep CourtConnect useful and safe for the whole local tennis community."
+      />
+      <div className="container-custom max-w-3xl py-8 md:py-12">
         <div className="card p-6 md:p-8">
           <ul className="space-y-4">
             {rules.map((rule) => (

@@ -246,7 +246,7 @@ export function SignupPage() {
             </label>
 
             <p className="text-xs text-secondary-500">
-              CourtConnect is for community coordination only &mdash; it does not officially reserve courts or process
+              CourtConnect is for community coordination only: it does not officially reserve courts or process
               gear payments. Minors should use CourtConnect with a parent or guardian's knowledge. See our{' '}
               <Link to="/safety" target="_blank" className="text-primary-600 hover:underline">Safety page</Link>.
             </p>

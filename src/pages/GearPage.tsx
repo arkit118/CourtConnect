@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Package, MapPin, Heart, Search, ArrowLeft, Camera, X, Info, Clock } from 'lucide-react';
+import { MapPin, Heart, Search, ArrowLeft, Camera, X, Info, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
@@ -9,6 +9,7 @@ import { supabase, GearListing, Profile } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
 import { ReportButton } from '../components/ReportButton';
 import { PageHero } from '../components/brand/PageHero';
+import { StringGrid } from '../components/brand/CourtMotif';
 
 function GearNoticeBanner() {
   return (
@@ -175,10 +176,10 @@ export function GearPage() {
             ))}
           </div>
         ) : filteredListings.length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">No listings found</h3>
-            <p className="text-secondary-600 mb-4">Try adjusting your filters or be the first to list gear</p>
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-secondary-200 bg-felt-texture p-12 text-center">
+            <StringGrid className="w-14 h-14 text-clay-400 mx-auto mb-4" strokeOpacity={0.8} />
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">The board is empty</h3>
+            <p className="text-secondary-600 mb-4">Try adjusting your filters, or be the first to pin a listing here.</p>
             <Link to="/gear/create" className="btn-primary">List Your Gear</Link>
           </div>
         ) : (
@@ -202,11 +203,10 @@ export function GearPage() {
                     <div className="flex items-center gap-2 mb-1 text-sm text-secondary-500">
                       <span>{categoryLabels[listing.category]}</span>
                       {listing.town && (
-                        <>
-                          <span>.</span>
+                        <span className="inline-flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
-                          <span>{listing.town}</span>
-                        </>
+                          {listing.town}
+                        </span>
                       )}
                     </div>
                     <h3 className="font-semibold text-secondary-900 mb-2 group-hover:text-primary-600 transition-colors">

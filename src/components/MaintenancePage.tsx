@@ -25,7 +25,7 @@ export function MaintenancePage() {
         </h1>
         <p className="text-navy-100 leading-relaxed mb-8">
           CourtConnect is offline for a short while as we roll out improvements for the Livingston community.
-          We'll be back shortly &mdash; thanks for your patience.
+          We'll be back shortly. Thanks for your patience.
         </p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}

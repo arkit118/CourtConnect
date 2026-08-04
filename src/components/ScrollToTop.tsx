@@ -1,24 +1,48 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-// Resets scroll position to the top on every route change (footer/header
-// links, homepage CTAs, "View Events", etc. all navigate via react-router,
-// which does not reset scroll on its own). Skips the reset when the URL has
-// a hash (e.g. "/page#section") so a real same-page anchor link -- none
-// exist today, but this keeps the component correct if one is ever added --
-// still scrolls to that anchor instead of being yanked back to the top.
+// Global scroll manager, mounted once inside the router above every page
+// (see App.tsx's AppRoutes). React Router does not reset or manage scroll
+// position on navigation on its own, so without this, links (footer,
+// header, homepage CTAs, "View Events", etc.) would leave the user
+// wherever they happened to be scrolled to on the previous page.
+//
+// Behavior:
+// - No hash (e.g. "/events"): scroll to the top of the new page, instantly.
+// - Hash present (e.g. "/about#mission"): scroll the matching element into
+//   view instead of the top. The target element may not exist in the DOM
+//   yet on the first render of a freshly-navigated page, so this retries
+//   across a few animation frames rather than giving up after one attempt.
 export function ScrollToTop() {
-  const { pathname, hash } = useLocation();
+  const { pathname, hash, key } = useLocation();
 
   useEffect(() => {
-    if (hash) return;
-    // html has `scroll-behavior: smooth` globally (index.css) - the two-arg
-    // scrollTo(0, 0) form inherits that and animates, which both looks like
-    // a slow drift on every route change instead of an instant relocation,
-    // and (worse) can silently no-op if something interrupts the animation
-    // before it completes. behavior: 'instant' bypasses the CSS setting.
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [pathname, hash]);
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      return;
+    }
+
+    const id = hash.slice(1);
+    let attempts = 0;
+    let frame: number;
+
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      attempts += 1;
+      if (attempts < 20) {
+        frame = requestAnimationFrame(tryScroll);
+      }
+    };
+
+    frame = requestAnimationFrame(tryScroll);
+    return () => cancelAnimationFrame(frame);
+    // `key` changes on every navigation (including re-clicking a link to
+    // the same hash), so it's included to make that re-trigger the scroll.
+  }, [pathname, hash, key]);
 
   return null;
 }

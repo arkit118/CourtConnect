@@ -69,7 +69,7 @@ export function ReportButton({ reportType, targetId, reportedUserId, label = 'Re
 
       if (error) throw error;
 
-      addToast({ type: 'success', message: 'Thanks — your report has been submitted for review.' });
+      addToast({ type: 'success', message: 'Thanks, your report has been submitted for review.' });
       setOpen(false);
       setDetails('');
       setReason(REASONS[0]);

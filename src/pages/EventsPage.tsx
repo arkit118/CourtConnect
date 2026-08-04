@@ -146,9 +146,9 @@ export function EventsPage() {
             ))}
           </div>
         ) : sortedEvents.length === 0 ? (
-          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
+          <div className="rounded-3xl bg-white border border-secondary-200 bg-felt-texture p-12 text-center">
             <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
-            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No events found</h3>
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">Nothing on the board yet</h3>
             <p className="text-secondary-600 mb-4">Try adjusting your filters, or check back later.</p>
           </div>
         ) : (

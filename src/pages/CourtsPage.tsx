@@ -4,7 +4,7 @@ import { MapPin, Lightbulb, ExternalLink, Search, AlertCircle, Info } from 'luci
 import { supabase, Court } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
 import { PageHero } from '../components/brand/PageHero';
-import { CourtCorner } from '../components/brand/CourtMotif';
+import { CourtCorner, BallArc } from '../components/brand/CourtMotif';
 
 const surfaceLabels: Record<string, string> = {
   hard: 'Hard',
@@ -155,9 +155,9 @@ export function CourtsPage() {
 
         {/* Error State */}
         {error && (
-          <div className="text-center py-12">
+          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
             <AlertCircle className="w-12 h-12 text-red-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">Error loading courts: {error}</h3>
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">Error loading courts: {error}</h3>
           </div>
         )}
 
@@ -181,18 +181,18 @@ export function CourtsPage() {
 
         {/* Empty State - No courts in database */}
         {!loading && !error && courts.length === 0 && (
-          <div className="text-center py-12">
-            <MapPin className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courts returned from Supabase.</h3>
+          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
+            <CourtCorner className="w-10 h-10 text-primary-400 mx-auto mb-4" />
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No courts listed yet</h3>
           </div>
         )}
 
         {/* Empty State - No matches for filters */}
         {!loading && !error && courts.length > 0 && filteredCourts.length === 0 && (
-          <div className="text-center py-12">
-            <MapPin className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-secondary-900 mb-2">No courts found</h3>
-            <p className="text-secondary-600 mb-4">Try adjusting your filters</p>
+          <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
+            <BallArc className="w-10 h-10 text-clay-400 mx-auto mb-4" />
+            <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No courts found</h3>
+            <p className="text-secondary-600 mb-4">Try adjusting your filters.</p>
             {hasFilters && (
               <button
                 onClick={() => {

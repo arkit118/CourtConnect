@@ -394,7 +394,7 @@ export function SchedulingPage() {
               >
                 {courts.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} — {c.town}
+                    {c.name}, {c.town}
                   </option>
                 ))}
               </select>
@@ -465,7 +465,10 @@ export function SchedulingPage() {
                 const Icon = matchTypeIcons[b.match_type] || User;
                 const isOwn = user?.id === b.user_id;
                 return (
-                  <div key={b.id} className="card p-4 md:p-5">
+                  <div
+                    key={b.id}
+                    className={`card p-4 md:p-5 ${isOwn ? 'border-l-4 border-l-clay-500' : ''}`}
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
                         <div className="w-11 h-11 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
@@ -476,6 +479,9 @@ export function SchedulingPage() {
                             <span className="font-semibold text-secondary-900">{b.player_name}</span>
                             <span className="text-secondary-400">vs</span>
                             <span className="font-semibold text-secondary-900">{b.opponent_name}</span>
+                            {isOwn && (
+                              <span className="badge bg-clay-100 text-clay-700 border border-clay-200 text-[11px]">Your booking</span>
+                            )}
                           </div>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-secondary-500">
                             <span className="inline-flex items-center gap-1">
@@ -548,7 +554,7 @@ export function SchedulingPage() {
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="bg-secondary-50 rounded-xl p-3 text-sm text-secondary-600">
                 <Calendar className="w-4 h-4 inline mr-1" />
-                {selectedCourt?.name} · {format(parseISO(selectedDate), 'MMM d, yyyy')}
+                {selectedCourt?.name}, {format(parseISO(selectedDate), 'MMM d, yyyy')}
               </div>
 
               {formError && (

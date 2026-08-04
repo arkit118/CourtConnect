@@ -156,7 +156,7 @@ export function ParentalConsentPage() {
           )}
 
           <p className="text-xs text-secondary-400 mt-6 text-center">
-            <Link to="/safety" className="hover:underline">CourtConnect Safety</Link> ·{' '}
+            <Link to="/safety" className="hover:underline">CourtConnect Safety</Link>,{' '}
             <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
           </p>
         </div>

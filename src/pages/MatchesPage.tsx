@@ -177,7 +177,7 @@ export function MatchesPage() {
                 <EmptyRow>No one has requested a match yet - they'll show up here.</EmptyRow>
               ) : (
                 receivedPending.map((m) => (
-                  <MatchCard key={m.id} match={m}>
+                  <MatchCard key={m.id} match={m} stripe="pending_received">
                     <button onClick={() => handleAccept(m.id)} className="btn-primary btn-sm" disabled={actingOn === m.id}>
                       <Check className="w-4 h-4" /> Accept
                     </button>
@@ -197,7 +197,7 @@ export function MatchesPage() {
                 </EmptyRow>
               ) : (
                 sentPending.map((m) => (
-                  <MatchCard key={m.id} match={m}>
+                  <MatchCard key={m.id} match={m} stripe="pending_sent">
                     <span className="badge bg-yellow-50 text-yellow-700 border border-yellow-200">Waiting for response</span>
                   </MatchCard>
                 ))
@@ -209,7 +209,7 @@ export function MatchesPage() {
                 <EmptyRow>Accepted matches - and their chat - will show up here.</EmptyRow>
               ) : (
                 active.map((m) => (
-                  <MatchCard key={m.id} match={m}>
+                  <MatchCard key={m.id} match={m} stripe="active">
                     <Link to={`/matches/${m.id}`} className="btn-primary btn-sm">
                       <MessageCircle className="w-4 h-4" /> Chat
                     </Link>
@@ -255,9 +255,29 @@ function EmptyRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MatchCard({ match, children }: { match: MatchWithOther; children: React.ReactNode }) {
+// A thin left-edge stripe per match status, like a scoreboard tag -
+// received requests (needs your action) get the clay accent so they
+// stand out from the rest of the list at a glance.
+const statusStripe: Record<string, string> = {
+  pending_received: 'border-l-clay-500',
+  pending_sent: 'border-l-accent-400',
+  active: 'border-l-primary-500',
+  other: 'border-l-secondary-200',
+};
+
+function MatchCard({
+  match,
+  children,
+  stripe = 'other',
+}: {
+  match: MatchWithOther;
+  children: React.ReactNode;
+  stripe?: keyof typeof statusStripe;
+}) {
   return (
-    <div className="rounded-2xl bg-white border border-secondary-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div
+      className={`rounded-2xl bg-white border border-secondary-200 border-l-4 ${statusStripe[stripe]} p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3`}
+    >
       <div className="flex items-center gap-3 min-w-0">
         {match.other?.avatar_url ? (
           <img src={match.other.avatar_url} alt={match.other.name} className="w-11 h-11 rounded-xl object-cover" />

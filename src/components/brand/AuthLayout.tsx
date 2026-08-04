@@ -28,7 +28,11 @@ export function AuthLayout({
           <Logo variant="lockup" className="h-7" />
         </Link>
         <p className="relative z-10 font-display text-3xl font-bold leading-snug max-w-sm">{tagline}</p>
-        <p className="relative z-10 text-sm text-navy-300">Livingston, NJ &middot; Community pilot</p>
+        <p className="relative z-10 text-sm text-navy-300 leading-snug">
+          Livingston, NJ
+          <br />
+          Community pilot
+        </p>
       </div>
 
       <div className="flex items-center justify-center py-12 px-4 bg-gray-50">

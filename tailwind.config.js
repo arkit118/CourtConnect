@@ -55,12 +55,24 @@ export default {
           800: '#92400E',
           900: '#78350F',
         },
-        // Subtle Clay Accent - tennis/court warmth, used sparingly, never
-        // as a primary brand color
+        // Red Clay Accent - tennis/court warmth (evokes a Har-Tru clay
+        // court surface). Supports the green/navy brand, never replaces
+        // it as the primary CTA color.
         clay: {
-          400: '#D68A5C',
-          500: '#C96C32',
-          600: '#A85527',
+          50: '#FBF1EC',
+          100: '#F6E2D8', // soft
+          200: '#EFCDB5',
+          300: '#E6A27C', // light
+          400: '#D17F52',
+          500: '#B85C38', // DEFAULT
+          600: '#8F3F27', // dark
+          700: '#7A3520',
+          800: '#5F291A',
+          900: '#452012',
+          DEFAULT: '#B85C38',
+          soft: '#F6E2D8',
+          light: '#E6A27C',
+          dark: '#8F3F27',
         },
         cream: '#F6F3EA',
         gray: {

@@ -12,7 +12,7 @@
   --cc-green-deep: #063F1F;
   --cc-navy: #0E3567;
   --cc-navy-deep: #102B4F;
-  --cc-clay: #C96C32;
+  --cc-clay: #B85C38;
   --cc-bg-app: #FAFAF8;
   --cc-surface-green: #E7F6EA;
   --cc-surface-navy: #EAF1FA;
@@ -195,6 +195,14 @@
   .court-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--cc-border-strong) 20%, var(--cc-border-strong) 80%, transparent);
+  }
+
+  /* Faint tennis-ball felt texture (a scattered dot grain), used behind
+     local "notice board" style panels (Gear Exchange, Events) instead of
+     a flat color fill. Deliberately subtle - grain, not a pattern. */
+  .bg-felt-texture {
+    background-image: radial-gradient(rgba(184, 92, 56, 0.09) 1px, transparent 1.4px);
+    background-size: 14px 14px;
   }
 }
 
