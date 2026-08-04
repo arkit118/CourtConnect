@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ShieldAlert, Clock, XCircle, Mail, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
+import { useLegalGateStore } from '../hooks/useLegalGate';
 import { SocialEligibilityStatus } from '../hooks/useSocialEligibility';
 import { supabase } from '../lib/supabase';
 import { CONTACT_EMAIL, MIN_SIGNUP_AGE } from '../lib/legal';
@@ -43,12 +44,7 @@ export function SocialOnboardingGate({ status }: Props) {
   }
 
   if (status === 'needs_legal') {
-    return (
-      <SafetyCard icon={ShieldAlert} tone="neutral" title="Please accept our Terms and Privacy Policy">
-        You need to accept our current Terms of Service and Privacy Policy before using partner matching or chat.
-        Try requesting a match or opening a chat and you'll be prompted to review them.
-      </SafetyCard>
-    );
+    return <NeedsLegalStep />;
   }
 
   if (status === 'needs_age_info') {
@@ -102,6 +98,37 @@ function SafetyCard({
       <Icon className="w-10 h-10 mx-auto mb-4" />
       <h3 className="text-lg font-bold text-secondary-900 mb-2">{title}</h3>
       <p className="text-sm">{children}</p>
+    </div>
+  );
+}
+
+// Direct action, not a hint to "go trigger some other flow" - a signed-in
+// user landing here has no other obvious way to find the Terms/Privacy
+// re-acceptance prompt, so this button opens LegalGateModal immediately via
+// the same shared store useActionGate uses.
+function NeedsLegalStep() {
+  const requestLegalAcceptance = useLegalGateStore((s) => s.request);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleReview = async () => {
+    setSubmitting(true);
+    try {
+      await requestLegalAcceptance();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="card p-8 text-center max-w-lg mx-auto border bg-primary-50 border-primary-200">
+      <ShieldAlert className="w-10 h-10 mx-auto mb-4 text-primary-800" />
+      <h3 className="text-lg font-bold text-secondary-900 mb-2">Please accept our Terms and Privacy Policy</h3>
+      <p className="text-sm text-primary-800 mb-6">
+        You need to accept our current Terms of Service and Privacy Policy before using partner matching or chat.
+      </p>
+      <button type="button" className="btn-primary" onClick={handleReview} disabled={submitting}>
+        {submitting ? 'Opening...' : 'Review and Accept Terms'}
+      </button>
     </div>
   );
 }

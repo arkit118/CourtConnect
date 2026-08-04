@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, isRetry = false) => {
     try {
       const { data, error: fetchError } = await withTimeout(
         supabase.from('profiles').select('*').eq('id', userId).single(),
@@ -124,6 +124,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfileError(null);
       }
     } catch (err) {
+      // Most real-world failures here are transient (a slow/cold
+      // connection, a dropped request) rather than a genuine problem the
+      // user needs to act on. One silent retry absorbs that without ever
+      // showing the "could not load your profile" message for what was
+      // really just a blip - only a second consecutive failure surfaces it.
+      if (!isRetry) {
+        devLog('[AuthContext] Profile fetch failed, retrying once:', err);
+        return fetchProfile(userId, true);
+      }
       console.error('[AuthContext] Error fetching profile:', err);
       if (mountedRef.current) {
         setProfileError(isMissingColumnError(err) ? MIGRATION_MISSING_MESSAGE : PROFILE_LOAD_ERROR_MESSAGE);
@@ -131,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchOrCreateProfile = async (sessionUser: User) => {
+  const fetchOrCreateProfile = async (sessionUser: User, isRetry = false) => {
     try {
       // Try to fetch existing profile
       const { data: existingProfile, error: fetchError } = await withTimeout(
@@ -191,6 +200,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw fetchError;
       }
     } catch (err) {
+      // Same transient-blip tolerance as fetchProfile above - don't scare
+      // the user over a single slow/dropped request.
+      if (!isRetry) {
+        devLog('[AuthContext] fetchOrCreateProfile failed, retrying once:', err);
+        return fetchOrCreateProfile(sessionUser, true);
+      }
       console.error('[AuthContext] Error in fetchOrCreateProfile:', err);
       if (mountedRef.current) {
         setProfileError(isMissingColumnError(err) ? MIGRATION_MISSING_MESSAGE : PROFILE_LOAD_ERROR_MESSAGE);

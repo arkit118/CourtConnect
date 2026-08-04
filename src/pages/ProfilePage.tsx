@@ -5,7 +5,7 @@ import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
-import { uploadImage, validateImageFile } from '../lib/storage';
+import { uploadImage, validateImageFile, compressImageForUpload } from '../lib/storage';
 import { ReportButton } from '../components/ReportButton';
 
 const skillLevelLabels: Record<string, string> = {
@@ -36,7 +36,17 @@ export function ProfilePage() {
   const [editForm, setEditForm] = useState<Partial<Profile>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Local object URL is only ever meaningful for the lifetime of one
+  // upload attempt - revoke it whenever it changes or the page unmounts
+  // so we don't leak blob: URLs.
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    };
+  }, [avatarPreviewUrl]);
 
   const isOwnProfile = user && (currentUser?.id === id || (!id && currentUser));
 
@@ -96,9 +106,13 @@ export function ProfilePage() {
     }
     if (!(await canProceed())) return;
 
+    // Show the picked photo instantly, before the network round-trip -
+    // the visible "it worked" moment shouldn't wait on the upload.
+    setAvatarPreviewUrl(URL.createObjectURL(file));
     setUploading(true);
     try {
-      const publicUrl = await uploadImage('avatars', file, user.id);
+      const uploadFile = await compressImageForUpload(file);
+      const publicUrl = await uploadImage('avatars', uploadFile, user.id);
 
       // Update profile with new avatar URL
       const { error } = await supabase
@@ -114,6 +128,7 @@ export function ProfilePage() {
     } catch (error: any) {
       console.error('Error uploading profile photo:', error);
       addToast({ type: 'error', message: error.message || 'Failed to upload image' });
+      setAvatarPreviewUrl(null);
     } finally {
       setUploading(false);
     }
@@ -194,11 +209,11 @@ export function ProfilePage() {
         <div className="card p-6 md:p-8 mb-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="relative">
-              {displayProfile.avatar_url ? (
+              {avatarPreviewUrl || displayProfile.avatar_url ? (
                 <img
-                  src={displayProfile.avatar_url}
+                  src={avatarPreviewUrl || displayProfile.avatar_url || undefined}
                   alt={displayProfile.name}
-                  className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover"
+                  className={`w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover ${uploading ? 'opacity-60' : ''}`}
                 />
               ) : (
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-primary-100 flex items-center justify-center">
@@ -433,17 +448,26 @@ export function ProfileEditPage() {
     }
     if (!(await canProceed())) return;
 
+    // Instant local preview before the network round-trip; replaced with
+    // the real Storage URL once the upload finishes.
+    const previousAvatarUrl = form.avatar_url;
+    const localPreviewUrl = URL.createObjectURL(file);
+    setForm((prev) => ({ ...prev, avatar_url: localPreviewUrl }));
+
     setUploading(true);
     try {
-      const publicUrl = await uploadImage('avatars', file, user.id);
-      setForm({ ...form, avatar_url: publicUrl });
+      const uploadFile = await compressImageForUpload(file);
+      const publicUrl = await uploadImage('avatars', uploadFile, user.id);
+      setForm((prev) => ({ ...prev, avatar_url: publicUrl }));
       await updateProfile({ avatar_url: publicUrl });
       addToast({ type: 'success', message: 'Profile photo updated!' });
     } catch (error: any) {
       console.error('Error uploading profile photo:', error);
       addToast({ type: 'error', message: error.message || 'Failed to upload image' });
+      setForm((prev) => ({ ...prev, avatar_url: previousAvatarUrl }));
     } finally {
       setUploading(false);
+      URL.revokeObjectURL(localPreviewUrl);
     }
   };
 
@@ -490,7 +514,11 @@ export function ProfileEditPage() {
           <div className="flex items-center gap-6 mb-8">
             <div className="relative">
               {form.avatar_url ? (
-                <img src={form.avatar_url} alt="Avatar" className="w-24 h-24 rounded-2xl object-cover" />
+                <img
+                  src={form.avatar_url}
+                  alt="Avatar"
+                  className={`w-24 h-24 rounded-2xl object-cover ${uploading ? 'opacity-60' : ''}`}
+                />
               ) : (
                 <div className="w-24 h-24 rounded-2xl bg-primary-100 flex items-center justify-center">
                   <User className="w-12 h-12 text-primary-500" />
