@@ -30,7 +30,7 @@ export function ChatPage() {
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [showSafetyCard, setShowSafetyCard] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesPaneRef = useRef<HTMLDivElement>(null);
 
   const fetchMatchAndMessages = useCallback(async () => {
     if (!id || !user) return;
@@ -108,8 +108,16 @@ export function ChatPage() {
     };
   }, [id, match?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Scrolls only the local message pane to its latest message - never the
+  // page/window. scrollIntoView() on an end-of-list marker was tried first,
+  // but browsers walk the full containing-block chain (including sticky
+  // ancestors) when satisfying it, which was pulling the whole page's
+  // scroll position around instead of just this pane. Setting scrollTop
+  // directly on the pane has no such side effect.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const pane = messagesPaneRef.current;
+    if (!pane) return;
+    pane.scrollTop = pane.scrollHeight;
   }, [messages.length]);
 
   const doSend = async (trimmed: string) => {
@@ -196,8 +204,8 @@ export function ChatPage() {
   const isLocked = match.status !== 'active';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-white border-b border-secondary-100 sticky top-16 md:top-20 z-30">
+    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] bg-gray-50 flex flex-col overflow-hidden">
+      <div className="bg-white border-b border-secondary-100 shrink-0 z-30">
         <div className="container-custom max-w-3xl py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Link to="/matches" className="p-2 rounded-lg hover:bg-secondary-50 shrink-0">
@@ -224,12 +232,12 @@ export function ChatPage() {
         </div>
       </div>
 
-      <div className="container-custom max-w-3xl py-4">
+      <div className="w-full container-custom max-w-3xl py-4 shrink-0">
         <SocialSafetyBanner />
       </div>
 
       {isLocked ? (
-        <div className="container-custom max-w-3xl flex-1 flex items-center justify-center pb-12">
+        <div className="w-full container-custom max-w-3xl flex-1 min-h-0 flex items-center justify-center pb-12 overflow-y-auto">
           <div className="card p-8 text-center max-w-md">
             <Lock className="w-10 h-10 text-secondary-400 mx-auto mb-4" />
             <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">
@@ -244,19 +252,19 @@ export function ChatPage() {
         </div>
       ) : (
         <>
-          <div className="flex-1 container-custom max-w-3xl overflow-y-auto pb-4">
+          <div ref={messagesPaneRef} className="flex-1 min-h-0 w-full container-custom max-w-3xl overflow-y-auto px-4 py-4">
             {messages.length === 0 ? (
               <div className="text-center text-secondary-500 text-sm py-12">
                 Say hello! No messages yet.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="flex flex-col gap-3">
                 {messages.map((m) => {
                   const isOwn = m.sender_id === user?.id;
                   return (
                     <div key={m.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
+                        className={`max-w-[78%] rounded-2xl px-4 py-2 text-sm break-words whitespace-pre-wrap ${
                           isOwn ? 'bg-primary-500 text-white' : 'bg-white border border-secondary-100 text-secondary-800'
                         }`}
                       >
@@ -268,13 +276,12 @@ export function ChatPage() {
                     </div>
                   );
                 })}
-                <div ref={messagesEndRef} />
               </div>
             )}
           </div>
 
-          <div className="bg-white border-t border-secondary-100 sticky bottom-0">
-            <form onSubmit={handleSend} className="container-custom max-w-3xl py-3 flex items-end gap-2">
+          <div className="bg-white border-t border-secondary-100 shrink-0">
+            <form onSubmit={handleSend} className="w-full container-custom max-w-3xl py-3 flex items-end gap-2">
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
