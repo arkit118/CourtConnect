@@ -26,8 +26,9 @@ const footerLinks = {
   ],
 };
 
-// Only Instagram is planned; the account isn't live yet, so this is a
-// disabled, non-navigating placeholder rather than a link to nowhere.
+const INSTAGRAM_URL = 'https://www.instagram.com/courtconnect_livingston/';
+
+// Only Instagram is part of the launch social presence.
 // Facebook/Twitter/YouTube are removed outright - not part of the launch
 // social presence.
 
@@ -46,13 +47,16 @@ export function Footer() {
               court time, and trading gear.
             </p>
             <div className="flex gap-3">
-              <span
-                className="w-10 h-10 rounded-lg bg-white/5 text-navy-300 flex items-center justify-center cursor-not-allowed"
-                title="Instagram coming soon"
-                aria-label="Instagram - coming soon"
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-lg bg-white/5 text-navy-300 hover:text-white hover:bg-white/10 transition-colors flex items-center justify-center"
+                title="CourtConnect on Instagram"
+                aria-label="CourtConnect on Instagram"
               >
                 <Instagram className="w-5 h-5" />
-              </span>
+              </a>
             </div>
           </div>
 
