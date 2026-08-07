@@ -5,9 +5,17 @@ import { withTimeout, isMissingColumnError, devLog } from '../lib/withTimeout';
 
 const AUTH_TIMEOUT_MS = 8000;
 
-interface SignUpLegalInfo {
+// Renamed from SignUpLegalInfo - originally just date_of_birth/age_band,
+// now also carries the skill_level/utr_rating/home_town the signup form
+// collects, since all of it needs to reach upsert_signup_profile() in the
+// same RPC call (see signUp() below and
+// 20260807000001_019_signup_skill_utr_location.sql).
+interface SignUpProfileInfo {
   date_of_birth: string;
   age_band: 'minor' | 'adult';
+  skill_level: string;
+  utr_rating: number | null;
+  home_town: string;
 }
 
 interface AuthContextType {
@@ -18,7 +26,7 @@ interface AuthContextType {
   error: string | null;
   profileError: string | null;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, name: string, legal: SignUpLegalInfo) => Promise<void>;
+  signUp: (email: string, password: string, name: string, info: SignUpProfileInfo) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -176,9 +184,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // whichever side actually created the row, we then always
         // re-select and use whatever is really in the database, so this
         // path can never overwrite a fuller row with this minimal one.
+        //
+        // skill_level is deliberately left null (not defaulted to
+        // 'beginner') - this path only runs for an account that never
+        // went through the signup form's skill-level field (first Google
+        // sign-in, or a race landing here before upsert_signup_profile's
+        // own call resolves), so there is no real chosen value to write.
+        // A null skill_level surfaces as "Skill level not set" in the UI
+        // and is picked up by the SkillLevelStep profile-completion
+        // prompt on Partners/Matches (useSocialEligibility.ts) rather
+        // than silently asserting a level the user never chose.
         const { error: createError } = await withTimeout(
           supabase.from('profiles').upsert(
-            { id: sessionUser.id, name, avatar_url: avatarUrl, role: 'player', skill_level: 'beginner', availability: [], favorite_courts: [] },
+            { id: sessionUser.id, name, avatar_url: avatarUrl, role: 'player', skill_level: null, availability: [], favorite_courts: [] },
             { onConflict: 'id', ignoreDuplicates: true }
           ),
           AUTH_TIMEOUT_MS,
@@ -213,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, legal: SignUpLegalInfo) => {
+  const signUp = async (email: string, password: string, name: string, info: SignUpProfileInfo) => {
     setError(null);
     setLoading(true);
 
@@ -253,6 +271,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // profile_columns pins age_band/date_of_birth back to their prior
       // value on a normal authenticated self-UPDATE, which is exactly
       // what upsert-on-conflict would be here without the RPC's bypass.)
+      //
+      // skill_level/utr_rating/home_town ride along in the same RPC call
+      // for the same reason, not a separate .update() afterward - see
+      // 20260807000001_019_signup_skill_utr_location.sql's header
+      // comment for why those three are also in the ON CONFLICT DO
+      // UPDATE branch now (the same race could otherwise silently
+      // discard the user's actual signup-form choices, not just default
+      // them to 'beginner' - the original bug this whole RPC exists to
+      // prevent).
       if (data.user) {
         const avatarUrl = data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null;
 
@@ -260,7 +287,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supabase.rpc('upsert_signup_profile', {
             p_name: name,
             p_avatar_url: avatarUrl,
-            p_date_of_birth: legal.date_of_birth,
+            p_date_of_birth: info.date_of_birth,
+            p_skill_level: info.skill_level,
+            p_utr_rating: info.utr_rating,
+            p_home_town: info.home_town,
           }),
           AUTH_TIMEOUT_MS,
           'Saving your profile timed out. Please try again.'

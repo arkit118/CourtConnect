@@ -103,7 +103,7 @@ export function GearPage() {
       <PageHero
         eyebrow="Local gear board"
         title="Gear Exchange"
-        description="Listed by Livingston players, for Livingston players. Coordinate directly - CourtConnect never touches payment or shipping."
+        description="Listed by Livingston, NJ players, for Livingston, NJ players. Coordinate directly - CourtConnect never touches payment or shipping."
       >
         <Link to="/gear/create" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold mt-6 inline-flex">
           List Your Gear

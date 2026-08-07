@@ -8,22 +8,7 @@ import { useActionGate } from '../hooks/useActionGate';
 import { uploadImage, validateImageFile, compressImageForUpload } from '../lib/storage';
 import { ReportButton } from '../components/ReportButton';
 import { CourtCorner } from '../components/brand/CourtMotif';
-
-const skillLevelLabels: Record<string, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-  varsity: 'Varsity',
-  elite: 'Elite',
-};
-
-const skillLevelColors: Record<string, string> = {
-  beginner: 'bg-navy-50 text-navy-700 border-navy-200',
-  intermediate: 'bg-primary-50 text-primary-700 border-primary-200',
-  advanced: 'bg-clay-400/10 text-clay-600 border-clay-400/30',
-  varsity: 'bg-accent-50 text-accent-700 border-accent-200',
-  elite: 'bg-secondary-100 text-secondary-800 border-secondary-300',
-};
+import { SKILL_LEVELS, skillLevelLabels, skillLevelColors } from '../lib/skillLevel';
 
 export function ProfilePage() {
   const { id } = useParams();
@@ -256,10 +241,16 @@ export function ProfilePage() {
                     </div>
                   )}
                 </div>
-                {displayProfile.skill_level && (
+                {displayProfile.skill_level ? (
                   <span className={`badge px-3 py-1.5 rounded-full text-sm font-semibold border ${skillLevelColors[displayProfile.skill_level]}`}>
                     {skillLevelLabels[displayProfile.skill_level]}
                   </span>
+                ) : (
+                  isOwnProfile && !isEditing && (
+                    <span className="badge px-3 py-1.5 rounded-full text-sm font-semibold border bg-gray-50 text-secondary-500 border-gray-200">
+                      Skill level not set
+                    </span>
+                  )
                 )}
                 {displayProfile.utr_rating && (
                   <div className="flex items-center gap-1 text-primary-600 font-semibold">
@@ -293,15 +284,14 @@ export function ProfilePage() {
                     <div>
                       <label className="label">Skill Level</label>
                       <select
-                        value={editForm.skill_level || 'beginner'}
+                        value={editForm.skill_level || ''}
                         onChange={(e) => setEditForm({ ...editForm, skill_level: e.target.value as any })}
                         className="input"
                       >
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                        <option value="varsity">Varsity</option>
-                        <option value="elite">Elite</option>
+                        <option value="">Not set</option>
+                        {SKILL_LEVELS.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -610,11 +600,9 @@ export function ProfileEditPage() {
                   className="input"
                 >
                   <option value="">Select level</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                  <option value="varsity">Varsity</option>
-                  <option value="elite">Elite</option>
+                  {SKILL_LEVELS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
                 </select>
               </div>
               <div>

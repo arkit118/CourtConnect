@@ -24,7 +24,7 @@ const surfaceColors: Record<string, string> = {
   other: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-const towns = ['Livingston']; // Pilot launch - more towns coming soon
+const towns = ['Livingston, NJ']; // Pilot launch - more towns coming soon
 const surfaces = ['hard', 'clay', 'grass', 'synthetic', 'carpet', 'other'];
 
 // Same visual pattern as GearPage's notice banner. Added because user
@@ -94,7 +94,7 @@ export function CourtsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHero
-        eyebrow="Livingston"
+        eyebrow="Livingston, NJ"
         title="Tennis Courts"
         description="Known court locations in the CourtConnect community. Not a live availability tracker."
       />

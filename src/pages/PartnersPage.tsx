@@ -58,7 +58,7 @@ export function PartnersPage() {
       <PageHero
         eyebrow="Core feature"
         title="Partner Matching"
-        description="The heart of CourtConnect - get matched with Livingston players near your level."
+        description="The heart of CourtConnect - get matched with Livingston, NJ players near your level."
       />
       <div className="container-custom py-8">
         <HowItWorksStrip />
@@ -161,7 +161,7 @@ function MatchCandidatesList() {
         <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
           <BallArc className="w-12 h-12 text-clay-400 mx-auto mb-4" />
           <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No match candidates right now</h3>
-          <p className="text-secondary-600">Check back soon as more Livingston players join.</p>
+          <p className="text-secondary-600">Check back soon as more Livingston, NJ players join.</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

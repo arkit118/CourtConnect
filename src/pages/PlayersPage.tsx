@@ -4,29 +4,12 @@ import { Search, MapPin, Filter, Clock, User, Info } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { PageHero } from '../components/brand/PageHero';
 import { CourtCorner } from '../components/brand/CourtMotif';
-
-const skillLevelLabels: Record<string, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-  varsity: 'Varsity',
-  elite: 'Elite',
-};
-
-const skillLevelOrder = ['beginner', 'intermediate', 'advanced', 'varsity', 'elite'];
-
-const skillLevelColors: Record<string, string> = {
-  beginner: 'bg-navy-50 text-navy-700 border-navy-200',
-  intermediate: 'bg-primary-50 text-primary-700 border-primary-200',
-  advanced: 'bg-clay-400/10 text-clay-600 border-clay-400/30',
-  varsity: 'bg-accent-50 text-accent-700 border-accent-200',
-  elite: 'bg-secondary-100 text-secondary-800 border-secondary-300',
-};
+import { skillLevelLabels, skillLevelOrder, skillLevelColors } from '../lib/skillLevel';
 
 // Pilot launch - one town today, matching Courts/Events/Schedule (see
 // PRODUCT.md: don't imply Essex-County-wide reach the product doesn't
 // have yet).
-const towns = ['Livingston'];
+const towns = ['Livingston, NJ'];
 
 export function PlayersPage() {
   const [players, setPlayers] = useState<Profile[]>([]);
@@ -99,7 +82,7 @@ export function PlayersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHero
-        eyebrow="Livingston"
+        eyebrow="Livingston, NJ"
         title="Player Directory"
         description="Browse the community and find hitting partners."
       />

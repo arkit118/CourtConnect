@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { ShieldAlert, Clock, XCircle, Mail, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Clock, XCircle, Mail, AlertTriangle, Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useLegalGateStore } from '../hooks/useLegalGate';
 import { SocialEligibilityStatus } from '../hooks/useSocialEligibility';
 import { supabase } from '../lib/supabase';
 import { CONTACT_EMAIL, MIN_SIGNUP_AGE } from '../lib/legal';
+import { SKILL_LEVELS, UTR_MIN, UTR_MAX, isValidUtr } from '../lib/skillLevel';
 
 interface Props {
   status: SocialEligibilityStatus;
@@ -71,6 +72,10 @@ export function SocialOnboardingGate({ status }: Props) {
         <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-medium">{CONTACT_EMAIL}</a> with questions.
       </SafetyCard>
     );
+  }
+
+  if (status === 'needs_skill_level') {
+    return <SkillLevelStep />;
   }
 
   return null;
@@ -195,6 +200,101 @@ function DateOfBirthStep() {
             required
           />
           <p className="text-xs text-secondary-500 mt-1.5">You must be at least {MIN_SIGNUP_AGE} to use CourtConnect.</p>
+        </div>
+        {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
+        <button type="submit" className="btn-primary w-full" disabled={submitting}>
+          {submitting ? 'Saving...' : 'Continue'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// skill_level/utr_rating aren't protected by protect_sensitive_profile_columns
+// (see the 019 migration), so this saves with a plain .update() rather than a
+// SECURITY DEFINER RPC - consistent with how ProfilePage's inline edit saves
+// the same two fields.
+function SkillLevelStep() {
+  const { user, refreshProfile } = useAuth();
+  const { addToast } = useToastStore();
+  const [skillLevel, setSkillLevel] = useState('');
+  const [utrRating, setUtrRating] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!skillLevel) {
+      setError('Please choose your skill level.');
+      return;
+    }
+    if (utrRating.trim() && !isValidUtr(Number(utrRating))) {
+      setError(`UTR rating must be between ${UTR_MIN} and ${UTR_MAX}.`);
+      return;
+    }
+    if (!user) return;
+
+    setSubmitting(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          skill_level: skillLevel,
+          utr_rating: utrRating.trim() ? Number(utrRating) : null,
+        })
+        .eq('id', user.id);
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+    } catch (err: any) {
+      console.error('Error saving skill level:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
+      addToast({ type: 'error', message: err.message || 'Failed to save skill level' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="card p-8 max-w-md mx-auto">
+      <div className="flex items-center gap-3 mb-3">
+        <Trophy className="w-6 h-6 text-primary-600" />
+        <h3 className="text-lg font-bold text-secondary-900">One quick step before matching</h3>
+      </div>
+      <p className="text-sm text-secondary-600 mb-6">
+        Your skill level helps us suggest hitting partners at your level. You can change this anytime from your
+        profile.
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="label">Skill Level</label>
+          <select
+            value={skillLevel}
+            onChange={(e) => setSkillLevel(e.target.value)}
+            className="input"
+            required
+          >
+            <option value="" disabled>Choose your skill level</option>
+            {SKILL_LEVELS.map((level) => (
+              <option key={level.value} value={level.value}>{level.label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">Self-Reported UTR Rating (Optional)</label>
+          <input
+            type="number"
+            value={utrRating}
+            onChange={(e) => setUtrRating(e.target.value)}
+            min={UTR_MIN}
+            max={UTR_MAX}
+            step="0.1"
+            className="input"
+            placeholder="e.g. 5.5 - leave blank if you don't have one"
+          />
+          <p className="text-xs text-secondary-500 mt-1.5">Self-reported, not verified by CourtConnect.</p>
         </div>
         {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
         <button type="submit" className="btn-primary w-full" disabled={submitting}>

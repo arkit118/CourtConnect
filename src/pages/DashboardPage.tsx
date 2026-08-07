@@ -269,7 +269,7 @@ export function DashboardPage() {
               </div>
               <div className="mt-4 pt-4 border-t border-secondary-100">
                 <p className="text-xs text-secondary-500 text-center">
-                  Livingston pilot - more towns coming soon!
+                  Livingston, NJ pilot - more towns coming soon!
                 </p>
               </div>
             </div>
@@ -302,7 +302,7 @@ export function ImpactDashboardPage() {
             <span className="w-3 h-3 rounded-full bg-primary-400 animate-pulse" />
             <span className="text-lg font-medium text-primary-700">Pilot launching soon</span>
           </div>
-          <p className="text-secondary-600 mt-4">Impact metrics will appear as our Livingston community grows.</p>
+          <p className="text-secondary-600 mt-4">Impact metrics will appear as our Livingston, NJ community grows.</p>
         </div>
 
         {/* Mission */}
@@ -311,7 +311,7 @@ export function ImpactDashboardPage() {
             <h2 className="text-2xl md:text-3xl font-bold mb-4">Our Mission</h2>
             <p className="text-primary-100 mb-6 text-lg">
               CourtConnect makes competitive tennis accessible and affordable.
-              Starting in Livingston, we're building a community where everyone can play.
+              Starting in Livingston, NJ, we're building a community where everyone can play.
             </p>
             <div className="flex items-center justify-center gap-4">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">

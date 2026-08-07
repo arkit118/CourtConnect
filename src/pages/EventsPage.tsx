@@ -31,7 +31,7 @@ const eventStatusColors: Record<string, string> = {
 
 const defaultImage = 'https://images.pexels.com/photos/3133638/pexels-photo-3133638.jpeg?auto=compress&cs=tinysrgb&w=800';
 
-const towns = ['Livingston']; // Pilot launch - more towns coming soon
+const towns = ['Livingston, NJ']; // Pilot launch - more towns coming soon
 
 export function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);

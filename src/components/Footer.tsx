@@ -43,7 +43,7 @@ export function Footer() {
               <Logo variant="lockup" className="h-7" />
             </Link>
             <p className="text-navy-200 text-sm mb-6">
-              A Livingston tennis community pilot for finding hitting partners, joining local events, coordinating
+              A Livingston, NJ tennis community pilot for finding hitting partners, joining local events, coordinating
               court time, and trading gear.
             </p>
             <div className="flex gap-3">

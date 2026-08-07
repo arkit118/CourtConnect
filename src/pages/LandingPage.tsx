@@ -58,7 +58,7 @@ function HeroSection() {
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.03] tracking-tight mb-6">
             The local court for
             <span className="relative inline-block ml-3">
-              Livingston tennis
+              Livingston, NJ tennis
               <svg
                 viewBox="0 0 320 14"
                 className="absolute left-0 -bottom-2 w-full h-3 text-clay-500"
@@ -71,7 +71,7 @@ function HeroSection() {
             .
           </h1>
           <p className="text-lg sm:text-xl text-navy-100 leading-relaxed mb-10 max-w-xl">
-            CourtConnect helps Livingston players find hitting partners, join community events, coordinate court
+            CourtConnect helps Livingston, NJ players find hitting partners, join community events, coordinate court
             time, and pass along gear. One local pilot, built for the community, not a business.
           </p>
 
@@ -118,7 +118,7 @@ function WhatItIsSection() {
             What CourtConnect actually is
           </h2>
           <p className="text-lg text-secondary-600 leading-relaxed">
-            A Livingston tennis community pilot, not a booking platform, not a coaching marketplace. Four
+            A Livingston, NJ tennis community pilot, not a booking platform, not a coaching marketplace. Four
             things it does, today, for local players.
           </p>
         </div>
@@ -220,7 +220,7 @@ function FlowSection() {
   const steps = [
     { title: 'Create your profile', description: 'Skill level, availability, and what you\'re looking for.' },
     { title: 'Find your people', description: 'Match with players, register for events, or list your gear.' },
-    { title: 'Play more tennis', description: 'Chat, coordinate court time, and build the Livingston community.' },
+    { title: 'Play more tennis', description: 'Chat, coordinate court time, and build the Livingston, NJ community.' },
   ];
 
   return (
@@ -298,7 +298,7 @@ function EventsPreviewSection() {
           <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
             <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
             <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">
-              First Livingston event coming soon
+              First Livingston, NJ event coming soon
             </h3>
             <p className="text-secondary-600">We're planning our inaugural event. Check back soon!</p>
           </div>
@@ -394,7 +394,7 @@ function CTASection() {
           <div className="relative z-10 max-w-xl">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-5">Ready to join the community?</h2>
             <p className="text-lg text-primary-100 mb-8 leading-relaxed">
-              Create your free profile and start connecting with Livingston tennis players.
+              Create your free profile and start connecting with Livingston, NJ tennis players.
             </p>
             <Link to="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
               Get Started Free

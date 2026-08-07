@@ -17,14 +17,14 @@ export function AboutPage() {
         <section>
           <h2 className="font-display text-2xl font-bold text-secondary-900 mb-4">What it actually does</h2>
           <p className="text-secondary-700 leading-relaxed mb-4">
-            CourtConnect is a local tennis community platform, currently piloting in Livingston. Create a profile
+            CourtConnect is a local tennis community platform, currently piloting in Livingston, NJ. Create a profile
             and you can send and accept partner match requests, then chat with anyone you've matched with; browse
             and register for local events; coordinate court time with other members on the Schedule page; and buy,
             sell, or trade tennis gear locally. Players under 18 need a parent or guardian to approve matching and
             chat specifically - everything else is open right away.
           </p>
           <p className="text-secondary-700 leading-relaxed">
-            We're starting small and deliberately: Livingston first, one real court location today. CourtConnect
+            We're starting small and deliberately: Livingston, NJ first, one real court location today. CourtConnect
             doesn't require a club membership, doesn't process payments of any kind, and doesn't track live court
             availability - gear exchanges and any event fees are handled directly between members.
           </p>
@@ -62,7 +62,7 @@ export function AboutPage() {
           <h2 className="font-display text-2xl font-bold mb-3">Join the pilot</h2>
           <p className="text-primary-100 mb-6 max-w-lg">
             Whether you're looking for a hitting partner, a community event, or just more time on the court,
-            CourtConnect is built for Livingston players.
+            CourtConnect is built for Livingston, NJ players.
           </p>
           <Link to="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
             Get Started Free

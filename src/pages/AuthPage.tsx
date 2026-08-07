@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
-import { Mail, Lock, User, Eye, EyeOff, Calendar } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Calendar, Trophy, MapPin } from 'lucide-react';
 import { calculateAge, ageBandForAge, MIN_SIGNUP_AGE } from '../lib/legal';
+import { SKILL_LEVELS, UTR_MIN, UTR_MAX, isValidUtr } from '../lib/skillLevel';
 import { AuthLayout } from '../components/brand/AuthLayout';
+
+const DEFAULT_SIGNUP_LOCATION = 'Livingston, NJ';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -33,7 +36,7 @@ export function LoginPage() {
   };
 
   return (
-    <AuthLayout backTo="/" backLabel="Back to home" tagline="Your local court for Livingston tennis.">
+    <AuthLayout backTo="/" backLabel="Back to home" tagline="Your local court for Livingston, NJ tennis.">
       <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Welcome back</h1>
       <p className="text-secondary-600 mb-8">Sign in to your CourtConnect account</p>
 
@@ -105,6 +108,9 @@ export function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
+  const [skillLevel, setSkillLevel] = useState('');
+  const [utrRating, setUtrRating] = useState('');
+  const [homeTown, setHomeTown] = useState(DEFAULT_SIGNUP_LOCATION);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -128,6 +134,20 @@ export function SignupPage() {
       return;
     }
 
+    if (!skillLevel) {
+      setFormError('Please choose a skill level.');
+      return;
+    }
+
+    let utrValue: number | null = null;
+    if (utrRating.trim()) {
+      utrValue = parseFloat(utrRating);
+      if (Number.isNaN(utrValue) || !isValidUtr(utrValue)) {
+        setFormError(`Self-reported UTR rating must be a number between ${UTR_MIN} and ${UTR_MAX}.`);
+        return;
+      }
+    }
+
     if (!agreedToTerms) {
       setFormError('Please agree to the Terms of Service and Privacy Policy to continue.');
       return;
@@ -138,6 +158,9 @@ export function SignupPage() {
       await signUp(email, password, name, {
         date_of_birth: dateOfBirth,
         age_band: ageBandForAge(age),
+        skill_level: skillLevel,
+        utr_rating: utrValue,
+        home_town: homeTown.trim() || DEFAULT_SIGNUP_LOCATION,
       });
       addToast({ type: 'success', message: 'Account created! You can now log in.' });
       navigate('/auth/login');
@@ -149,7 +172,7 @@ export function SignupPage() {
   };
 
   return (
-    <AuthLayout backTo="/" backLabel="Back to home" tagline="Find hitting partners, events, and gear - built for Livingston.">
+    <AuthLayout backTo="/" backLabel="Back to home" tagline="Find hitting partners, events, and gear in Livingston, NJ.">
       <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Create your account</h1>
       <p className="text-secondary-600 mb-8">Join the CourtConnect community</p>
 
@@ -220,7 +243,65 @@ export function SignupPage() {
                   required
                 />
               </div>
-              <p className="text-xs text-secondary-500 mt-1.5">You must be at least 13 to use CourtConnect.</p>
+              <p className="text-xs text-secondary-500 mt-1.5">
+                We ask for your date of birth for age safety: it keeps CourtConnect's minimum age enforced, and
+                members under 18 need a parent or guardian's approval before using partner matching or chat.
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Skill Level</label>
+              <div className="relative">
+                <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+                <select
+                  value={skillLevel}
+                  onChange={(e) => setSkillLevel(e.target.value)}
+                  className="input pl-10 appearance-none"
+                  required
+                >
+                  <option value="" disabled>Choose your skill level</option>
+                  {SKILL_LEVELS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="label">Home Town</label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+                <input
+                  type="text"
+                  value={homeTown}
+                  onChange={(e) => setHomeTown(e.target.value)}
+                  className="input pl-10"
+                  placeholder={DEFAULT_SIGNUP_LOCATION}
+                />
+              </div>
+              <p className="text-xs text-secondary-500 mt-1.5">
+                CourtConnect is currently a {DEFAULT_SIGNUP_LOCATION} tennis community pilot.
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Self-Reported UTR Rating (Optional)</label>
+              <div className="relative">
+                <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+                <input
+                  type="number"
+                  step="0.1"
+                  min={UTR_MIN}
+                  max={UTR_MAX}
+                  value={utrRating}
+                  onChange={(e) => setUtrRating(e.target.value)}
+                  className="input pl-10"
+                  placeholder="e.g. 5.5 - leave blank if you don't have one"
+                />
+              </div>
+              <p className="text-xs text-secondary-500 mt-1.5">
+                This is what you tell us, not a verified rating - CourtConnect does not verify UTR.
+              </p>
             </div>
 
             {formError && (
