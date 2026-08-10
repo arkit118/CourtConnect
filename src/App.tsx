@@ -18,7 +18,6 @@ import { ProfilePage, ProfileEditPage } from './pages/ProfilePage';
 import { PlayersPage } from './pages/PlayersPage';
 import { EventsPage, EventDetailPage } from './pages/EventsPage';
 import { EventCreatePage } from './pages/EventCreatePage';
-import { PartnersPage } from './pages/PartnersPage';
 import { GearPage, GearDetailPage, GearCreatePage } from './pages/GearPage';
 import { CourtsPage, CourtDetailPage } from './pages/CourtsPage';
 import { SchedulingPage } from './pages/SchedulingPage';
@@ -39,7 +38,7 @@ import { TermsPage, PrivacyPage, SafetyPage, CommunityGuidelinesPage } from './p
 // "immediately after login, before protected pages" half of the legal
 // gate; useActionGate (see hooks/useActionGate.ts) covers the "before a
 // specific write action" half on pages that stay reachable while signed
-// out (Partners, Schedule, Gear, Events).
+// out (Players, Schedule, Gear, Events).
 function NeedsLegalGate() {
   const requestLegalAcceptance = useLegalGateStore((s) => s.request);
   const [submitting, setSubmitting] = useState(false);
@@ -227,11 +226,14 @@ function AppRoutes() {
           <Route path="/events/create" element={<ProtectedRoute><EventCreatePage /></ProtectedRoute>} />
           <Route path="/events/:id" element={<EventDetailPage />} />
 
-          {/* Partner Routes - the old /partners/request/:id "Request to
-              Hit" flow was retired (no age-band/Terms/ban safety checks);
-              redirect any old links to the safe Partner Matching page. */}
-          <Route path="/partners" element={<PartnersPage />} />
-          <Route path="/partners/request/:id" element={<Navigate to="/partners" replace />} />
+          {/* /partners is retired as a separate product concept - Players
+              and Partners were confusing as two overlapping nav items, so
+              Partners' matching/request functionality was folded into
+              /players (see PlayersPage.tsx). Both old routes alias
+              straight to /players so existing links never 404, following
+              the same pattern as the /gear-exchange alias below. */}
+          <Route path="/partners" element={<Navigate to="/players" replace />} />
+          <Route path="/partners/request/:id" element={<Navigate to="/players" replace />} />
 
           {/* Matching / Chat Routes - matching requires sign-in; the
               social/legal/consent eligibility gate itself is handled

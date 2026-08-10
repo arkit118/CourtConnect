@@ -81,7 +81,7 @@ function HeroSection() {
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
-              to="/partners"
+              to="/players"
               className="btn-lg inline-flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/25 backdrop-blur-sm"
             >
               Find Players
@@ -106,7 +106,7 @@ function HeroSection() {
 }
 
 // Deliberately not a 4-up icon+heading+text card grid - one featured block
-// (Partner Matching, the product's actual core loop per the brief) plus a
+// (Player Matching, the product's actual core loop per the brief) plus a
 // tighter cluster for the other three, so the page argues for what matters
 // most instead of presenting four equal options.
 function WhatItIsSection() {
@@ -125,13 +125,13 @@ function WhatItIsSection() {
 
         <div className="grid lg:grid-cols-5 gap-6">
           <Link
-            to="/partners"
+            to="/players"
             className="group lg:col-span-3 relative overflow-hidden rounded-3xl bg-navy-800 text-white p-8 md:p-10 flex flex-col justify-between min-h-[320px]"
           >
             <CourtLines className="absolute -right-10 -bottom-16 h-64 w-64 text-white" strokeOpacity={0.1} />
             <div className="relative z-10">
               <CourtCorner className="w-8 h-8 text-primary-300 mb-6" />
-              <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">Partner Matching</h3>
+              <h3 className="font-display text-2xl md:text-3xl font-bold mb-3">Player Matching</h3>
               <p className="text-navy-100 leading-relaxed max-w-md">
                 The core of CourtConnect: get matched with players near your level, send a request, and chat once
                 you're both in. Minors and adults are matched separately, and minors need parent/guardian approval

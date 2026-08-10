@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { uploadImage, validateImageFile, compressImageForUpload } from '../lib/storage';
+import { withTimeout } from '../lib/withTimeout';
 import { ReportButton } from '../components/ReportButton';
 import { CourtCorner } from '../components/brand/CourtMotif';
 import { SKILL_LEVELS, skillLevelLabels, skillLevelColors } from '../lib/skillLevel';
@@ -48,11 +49,11 @@ export function ProfilePage() {
       setError(null);
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', targetId)
-          .single();
+        const { data, error: fetchError } = await withTimeout(
+          supabase.from('profiles').select('*').eq('id', targetId).single(),
+          15000,
+          'Loading this profile timed out. Please try refreshing.'
+        );
 
         if (fetchError) {
           if (fetchError.code === 'PGRST116') {
@@ -341,7 +342,7 @@ export function ProfilePage() {
                       </button>
                     )}
                     {!isOwnProfile && user && (
-                      <Link to="/partners" className="btn-primary">
+                      <Link to="/players" className="btn-primary">
                         Find a Match
                       </Link>
                     )}

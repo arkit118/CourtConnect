@@ -8,7 +8,6 @@ import { Logo } from './brand/Logo';
 const navLinks = [
   { to: '/events', label: 'Events' },
   { to: '/players', label: 'Players' },
-  { to: '/partners', label: 'Partners' },
   { to: '/matches', label: 'Matches' },
   { to: '/gear', label: 'Gear Exchange' },
   { to: '/courts', label: 'Courts' },

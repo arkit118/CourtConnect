@@ -46,11 +46,11 @@ export function ChatPage() {
       setMatch(matchData);
 
       const otherId = matchData.user_a === user.id ? matchData.user_b : matchData.user_a;
-      const { data: otherProfile, error: otherError } = await supabase
-        .from('profiles')
-        .select('id, name, avatar_url, home_town')
-        .eq('id', otherId)
-        .single();
+      const { data: otherProfile, error: otherError } = await withTimeout(
+        supabase.from('profiles').select('id, name, avatar_url, home_town').eq('id', otherId).single(),
+        15000,
+        'Loading this chat timed out. Please try refreshing.'
+      );
       if (otherError) throw otherError;
       setOther(otherProfile);
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Calendar, Package, Flag, BarChart3, Settings, AlertTriangle, Check, X, Search } from 'lucide-react';
 import { supabase, Profile, Event, GearListing, Comment } from '../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { useToastStore } from '../hooks/useToast';
 
 const tabs = [
@@ -31,12 +32,16 @@ export function AdminPage() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [usersRes, eventsRes, listingsRes, commentsRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(50),
-        supabase.from('events').select('*').order('created_at', { ascending: false }).limit(50),
-        supabase.from('gear_listings').select('*').order('created_at', { ascending: false }).limit(50),
-        supabase.from('comments').select('*, profile:profiles(*)').eq('is_flagged', true),
-      ]);
+      const [usersRes, eventsRes, listingsRes, commentsRes] = await withTimeout(
+        Promise.all([
+          supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('events').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('gear_listings').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('comments').select('*, profile:profiles(*)').eq('is_flagged', true),
+        ]),
+        15000,
+        'Loading admin data timed out. Please try refreshing.'
+      );
 
       setUsers(usersRes.data || []);
       setEvents(eventsRes.data || []);

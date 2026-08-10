@@ -18,7 +18,7 @@ export function AboutPage() {
           <h2 className="font-display text-2xl font-bold text-secondary-900 mb-4">What it actually does</h2>
           <p className="text-secondary-700 leading-relaxed mb-4">
             CourtConnect is a local tennis community platform, currently piloting in Livingston, NJ. Create a profile
-            and you can send and accept partner match requests, then chat with anyone you've matched with; browse
+            and you can send and accept match requests, then chat with anyone you've matched with; browse
             and register for local events; coordinate court time with other members on the Schedule page; and buy,
             sell, or trade tennis gear locally. Players under 18 need a parent or guardian to approve matching and
             chat specifically - everything else is open right away.
@@ -41,7 +41,7 @@ export function AboutPage() {
             <SafetyPoint
               icon={Users2}
               title="Parent/guardian approval for minors"
-              description="Players under 18 need a parent or guardian to approve partner matching and chat before either unlocks."
+              description="Players under 18 need a parent or guardian to approve player matching and chat before either unlocks."
             />
             <SafetyPoint
               icon={MessageCircleWarning}

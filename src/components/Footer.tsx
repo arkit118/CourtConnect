@@ -8,7 +8,6 @@ const footerLinks = {
   community: [
     { label: 'Events', to: '/events' },
     { label: 'Players', to: '/players' },
-    { label: 'Partners', to: '/partners' },
     { label: 'Matches', to: '/matches' },
     { label: 'Gear Exchange', to: '/gear' },
     { label: 'Courts', to: '/courts' },

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Users, Package, Settings, User, DollarSign, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, GearListing, Registration } from '../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { format, parseISO } from 'date-fns';
 
 export function DashboardPage() {
@@ -26,23 +27,31 @@ export function DashboardPage() {
 
     try {
       // Fetch upcoming registrations
-      const { data: regs } = await supabase
-        .from('registrations')
-        .select('*, event:events(*)')
-        .eq('user_id', user.id)
-        .eq('status', 'registered')
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const { data: regs } = await withTimeout(
+        supabase
+          .from('registrations')
+          .select('*, event:events(*)')
+          .eq('user_id', user.id)
+          .eq('status', 'registered')
+          .order('created_at', { ascending: false })
+          .limit(5),
+        15000,
+        'Loading your dashboard timed out. Please try refreshing.'
+      );
       setUpcomingEvents(regs || []);
 
       // Fetch my gear listings
-      const { data: listings } = await supabase
-        .from('gear_listings')
-        .select('*')
-        .eq('seller_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const { data: listings } = await withTimeout(
+        supabase
+          .from('gear_listings')
+          .select('*')
+          .eq('seller_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        15000,
+        'Loading your dashboard timed out. Please try refreshing.'
+      );
       setMyListings(listings || []);
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
@@ -100,14 +109,14 @@ export function DashboardPage() {
             <p className="text-xs text-secondary-500">upcoming</p>
           </div>
 
-          <Link to="/partners" className="card p-5 card-hover">
+          <Link to="/players" className="card p-5 card-hover">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-accent-100 flex items-center justify-center">
                 <Heart className="w-5 h-5 text-accent-600" />
               </div>
               <div>
-                <p className="text-sm text-secondary-500">Partner Matching</p>
-                <p className="text-base font-semibold text-secondary-900">Find a partner</p>
+                <p className="text-sm text-secondary-500">Player Matching</p>
+                <p className="text-base font-semibold text-secondary-900">Find a player</p>
               </div>
             </div>
             <p className="text-xs text-secondary-500">safe, age-banded matching</p>
@@ -179,18 +188,18 @@ export function DashboardPage() {
               )}
             </div>
 
-            {/* Partner Matching */}
+            {/* Player Matching */}
             <div className="card p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-secondary-900">Partner Matching</h2>
+                <h2 className="text-lg font-semibold text-secondary-900">Player Matching</h2>
                 <Link to="/matches" className="text-sm text-primary-600 hover:text-primary-700">View my matches</Link>
               </div>
               <div className="text-center py-8">
                 <Heart className="w-12 h-12 text-secondary-300 mx-auto mb-4" />
                 <p className="text-secondary-600 mb-4">
-                  Use Partner Matching for safe age-banded tennis partner requests.
+                  Use Player Matching for safe age-banded tennis match requests.
                 </p>
-                <Link to="/partners" className="btn-outline">Find Partners</Link>
+                <Link to="/players" className="btn-outline">Find Players</Link>
               </div>
             </div>
 
@@ -239,9 +248,9 @@ export function DashboardPage() {
                   <Calendar className="w-4 h-4" />
                   Browse Events
                 </Link>
-                <Link to="/partners" className="btn-ghost w-full justify-start">
+                <Link to="/players" className="btn-ghost w-full justify-start">
                   <Users className="w-4 h-4" />
-                  Find Partners
+                  Find Players
                 </Link>
                 <Link to="/gear" className="btn-ghost w-full justify-start">
                   <Package className="w-4 h-4" />
