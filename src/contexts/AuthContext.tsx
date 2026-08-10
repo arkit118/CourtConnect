@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 import { withTimeout, isMissingColumnError, devLog } from '../lib/withTimeout';
 import { installAuthRecovery } from '../lib/authRecovery';
+import { authRedirectOrigin } from '../lib/openExternal';
 
 const AUTH_TIMEOUT_MS = 8000;
 
@@ -309,7 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               utr_rating: info.utr_rating,
               home_town: info.home_town,
             },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${authRedirectOrigin()}/dashboard`,
           },
         }),
         AUTH_TIMEOUT_MS,
@@ -444,7 +445,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error: resendError } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: `${authRedirectOrigin()}/dashboard` },
     });
     if (resendError) {
       console.error('[AuthContext] Resend verification email error:', resendError);
@@ -499,7 +500,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/auth/reset-password',
+      redirectTo: authRedirectOrigin() + '/auth/reset-password',
     });
     if (resetError) {
       console.error('[AuthContext] Reset password error:', resetError);

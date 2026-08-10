@@ -1,5 +1,9 @@
 # CourtConnect iOS App Store Build (Capacitor)
 
+> For the full submission process (signing, archiving, TestFlight, the App Store Connect
+> listing copy, privacy label, review notes) see `docs/ios-app-store.md`. This file covers
+> just the native project's build mechanics.
+
 CourtConnect is wrapped as a native iOS shell using [Capacitor](https://capacitorjs.com/).
 Capacitor does not change the web app itself — it loads the built `dist/` bundle inside a
 native `WKWebView` and gives it an Xcode project you can archive and submit to the App
@@ -71,18 +75,17 @@ iOS-specific was added.
 
 ## App Store risks / things to resolve before submitting
 
-- **Placeholder app icon and launch screen.** `cap add ios` generated Capacitor's generic
-  default app icon (`ios/App/App/Assets.xcassets/AppIcon.appiconset`) and a blank splash
-  screen — not CourtConnect branding. Apple will reject a submission using the stock
-  Capacitor icon. This needs to be replaced with the CourtConnect logo (the existing
-  `src/assets/brand/logo-icon.png` mark, or the same source used for the PWA icons on the
-  `pwa-install` branch) before archiving for submission. Not done as part of this task —
-  flagging it here as a required follow-up.
+> **Update:** the app icon/splash screen and status bar/safe-area items below were
+> resolved on the `ios-capacitor-app` branch after this doc was originally written — see
+> `docs/ios-app-store.md`'s "Safe areas, status bar, splash screen, app icon" section for
+> what's actually in place now. Left the original notes below for history.
+
+- ~~**Placeholder app icon and launch screen.**~~ Resolved — see `docs/ios-app-store.md`.
 - **App Store review — WebView-wrapped apps.** Apple's guidelines (4.2) require that
   web-wrapped apps offer enough native-feeling value and aren't "just a website in a
-  wrapper." Worth a deliberate pass on native niceties (status bar styling, safe-area
-  handling, offline/error states inside the WebView, push notifications if planned) before
-  submitting — none of that is set up yet beyond the default Capacitor shell.
+  wrapper." Status bar styling, safe-area handling, and a branded icon/splash are now in
+  place; offline/error states inside the WebView and push notifications are still not set
+  up (not required for a v1 pilot submission, see `docs/ios-app-store.md`).
 - **Minor/parent-consent flows in review.** Apple reviewers will interact with the app as
   an anonymous tester. Confirm the sign-up and parent-consent screens behave sanely for a
   reviewer who isn't a real Livingston tennis player (this app was already built with that

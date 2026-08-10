@@ -3,6 +3,7 @@ import { Instagram } from 'lucide-react';
 import { CONTACT_EMAIL } from '../lib/legal';
 import { Logo } from './brand/Logo';
 import { CourtLines } from './brand/CourtMotif';
+import { handleExternalLinkClick } from '../lib/openExternal';
 
 const footerLinks = {
   community: [
@@ -50,6 +51,7 @@ export function Footer() {
                 href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={handleExternalLinkClick(INSTAGRAM_URL)}
                 className="w-10 h-10 rounded-lg bg-white/5 text-navy-300 hover:text-white hover:bg-white/10 transition-colors flex items-center justify-center"
                 title="CourtConnect on Instagram"
                 aria-label="CourtConnect on Instagram"

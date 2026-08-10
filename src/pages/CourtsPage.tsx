@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { MapPin, Lightbulb, ExternalLink, Search, AlertCircle, Info } from 'lucide-react';
 import { supabase, Court } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
+import { handleExternalLinkClick } from '../lib/openExternal';
 import { PageHero } from '../components/brand/PageHero';
 import { CourtCorner, BallArc } from '../components/brand/CourtMotif';
 
@@ -255,6 +256,7 @@ export function CourtsPage() {
                     href={court.booking_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={handleExternalLinkClick(court.booking_url)}
                     className="btn-outline btn-sm w-full"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -382,6 +384,7 @@ export function CourtDetailPage() {
               href={court.booking_url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleExternalLinkClick(court.booking_url)}
               className="btn-primary w-full"
             >
               <ExternalLink className="w-5 h-5" />

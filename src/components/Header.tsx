@@ -44,7 +44,7 @@ export function Header() {
     location.pathname === path || (path === '/matches' && location.pathname.startsWith('/matches/'));
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100 shadow-nav">
+    <header className="safe-top safe-x sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100 shadow-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-18">
           <div className="flex items-center gap-8">
