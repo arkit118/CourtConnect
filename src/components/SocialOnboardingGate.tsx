@@ -5,6 +5,7 @@ import { useToastStore } from '../hooks/useToast';
 import { useLegalGateStore } from '../hooks/useLegalGate';
 import { SocialEligibilityStatus } from '../hooks/useSocialEligibility';
 import { supabase } from '../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { CONTACT_EMAIL, MIN_SIGNUP_AGE } from '../lib/legal';
 import { SKILL_LEVELS, UTR_MIN, UTR_MAX, isValidUtr } from '../lib/skillLevel';
 
@@ -28,8 +29,8 @@ export function SocialOnboardingGate({ status }: Props) {
 
   if (status === 'signed_out') {
     return (
-      <SafetyCard icon={ShieldAlert} tone="neutral" title="Sign in to use partner matching">
-        Partner matching and chat are available to signed-in members. Please sign in or create an account first.
+      <SafetyCard icon={ShieldAlert} tone="neutral" title="Sign in to use player matching">
+        Player matching and chat are available to signed-in members. Please sign in or create an account first.
       </SafetyCard>
     );
   }
@@ -37,11 +38,15 @@ export function SocialOnboardingGate({ status }: Props) {
   if (status === 'banned') {
     return (
       <SafetyCard icon={XCircle} tone="danger" title="Your account is restricted">
-        Your account is restricted and cannot use partner matching or chat. Contact{' '}
+        Your account is restricted and cannot use player matching or chat. Contact{' '}
         <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-medium">{CONTACT_EMAIL}</a> if you think this
         is a mistake.
       </SafetyCard>
     );
+  }
+
+  if (status === 'needs_email_verification') {
+    return <EmailVerificationStep />;
   }
 
   if (status === 'needs_legal') {
@@ -67,7 +72,7 @@ export function SocialOnboardingGate({ status }: Props) {
   if (status === 'consent_declined') {
     return (
       <SafetyCard icon={XCircle} tone="danger" title="Parent/guardian approval was declined">
-        Your parent or guardian declined the request to use partner matching and chat. If you think this was a
+        Your parent or guardian declined the request to use player matching and chat. If you think this was a
         mistake, talk to them directly, or contact{' '}
         <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-medium">{CONTACT_EMAIL}</a> with questions.
       </SafetyCard>
@@ -129,10 +134,47 @@ function NeedsLegalStep() {
       <ShieldAlert className="w-10 h-10 mx-auto mb-4 text-primary-800" />
       <h3 className="text-lg font-bold text-secondary-900 mb-2">Please accept our Terms and Privacy Policy</h3>
       <p className="text-sm text-primary-800 mb-6">
-        You need to accept our current Terms of Service and Privacy Policy before using partner matching or chat.
+        You need to accept our current Terms of Service and Privacy Policy before using player matching or chat.
       </p>
       <button type="button" className="btn-primary" onClick={handleReview} disabled={submitting}>
         {submitting ? 'Opening...' : 'Review and Accept Terms'}
+      </button>
+    </div>
+  );
+}
+
+// Defense-in-depth (see useSocialEligibility.ts's comment on this status) -
+// normal password sign-in already refuses an unconfirmed account before a
+// session ever exists, so this mostly covers edge cases: a stale session
+// from before "Confirm email" was turned on, or a future auth flow.
+function EmailVerificationStep() {
+  const { user, resendVerificationEmail } = useAuth();
+  const { addToast } = useToastStore();
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!user?.email) return;
+    setResending(true);
+    try {
+      await resendVerificationEmail(user.email);
+      addToast({ type: 'success', message: 'Verification email sent - check your inbox.' });
+    } catch (err: any) {
+      console.error('Error resending verification email:', err);
+      addToast({ type: 'error', message: err.message || 'Failed to resend verification email' });
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <div className="card p-8 text-center max-w-lg mx-auto border bg-primary-50 border-primary-200">
+      <Mail className="w-10 h-10 mx-auto mb-4 text-primary-800" />
+      <h3 className="text-lg font-bold text-secondary-900 mb-2">Please verify your email</h3>
+      <p className="text-sm text-primary-800 mb-6">
+        Please verify your email before using player matching or chat. Check your inbox for a verification link.
+      </p>
+      <button type="button" className="btn-primary" onClick={handleResend} disabled={resending}>
+        {resending ? 'Sending...' : 'Resend Verification Email'}
       </button>
     </div>
   );
@@ -156,7 +198,11 @@ function DateOfBirthStep() {
 
     setSubmitting(true);
     try {
-      const { data, error: rpcError } = await supabase.rpc('set_social_age_band', { p_date_of_birth: dob });
+      const { data, error: rpcError } = await withTimeout(
+        supabase.rpc('set_social_age_band', { p_date_of_birth: dob }),
+        15000,
+        'Saving your date of birth timed out. Please try again.'
+      );
       if (rpcError) throw rpcError;
 
       if (data?.ok === false && data?.reason === 'under_13') {
@@ -177,7 +223,7 @@ function DateOfBirthStep() {
   if (blocked) {
     return (
       <SafetyCard icon={XCircle} tone="danger" title="You must be at least 13 to use CourtConnect">
-        Partner matching and chat, like the rest of CourtConnect, require you to be at least 13 years old.
+        Player matching and chat, like the rest of CourtConnect, require you to be at least 13 years old.
       </SafetyCard>
     );
   }
@@ -317,9 +363,11 @@ function AdultActivationStep() {
 
     (async () => {
       try {
-        const { data, error: rpcError } = await supabase.rpc('set_social_age_band', {
-          p_date_of_birth: profile.date_of_birth,
-        });
+        const { data, error: rpcError } = await withTimeout(
+          supabase.rpc('set_social_age_band', { p_date_of_birth: profile.date_of_birth }),
+          15000,
+          'Enabling matching for your account timed out. Please refresh and try again.'
+        );
         if (rpcError) throw rpcError;
         if (data?.ok) {
           await refreshProfile();
@@ -489,7 +537,7 @@ function ParentEmailStep() {
         <h3 className="text-lg font-bold text-secondary-900">Parent/guardian approval needed</h3>
       </div>
       <p className="text-sm text-secondary-600 mb-6">
-        Because you're under 18, a parent or guardian needs to approve partner matching and chat. We'll send them an
+        Because you're under 18, a parent or guardian needs to approve player matching and chat. We'll send them an
         email explaining what CourtConnect is and what they're approving - they don't need to create an account.
         You'll only ever be matched with other minors, never adults.
       </p>
@@ -531,7 +579,7 @@ function PendingConsentStep() {
 
   return (
     <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
-      We've sent your parent or guardian an email asking them to approve partner matching and chat for your
+      We've sent your parent or guardian an email asking them to approve player matching and chat for your
       account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
       CourtConnect - you can still browse courts, events, and the schedule.
     </SafetyCard>

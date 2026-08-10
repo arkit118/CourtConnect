@@ -115,7 +115,9 @@ export function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const { signUp } = useAuth();
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [resending, setResending] = useState(false);
+  const { signUp, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
 
@@ -155,21 +157,61 @@ export function SignupPage() {
 
     setLoading(true);
     try {
-      await signUp(email, password, name, {
+      const { confirmationRequired } = await signUp(email, password, name, {
         date_of_birth: dateOfBirth,
         age_band: ageBandForAge(age),
         skill_level: skillLevel,
         utr_rating: utrValue,
         home_town: homeTown.trim() || DEFAULT_SIGNUP_LOCATION,
       });
-      addToast({ type: 'success', message: 'Account created! You can now log in.' });
-      navigate('/auth/login');
+
+      if (confirmationRequired) {
+        setConfirmationPending(true);
+      } else {
+        addToast({ type: 'success', message: 'Account created! You can now log in.' });
+        navigate('/auth/login');
+      }
     } catch (error: any) {
       addToast({ type: 'error', message: error.message || 'Failed to create account' });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await resendVerificationEmail(email);
+      addToast({ type: 'success', message: 'Verification email sent - check your inbox.' });
+    } catch (error: any) {
+      addToast({ type: 'error', message: error.message || 'Failed to resend verification email' });
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (confirmationPending) {
+    return (
+      <AuthLayout backTo="/" backLabel="Back to home" tagline="Almost there - check your inbox.">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-primary-600" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Check your email to verify your account</h1>
+          <p className="text-secondary-600 mb-8">
+            We've sent a verification link to <strong>{email}</strong>. You'll need to verify your email before using
+            player matching or chat - the rest of CourtConnect is available once you sign in.
+          </p>
+          <button type="button" onClick={handleResend} className="btn-outline w-full mb-3" disabled={resending}>
+            {resending ? 'Sending...' : 'Resend Verification Email'}
+          </button>
+          <Link to="/auth/login" className="btn-primary w-full">
+            Back to Sign In
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout backTo="/" backLabel="Back to home" tagline="Find hitting partners, events, and gear in Livingston, NJ.">
@@ -245,7 +287,7 @@ export function SignupPage() {
               </div>
               <p className="text-xs text-secondary-500 mt-1.5">
                 We ask for your date of birth for age safety: it keeps CourtConnect's minimum age enforced, and
-                members under 18 need a parent or guardian's approval before using partner matching or chat.
+                members under 18 need a parent or guardian's approval before using player matching or chat.
               </p>
             </div>
 

@@ -139,7 +139,7 @@ export function MatchesPage() {
   if (eligibility !== 'eligible') {
     return (
       <div className="min-h-screen bg-gray-50">
-        <PageHero title="Matches" description="Your partner match requests and active chats, in one place." />
+        <PageHero title="Matches" description="Track sent requests, respond to received requests, and chat after a match is accepted." />
         <div className="container-custom max-w-lg py-8">
           <SocialOnboardingGate status={eligibility} />
         </div>
@@ -154,7 +154,7 @@ export function MatchesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHero title="Matches" description="Your partner match requests and active chats, in one place." />
+      <PageHero title="Matches" description="Track sent requests, respond to received requests, and chat after a match is accepted." />
       <div className="container-custom max-w-3xl py-8">
         <div className="mb-6">
           <SocialSafetyBanner />
@@ -193,7 +193,7 @@ export function MatchesPage() {
             <MatchSection title={`Requests Sent (${sentPending.length})`}>
               {sentPending.length === 0 ? (
                 <EmptyRow>
-                  You haven't sent any match requests. <Link to="/partners" className="text-primary-600 font-semibold underline underline-offset-2">Find players &rarr;</Link>
+                  You haven't sent any match requests. <Link to="/players" className="text-primary-600 font-semibold underline underline-offset-2">Find players &rarr;</Link>
                 </EmptyRow>
               ) : (
                 sentPending.map((m) => (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { ShieldCheck, Check, X, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { CONTACT_EMAIL } from '../lib/legal';
 
 type ConsentInfo = { childName: string; decision: string | null };
@@ -27,7 +28,11 @@ export function ParentalConsentPage() {
 
     (async () => {
       try {
-        const { data, error: rpcError } = await supabase.rpc('get_consent_request_info', { p_token: token });
+        const { data, error: rpcError } = await withTimeout(
+          supabase.rpc('get_consent_request_info', { p_token: token }),
+          15000,
+          'Loading this request timed out. Please try refreshing.'
+        );
         if (cancelled) return;
         if (rpcError) throw rpcError;
 
@@ -58,10 +63,11 @@ export function ParentalConsentPage() {
     setDeciding(true);
     setError(null);
     try {
-      const { data, error: rpcError } = await supabase.rpc('resolve_parent_consent', {
-        p_token: token,
-        p_decision: decision,
-      });
+      const { data, error: rpcError } = await withTimeout(
+        supabase.rpc('resolve_parent_consent', { p_token: token, p_decision: decision }),
+        15000,
+        'Saving your decision timed out. Please try again.'
+      );
       if (rpcError) throw rpcError;
       if (!data?.ok) {
         setError('This approval link is invalid or has expired.');
@@ -104,12 +110,12 @@ export function ParentalConsentPage() {
             >
               {result === 'approved' ? (
                 <p>
-                  Thank you. You've approved partner matching and chat for {info?.childName || 'this account'}. They
+                  Thank you. You've approved player matching and chat for {info?.childName || 'this account'}. They
                   can now see match candidates and chat, always with other minors only, never adults.
                 </p>
               ) : (
                 <p>
-                  You've declined partner matching and chat for {info?.childName || 'this account'}. They will not be
+                  You've declined player matching and chat for {info?.childName || 'this account'}. They will not be
                   able to use these features. The rest of CourtConnect (courts, events, schedule) is unaffected.
                 </p>
               )}
@@ -121,7 +127,7 @@ export function ParentalConsentPage() {
           ) : (
             <>
               <p className="text-secondary-600 mb-4">
-                <strong>{info?.childName}</strong> has a CourtConnect account and would like to use partner matching
+                <strong>{info?.childName}</strong> has a CourtConnect account and would like to use player matching
                 and in-app chat with other members.
               </p>
               <div className="bg-secondary-50 rounded-xl p-4 mb-6 text-sm text-secondary-700 space-y-2">

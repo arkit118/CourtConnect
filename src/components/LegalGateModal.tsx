@@ -4,6 +4,7 @@ import { ShieldAlert } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLegalGateStore } from '../hooks/useLegalGate';
 import { supabase } from '../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from '../lib/legal';
 
 // Rendered once near the app root. Shown whenever a signed-in user with a
@@ -28,16 +29,20 @@ export function LegalGateModal() {
     setError(null);
     try {
       const now = new Date().toISOString();
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          tos_accepted_at: now,
-          tos_version: CURRENT_TOS_VERSION,
-          privacy_accepted_at: now,
-          privacy_version: CURRENT_PRIVACY_VERSION,
-          safety_acknowledged_at: now,
-        })
-        .eq('id', user.id);
+      const { error: updateError } = await withTimeout(
+        supabase
+          .from('profiles')
+          .update({
+            tos_accepted_at: now,
+            tos_version: CURRENT_TOS_VERSION,
+            privacy_accepted_at: now,
+            privacy_version: CURRENT_PRIVACY_VERSION,
+            safety_acknowledged_at: now,
+          })
+          .eq('id', user.id),
+        15000,
+        'Saving your acceptance timed out. Please try again.'
+      );
 
       if (updateError) throw updateError;
       await refreshProfile();

@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { CourtLines } from './CourtMotif';
 
 // Shared committed-color page header used across the redesigned app pages
-// (Partners, Matches, Schedule, Courts, Gear) - replaces the old plain
+// (Players, Matches, Schedule, Courts, Gear) - replaces the old plain
 // "text-3xl font-bold" white-background page title with the same
 // navy/green field + court-line motif language established on the
 // homepage, so the whole app reads as one redesigned product rather than

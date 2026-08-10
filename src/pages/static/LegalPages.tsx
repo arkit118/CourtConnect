@@ -27,7 +27,7 @@ export function TermsPage() {
             <p>
               CourtConnect is a local tennis community platform, starting in Livingston, NJ. It helps players find
               local tennis courts, view and register for events, coordinate community court time, use gear exchange,
-              and use optional partner matching and in-app chat to connect with other members.
+              and use optional player matching and in-app chat to connect with other members.
             </p>
           </LegalSection>
 
@@ -36,7 +36,7 @@ export function TermsPage() {
             <p>If you are under 18, you should use CourtConnect with your parent or guardian's knowledge and permission.</p>
             <p>If you are under 13, you may not create an account or use CourtConnect.</p>
             <p>
-              Partner matching and in-app chat are optional features with their own eligibility rule: if you are
+              Player matching and in-app chat are optional features with their own eligibility rule: if you are
               under 18, a parent or guardian must approve your use of matching and chat specifically before you can
               use them. This does not affect your ability to use the rest of CourtConnect (courts, events, schedule,
               gear exchange).
@@ -89,9 +89,9 @@ export function TermsPage() {
             <p>Do not share sensitive personal information publicly. In an emergency, contact local emergency services directly, not CourtConnect.</p>
           </LegalSection>
 
-          <LegalSection number={10} title="Partner Matching and Chat">
+          <LegalSection number={10} title="Player Matching and Chat">
             <p>
-              CourtConnect offers optional partner matching and in-app chat so members can coordinate hitting
+              CourtConnect offers optional player matching and in-app chat so members can coordinate hitting
               partners and tennis meetups.
             </p>
             <p>
@@ -174,8 +174,8 @@ export function PrivacyPage() {
               <li>Court bookings: player name, partner/opponent name, court, date/time, and notes</li>
               <li>Event registrations</li>
               <li>Gear listings and interest/contact information, if you use gear exchange</li>
-              <li>Partner matching and chat data: match requests, match status, chat messages, and block records, if you use partner matching or chat</li>
-              <li>A parent or guardian's email address, if you are a minor requesting approval to use partner matching or chat</li>
+              <li>Player matching and chat data: match requests, match status, chat messages, and block records, if you use player matching or chat</li>
+              <li>A parent or guardian's email address, if you are a minor requesting approval to use player matching or chat</li>
               <li>Reports and safety submissions you file</li>
               <li>Basic technical information such as browser/device details, auth/session data, and hosting/backend logs</li>
             </ul>
@@ -186,7 +186,7 @@ export function PrivacyPage() {
               <li>Provide accounts and authentication</li>
               <li>Show courts, events, schedule entries, and listings</li>
               <li>Prevent under-13 signup</li>
-              <li>Operate partner matching and chat, including keeping minors matched only with other minors and adults matched only with other adults</li>
+              <li>Operate player matching and chat, including keeping minors matched only with other minors and adults matched only with other adults</li>
               <li>Request and record parent/guardian approval before a minor can use matching or chat</li>
               <li>Improve safety and moderation</li>
               <li>Communicate with you about your account or support requests</li>
@@ -217,7 +217,7 @@ export function PrivacyPage() {
             <p>You must be at least 13 to use CourtConnect. We do not knowingly allow users under 13 to create accounts.</p>
             <p>Users under 18 should use the app with parent/guardian involvement.</p>
             <p>
-              Partner matching and chat specifically require a parent or guardian to approve those features for a
+              Player matching and chat specifically require a parent or guardian to approve those features for a
               minor's account, via an email sent to the address the minor provides. This is a lightweight, email-link
               approval process appropriate for a v1 product - it does not verify that the email address actually
               belongs to the user's parent or guardian. Minors are only ever matched with other minors, never adults.
@@ -298,7 +298,7 @@ export function SafetyPage() {
               <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
                 <Users className="w-5 h-5 text-primary-600" />
               </div>
-              <h2 className="text-lg font-bold text-secondary-900">Partner Matching and Chat Safety</h2>
+              <h2 className="text-lg font-bold text-secondary-900">Player Matching and Chat Safety</h2>
             </div>
             <ul className="list-disc list-inside space-y-1 text-secondary-600">
               <li>Minors are only ever matched with other minors, never adults - enforced at the database level</li>
