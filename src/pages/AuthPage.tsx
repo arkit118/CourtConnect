@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
@@ -121,6 +121,24 @@ export function SignupPage() {
   const { signUp, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
+
+  // Account creation doesn't navigate to a new route when email
+  // confirmation is required (the common case - Supabase's "Confirm
+  // email" setting is on for App Store builds) - it swaps this same
+  // /auth/signup screen from the long signup form to the "check your
+  // email" card in place. The router-level ScrollToTop (src/components/
+  // ScrollToTop.tsx) only fires on pathname/hash changes, so it never
+  // sees this transition, and a user who scrolled to the bottom of the
+  // form to hit "Create Account" was left staring at whatever was at that
+  // same scroll position - often blank space below the confirmation
+  // card - instead of the card itself. Scroll explicitly whenever this
+  // screen switches into the confirmation view, on both web and
+  // Capacitor iOS (same window.scrollTo the router-level version uses).
+  useEffect(() => {
+    if (confirmationPending) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [confirmationPending]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

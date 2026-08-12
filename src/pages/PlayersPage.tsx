@@ -417,6 +417,7 @@ function LoadingGrid() {
 // eligible user it reveals the same onboarding steps Partners used to
 // gate its whole page behind, right on this page.
 function PublicPlayerDirectory({ eligibility }: { eligibility: ReturnType<typeof useSocialEligibility> }) {
+  const { user } = useAuth();
   const { addToast } = useToastStore();
   const [players, setPlayers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -437,7 +438,13 @@ function PublicPlayerDirectory({ eligibility }: { eligibility: ReturnType<typeof
           'Loading players timed out. Please try refreshing.'
         );
         if (fetchError) throw fetchError;
-        if (!cancelled) setPlayers(data || []);
+        // The signed-in viewer is never someone to send themselves a match
+        // request - exclude their own row from the directory they're
+        // browsing (get_match_candidates() already does this server-side
+        // for the eligible branch below; the public directory queries
+        // the profiles table directly with no such filter, so it needs
+        // its own here).
+        if (!cancelled) setPlayers((data || []).filter((p) => p.id !== user?.id));
       } catch (err: any) {
         console.error('Error fetching players:', err);
         if (!cancelled) setError(err.message || 'Failed to load players');
@@ -448,7 +455,7 @@ function PublicPlayerDirectory({ eligibility }: { eligibility: ReturnType<typeof
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id]);
 
   const filteredPlayers = filters.filterPlayers(players);
 
@@ -561,7 +568,12 @@ function EligibleCandidateList() {
         'Loading players timed out. Please try refreshing.'
       );
       if (rpcError) throw rpcError;
-      setCandidates(data || []);
+      // Defense in depth: get_match_candidates() already excludes the
+      // caller server-side (see 20260728000008_015_social_rpcs.sql), but
+      // this is a safety-sensitive list (adults/minors must never be
+      // shown someone to request/play with who is themselves) so the
+      // client filters again rather than trusting a single layer.
+      setCandidates((data || []).filter((c: MatchCandidate) => c.id !== user?.id));
     } catch (err: any) {
       console.error('Error fetching match candidates:', err);
       setError(err.message || 'Failed to load players');
@@ -636,7 +648,9 @@ function EligibleCandidateList() {
       <div className="mb-6 flex items-center gap-2 text-secondary-600">
         <Shield className="w-4 h-4 text-primary-500" />
         <p>
-          Showing {filteredCandidates.length} of {candidates.length} players matched to your age group and eligibility
+          {filters.hasActiveFilters
+            ? `Showing ${filteredCandidates.length} of ${candidates.length} eligible players for your age group and safety settings`
+            : `${candidates.length} eligible player${candidates.length === 1 ? '' : 's'} found`}
         </p>
       </div>
 
@@ -650,8 +664,11 @@ function EligibleCandidateList() {
       ) : candidates.length === 0 ? (
         <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
           <CourtCorner className="w-12 h-12 text-clay-400 mx-auto mb-4" />
-          <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No players right now</h3>
-          <p className="text-secondary-600">Check back soon as more Livingston, NJ players join.</p>
+          <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No eligible players yet</h3>
+          <p className="text-secondary-600">
+            Invite local players or check back as more Livingston, NJ players join. Matching always keeps adults and
+            minors separate, so you'll only ever see players in your own age group.
+          </p>
         </div>
       ) : filteredCandidates.length === 0 ? (
         <EmptyState onClear={filters.clearFilters} />
