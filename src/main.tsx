@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
+import { isNativeApp } from './lib/platform.ts';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -10,6 +11,6 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
-    <Analytics />
+    {!isNativeApp() && <Analytics />}
   </StrictMode>
 );
