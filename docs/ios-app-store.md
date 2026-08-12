@@ -15,7 +15,7 @@ Connect listing itself.
 | | |
 |---|---|
 | App name | CourtConnect |
-| Bundle ID | `com.courtconnect.app` |
+| Bundle ID | `com.arkitshah.courtconnect` |
 | Version (marketing) | 1.0.0 |
 | Build number | 2 |
 | Platform | iOS first (Android not set up) |
@@ -23,7 +23,7 @@ Connect listing itself.
 **Do not change the Bundle ID after the first App Store Connect upload.** Once a bundle ID
 has an app record in App Store Connect, it's permanent for that app — changing it means
 creating an entirely new app listing from scratch (losing reviews, TestFlight testers,
-ratings history, everything). `com.courtconnect.app` is set in both `capacitor.config.ts`
+ratings history, everything). `com.arkitshah.courtconnect` is set in both `capacitor.config.ts`
 (`appId`) and the Xcode project (`PRODUCT_BUNDLE_IDENTIFIER`, both Debug and Release
 configs in `ios/App/App.xcodeproj/project.pbxproj`) — they must always match.
 
@@ -111,7 +111,7 @@ the logo changes; the generated files are already committed under `ios/App/App/A
 ## App Store Connect listing
 
 Create the app record in App Store Connect (**My Apps → +**) if it doesn't exist yet,
-using the Bundle ID `com.courtconnect.app` registered in your Apple Developer account.
+using the Bundle ID `com.arkitshah.courtconnect` registered in your Apple Developer account.
 Then fill in:
 
 **App name:** CourtConnect

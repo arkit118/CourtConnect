@@ -11,7 +11,7 @@ Store. All product logic (auth, matching, chat, scheduling, reports, parent cons
 runs as the same React/Vite web app; nothing about that logic was touched for this.
 
 - App name: `CourtConnect`
-- Bundle ID: `com.courtconnect.app`
+- Bundle ID: `com.arkitshah.courtconnect`
 - Web dir: `dist`
 - Native project: `ios/App/App.xcodeproj` (open the **App.xcworkspace** if one exists after
   `pod install`, otherwise the `.xcodeproj` — see step 3 below)
