@@ -17,7 +17,7 @@ Connect listing itself.
 | App name | CourtConnect |
 | Bundle ID | `com.arkitshah.courtconnect` |
 | Version (marketing) | 1.0.0 |
-| Build number | 2 |
+| Build number | 3 |
 | Platform | iOS first (Android not set up) |
 
 **Do not change the Bundle ID after the first App Store Connect upload.** Once a bundle ID
@@ -94,10 +94,11 @@ the logo changes; the generated files are already committed under `ios/App/App/A
 1. In [App Store Connect](https://appstoreconnect.apple.com/) → your app → **TestFlight**,
    wait for the uploaded build to finish processing (status changes from "Processing" to
    ready).
-2. Apple may require answering **Export Compliance** questions for the build (CourtConnect
-   doesn't use custom encryption beyond standard HTTPS/TLS, so this is normally the
-   "does not use encryption beyond what's exempt" answer — confirm against Apple's current
-   questionnaire wording at submission time).
+2. **Export Compliance**: `ITSAppUsesNonExemptEncryption` is set to `false` in
+   `ios/App/App/Info.plist` — CourtConnect only uses standard HTTPS/TLS (Supabase, Apple's
+   own OS networking), no custom or proprietary encryption, so this declares that upfront
+   and App Store Connect should not prompt for the Export Compliance questionnaire on
+   upload. If it still prompts, answer "does not use encryption beyond what's exempt."
 3. Add **internal testers** (your own Apple Developer team, no review needed) for a first
    pass, or an **external testing group** (requires a lightweight Beta App Review) once
    you're ready for testers outside the team.
