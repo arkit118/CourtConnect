@@ -349,7 +349,9 @@ function PlayerCard({
             {skillLevelLabels[player.skill_level]}
           </span>
         )}
-        {player.utr_rating && <span className="badge bg-primary-50 text-primary-700">UTR {player.utr_rating}</span>}
+        {player.utr_rating && (
+          <span className="badge bg-primary-50 text-primary-700">Self-reported UTR {player.utr_rating}</span>
+        )}
       </div>
 
       {player.availability && player.availability.length > 0 && (

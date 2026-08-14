@@ -12,7 +12,7 @@ STORY: A Livingston player lands, understands in one viewport that this is a
   on one court location today, and has one clear next action.
 FIRST VIEWPORT: Full-bleed navy hero, large court-line diagram bleeding off
   the right edge, display headline stating what CourtConnect is directly (no
-  eyebrow pill), two CTAs (Join the beta / Find players).
+  eyebrow pill), two CTAs (Create Your Profile / Find Players).
 FORM: Brief-pinned direction (user-supplied tennis moodboard + explicit
   palette/motif constraints) - overrides the concept-seed roll per
   new-work.md's "a user- or brief-pinned decision beats the roll, always."
@@ -77,7 +77,7 @@ function HeroSection() {
 
           <div className="flex flex-wrap gap-4">
             <Link to="/auth/signup" className="btn-primary btn-lg inline-flex items-center gap-2">
-              Join the Beta
+              Create Your Profile
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
@@ -298,9 +298,9 @@ function EventsPreviewSection() {
           <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
             <CourtCorner className="w-8 h-8 text-primary-400 mx-auto mb-4" />
             <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">
-              First Livingston, NJ event coming soon
+              No events posted yet
             </h3>
-            <p className="text-secondary-600">We're planning our inaugural event. Check back soon!</p>
+            <p className="text-secondary-600">Livingston, NJ events will show up here once they're posted.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">

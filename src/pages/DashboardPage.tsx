@@ -278,7 +278,7 @@ export function DashboardPage() {
               </div>
               <div className="mt-4 pt-4 border-t border-secondary-100">
                 <p className="text-xs text-secondary-500 text-center">
-                  Livingston, NJ pilot - more towns coming soon!
+                  Livingston, NJ tennis community
                 </p>
               </div>
             </div>
@@ -309,7 +309,7 @@ export function ImpactDashboardPage() {
         <div className="text-center py-12 mb-12">
           <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-primary-50 border border-primary-100">
             <span className="w-3 h-3 rounded-full bg-primary-400 animate-pulse" />
-            <span className="text-lg font-medium text-primary-700">Pilot launching soon</span>
+            <span className="text-lg font-medium text-primary-700">Livingston, NJ pilot</span>
           </div>
           <p className="text-secondary-600 mt-4">Impact metrics will appear as our Livingston, NJ community grows.</p>
         </div>

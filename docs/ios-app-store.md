@@ -183,12 +183,12 @@ Safety/moderation:
 No payments, subscriptions, paid hitting, coaching marketplace, shipping, or Stripe
 checkout are included.
 
-Email/password sign-in only in this build (no social login). If the reviewer needs a demo
-account, provide one via App Store Connect's reviewer-notes attachment rather than in this
-public-facing text.
+Email/password sign-in only in this build (no social login). If the reviewer needs a
+reviewer test account, provide one via App Store Connect's reviewer-notes attachment
+rather than in this public-facing text.
 ```
 
-Consider providing the reviewer a pre-made demo account (email + password) in App Store
+Consider providing the reviewer a pre-made reviewer test account (email + password) in App Store
 Connect's sign-in-information fields, since the app requires an account for most
 functionality and a reviewer won't want to complete a real signup + email verification
 loop (see "Email verification and deep linking" below for why that loop is extra friction
@@ -253,7 +253,7 @@ email whose link opens in Safari (the website), not back inside the native app. 
 complete verification there, then have to return to the CourtConnect app and sign in
 normally — the web session doesn't carry over to the native app's separate WebView
 storage. This is a real extra step, not a crash or dead link, and it's why review notes
-above suggest giving the App Review team a pre-verified demo account.
+above suggest giving the App Review team a pre-verified reviewer test account.
 
 **Next steps to fix this properly (not done in this task — scope was explicitly to wrap
 the existing web app, not add native auth infrastructure):**

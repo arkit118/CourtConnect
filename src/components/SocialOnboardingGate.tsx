@@ -282,7 +282,7 @@ function SkillLevelStep() {
       return;
     }
     if (utrRating.trim() && !isValidUtr(Number(utrRating))) {
-      setError(`UTR rating must be between ${UTR_MIN} and ${UTR_MAX}.`);
+      setError(`Self-reported UTR rating must be between ${UTR_MIN} and ${UTR_MAX}.`);
       return;
     }
     if (!user) return;

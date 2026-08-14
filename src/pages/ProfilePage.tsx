@@ -262,7 +262,7 @@ export function ProfilePage() {
                 {displayProfile.utr_rating && (
                   <div className="flex items-center gap-1 text-primary-600 font-semibold">
                     <Trophy className="w-4 h-4" />
-                    <span>UTR {displayProfile.utr_rating}</span>
+                    <span>Self-reported UTR {displayProfile.utr_rating}</span>
                   </div>
                 )}
               </div>
@@ -302,7 +302,7 @@ export function ProfilePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="label">UTR Rating</label>
+                      <label className="label">Self-Reported UTR Rating</label>
                       <input
                         type="number"
                         step="0.1"
@@ -620,7 +620,7 @@ export function ProfileEditPage() {
                 </select>
               </div>
               <div>
-                <label className="label">UTR Rating</label>
+                <label className="label">Self-Reported UTR Rating</label>
                 <input
                   type="number"
                   step="0.1"

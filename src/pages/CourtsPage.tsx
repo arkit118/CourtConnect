@@ -25,7 +25,7 @@ const surfaceColors: Record<string, string> = {
   other: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-const towns = ['Livingston, NJ']; // Pilot launch - more towns coming soon
+const towns = ['Livingston, NJ']; // Pilot launch - Livingston, NJ only
 const surfaces = ['hard', 'clay', 'grass', 'synthetic', 'carpet', 'other'];
 
 // Same visual pattern as GearPage's notice banner. Added because user
@@ -39,8 +39,8 @@ function CourtsNoticeBanner() {
       <Info className="w-5 h-5 text-clay-600 shrink-0 mt-0.5" />
       <p className="text-sm text-secondary-700">
         Court counts below show total courts at each location, not live availability. CourtConnect does not track
-        whether a court is currently in use - scheduling here is for community coordination only, not an official
-        reservation.
+        whether a court is currently in use. CourtConnect does not officially reserve public courts - scheduling is
+        for community coordination only.
       </p>
     </div>
   );
