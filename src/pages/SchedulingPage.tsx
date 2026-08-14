@@ -8,6 +8,7 @@ import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Court, CourtBooking } from '../lib/supabase';
 import { ReportButton } from '../components/ReportButton';
 import { withTimeout } from '../lib/withTimeout';
+import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
 import { PageHero } from '../components/brand/PageHero';
 
 function ScheduleHero() {
@@ -182,6 +183,10 @@ export function SchedulingPage() {
     }
     if (!form.start_time || !form.end_time) {
       addToast({ type: 'error', message: 'Please select start and end times' });
+      return;
+    }
+    if (containsBlockedContent(form.notes)) {
+      addToast({ type: 'error', message: CONTENT_BLOCKED_MESSAGE });
       return;
     }
 

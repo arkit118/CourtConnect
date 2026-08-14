@@ -7,6 +7,7 @@ import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { supabase, GearListing, Profile } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
+import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
 import { ReportButton } from '../components/ReportButton';
 import { PageHero } from '../components/brand/PageHero';
 import { StringGrid } from '../components/brand/CourtMotif';
@@ -481,6 +482,10 @@ export function GearCreatePage() {
       return;
     }
     if (!(await canProceed())) {
+      return;
+    }
+    if (containsBlockedContent(form.title) || containsBlockedContent(form.description)) {
+      addToast({ type: 'error', message: CONTENT_BLOCKED_MESSAGE });
       return;
     }
 

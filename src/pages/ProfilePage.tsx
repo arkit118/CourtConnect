@@ -7,7 +7,9 @@ import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { uploadImage, validateImageFile, compressImageForUpload } from '../lib/storage';
 import { withTimeout } from '../lib/withTimeout';
+import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
 import { ReportButton } from '../components/ReportButton';
+import { BlockButton } from '../components/BlockButton';
 import { CourtCorner } from '../components/brand/CourtMotif';
 import { SKILL_LEVELS, skillLevelLabels, skillLevelColors } from '../lib/skillLevel';
 
@@ -123,6 +125,10 @@ export function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) return;
+    if (containsBlockedContent(editForm.bio)) {
+      addToast({ type: 'error', message: CONTENT_BLOCKED_MESSAGE });
+      return;
+    }
     if (!(await canProceed())) return;
     setSaving(true);
 
@@ -346,8 +352,11 @@ export function ProfilePage() {
                         Find a Match
                       </Link>
                     )}
-                    {!isOwnProfile && profile && (
-                      <ReportButton reportType="user" targetId={profile.id} reportedUserId={profile.id} />
+                    {!isOwnProfile && profile && user && (
+                      <>
+                        <ReportButton reportType="user" targetId={profile.id} reportedUserId={profile.id} />
+                        <BlockButton blockedUserId={profile.id} />
+                      </>
                     )}
                   </div>
                 </>
@@ -466,6 +475,10 @@ export function ProfileEditPage() {
   };
 
   const handleSave = async () => {
+    if (containsBlockedContent(form.bio)) {
+      addToast({ type: 'error', message: CONTENT_BLOCKED_MESSAGE });
+      return;
+    }
     if (!(await canProceed())) return;
     setLoading(true);
     try {

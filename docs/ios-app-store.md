@@ -17,7 +17,7 @@ Connect listing itself.
 | App name | CourtConnect |
 | Bundle ID | `com.arkitshah.courtconnect` |
 | Version (marketing) | 1.0.0 |
-| Build number | 3 |
+| Build number | 4 |
 | Platform | iOS first (Android not set up) |
 
 **Do not change the Bundle ID after the first App Store Connect upload.** Once a bundle ID

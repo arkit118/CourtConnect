@@ -12,6 +12,7 @@ import { ReportButton } from '../components/ReportButton';
 import { BlockButton } from '../components/BlockButton';
 import { supabase, Match, Message, Profile } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
+import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -153,6 +154,10 @@ export function ChatPage() {
     if (!trimmed) return;
     if (trimmed.length > MAX_MESSAGE_LENGTH) {
       addToast({ type: 'error', message: `Messages must be ${MAX_MESSAGE_LENGTH} characters or fewer.` });
+      return;
+    }
+    if (containsBlockedContent(trimmed)) {
+      addToast({ type: 'error', message: CONTENT_BLOCKED_MESSAGE });
       return;
     }
 

@@ -15,6 +15,7 @@ import { useLegalGateStore } from './hooks/useLegalGate';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage, SignupPage, ForgotPasswordPage } from './pages/AuthPage';
 import { ProfilePage, ProfileEditPage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { EventsPage, EventDetailPage } from './pages/EventsPage';
 import { EventCreatePage } from './pages/EventCreatePage';
@@ -266,6 +267,7 @@ function AppRoutes() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/impact" element={<ImpactDashboardPage />} />
 
           {/* Admin Routes */}

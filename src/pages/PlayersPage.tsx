@@ -8,6 +8,7 @@ import { useSocialEligibility } from '../hooks/useSocialEligibility';
 import { SocialOnboardingGate } from '../components/SocialOnboardingGate';
 import { SocialSafetyBanner } from '../components/SocialSafetyBanner';
 import { ReportButton } from '../components/ReportButton';
+import { BlockButton } from '../components/BlockButton';
 import { supabase, Profile, MatchCandidate } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
 import { PageHero } from '../components/brand/PageHero';
@@ -701,6 +702,12 @@ function EligibleCandidateList() {
                     reportedUserId={candidate.id}
                     label=""
                     className="p-2 rounded-lg border border-secondary-200 text-secondary-500 hover:text-red-600 hover:border-red-200"
+                  />
+                  <BlockButton
+                    blockedUserId={candidate.id}
+                    label=""
+                    className="p-2 rounded-lg border border-secondary-200 text-secondary-500 hover:text-red-600 hover:border-red-200"
+                    onBlocked={() => setCandidates((prev) => prev.filter((c) => c.id !== candidate.id))}
                   />
                 </div>
               }

@@ -53,6 +53,13 @@ interface AuthContextType {
   // signup "check your email" screen, the sign-in "email not confirmed"
   // prompt, and the needs_email_verification onboarding step.
   resendVerificationEmail: (email: string) => Promise<void>;
+  // Permanently deletes the signed-in user's own account via the
+  // delete-account Edge Function (the only place the service_role key is
+  // ever used - never in this frontend). Does NOT sign out on its own;
+  // SettingsPage calls signOut() itself right after this resolves, so the
+  // two steps stay visibly sequential (delete, then sign out, then
+  // navigate away) rather than hidden inside one context method.
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -473,6 +480,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      throw new Error('You must be signed in to delete your account.');
+    }
+
+    const { data, error: invokeError } = await supabase.functions.invoke('delete-account', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (invokeError || data?.ok !== true) {
+      console.error('[AuthContext] delete-account failed:', { invokeError, data });
+      throw new Error(data?.error || invokeError?.message || 'Could not delete your account. Please try again.');
+    }
+  };
+
   const signOut = async () => {
     setError(null);
     try {
@@ -584,6 +608,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshProfile,
         setProfileFields,
         resendVerificationEmail,
+        deleteAccount,
       }}
     >
       {children}
