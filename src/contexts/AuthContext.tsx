@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 import { withTimeout, isMissingColumnError, devLog } from '../lib/withTimeout';
 import { installAuthRecovery } from '../lib/authRecovery';
+import { authRedirectOrigin } from '../lib/openExternal';
 
 const AUTH_TIMEOUT_MS = 8000;
 
@@ -39,11 +40,26 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<Profile>;
-  refreshProfile: () => Promise<void>;
+  // silent: true skips setting the global profileError (the app-wide
+  // orange banner) on failure - for opportunistic refreshes after an
+  // action whose success is already confirmed by its own RPC result, not
+  // for the primary profile-load path. See fetchProfile's comment.
+  refreshProfile: (opts?: { silent?: boolean }) => Promise<void>;
+  // Local cache merge only, never touches the database. Only ever use this
+  // with fields already confirmed server-side by a SECURITY DEFINER RPC's
+  // own success result.
+  setProfileFields: (updates: Partial<Profile>) => void;
   // supabase.auth.resend() for a signup confirmation email - used by the
   // signup "check your email" screen, the sign-in "email not confirmed"
   // prompt, and the needs_email_verification onboarding step.
   resendVerificationEmail: (email: string) => Promise<void>;
+  // Permanently deletes the signed-in user's own account via the
+  // delete-account Edge Function (the only place the service_role key is
+  // ever used - never in this frontend). Does NOT sign out on its own;
+  // SettingsPage calls signOut() itself right after this resolves, so the
+  // two steps stay visibly sequential (delete, then sign out, then
+  // navigate away) rather than hidden inside one context method.
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -138,7 +154,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchProfile = async (userId: string, isRetry = false) => {
+  // silent=true is for opportunistic background refreshes that follow a
+  // successful, already-confirmed action (e.g. parent consent submit) -
+  // the profile row is known-good server-side at that point, so a failure
+  // to re-fetch it here is just a missed cache sync, not a real "your
+  // profile is broken" event. Never surface PROFILE_LOAD_ERROR_MESSAGE (the
+  // app-wide orange banner - see App.tsx's ProfileErrorBanner) for that
+  // case; only log it. Non-silent callers (initial auth load, the banner's
+  // own Retry button) keep the original behavior unchanged.
+  const fetchProfile = async (userId: string, isRetry = false, silent = false) => {
     try {
       const { data, error: fetchError } = await withTimeout(
         supabase.from('profiles').select('*').eq('id', userId).single(),
@@ -149,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fetchError) throw fetchError;
       if (mountedRef.current && data) {
         setProfile(data);
-        setProfileError(null);
+        if (!silent) setProfileError(null);
       }
     } catch (err) {
       // Most real-world failures here are transient (a slow/cold
@@ -159,7 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // really just a blip - only a second consecutive failure surfaces it.
       if (!isRetry) {
         devLog('[AuthContext] Profile fetch failed, retrying once:', err);
-        return fetchProfile(userId, true);
+        return fetchProfile(userId, true, silent);
+      }
+      if (silent) {
+        console.error('[AuthContext] Silent profile refresh failed (not shown to user):', err);
+        return;
       }
       console.error('[AuthContext] Error fetching profile:', err);
       if (mountedRef.current) {
@@ -309,7 +337,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               utr_rating: info.utr_rating,
               home_town: info.home_town,
             },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${authRedirectOrigin()}/dashboard`,
           },
         }),
         AUTH_TIMEOUT_MS,
@@ -444,11 +472,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error: resendError } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: `${authRedirectOrigin()}/dashboard` },
     });
     if (resendError) {
       console.error('[AuthContext] Resend verification email error:', resendError);
       throw resendError;
+    }
+  };
+
+  const deleteAccount = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      throw new Error('You must be signed in to delete your account.');
+    }
+
+    const { data, error: invokeError } = await supabase.functions.invoke('delete-account', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (invokeError || data?.ok !== true) {
+      console.error('[AuthContext] delete-account failed:', { invokeError, data });
+      throw new Error(data?.error || invokeError?.message || 'Could not delete your account. Please try again.');
     }
   };
 
@@ -499,7 +544,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/auth/reset-password',
+      redirectTo: authRedirectOrigin() + '/auth/reset-password',
     });
     if (resetError) {
       console.error('[AuthContext] Reset password error:', resetError);
@@ -526,10 +571,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = async (opts?: { silent?: boolean }) => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, false, opts?.silent ?? false);
     }
+  };
+
+  // Local-only merge into the cached profile, no network request. Safe to
+  // use only for fields the caller has already confirmed server-side via a
+  // SECURITY DEFINER RPC's own success result (e.g.
+  // request_parent_consent/mark_parent_consent_email_sent) - this never
+  // writes to the database itself. Lets a component reflect a known-true
+  // server state immediately, without making UI correctness depend on a
+  // follow-up fetchProfile() round trip that could time out.
+  const setProfileFields = (updates: Partial<Profile>) => {
+    if (!mountedRef.current) return;
+    setProfile((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
   return (
@@ -549,7 +606,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPassword,
         updateProfile,
         refreshProfile,
+        setProfileFields,
         resendVerificationEmail,
+        deleteAccount,
       }}
     >
       {children}

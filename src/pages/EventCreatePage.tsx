@@ -6,6 +6,7 @@ import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { supabase } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
+import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
 
 const towns = ['Bloomfield', 'Caldwell', 'Livingston', 'Maplewood', 'Millburn', 'Montclair', 'Nutley', 'South Orange', 'West Orange'];
 
@@ -78,6 +79,14 @@ export function EventCreatePage() {
       return;
     }
     if (!(await canProceed())) {
+      return;
+    }
+    if (
+      containsBlockedContent(form.description) ||
+      containsBlockedContent(form.rules) ||
+      containsBlockedContent(form.faq)
+    ) {
+      addToast({ type: 'error', message: CONTENT_BLOCKED_MESSAGE });
       return;
     }
 

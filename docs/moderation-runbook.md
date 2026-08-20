@@ -124,7 +124,67 @@ active emergency, immediate danger, or anything requiring law enforcement:
 
 ## 7. Appeals and support
 
-All appeals ("I was banned and think it's a mistake"), account deletion requests, and
-general support requests go to **courtconnect.contact@gmail.com** — this is the single
-contact address used consistently across the Terms, Privacy, Safety pages, the banned
-banner, and this runbook. Respond manually; there is no ticketing system yet.
+All appeals ("I was banned and think it's a mistake") and general support requests go to
+**courtconnect.contact@gmail.com** — this is the single contact address used consistently
+across the Terms, Privacy, Safety pages, the banned banner, and this runbook. Respond
+manually; there is no ticketing system yet.
+
+Account deletion no longer requires emailing support — users can delete their own account
+in-app (Settings → Account → Delete Account, type DELETE to confirm). See section 8 below
+if a user asks you to do it for them instead (e.g. they can't sign in).
+
+## 8. Account deletion (in-app, and the `delete-account` Edge Function)
+
+Users delete their own account from **Settings → Account → Delete Account**
+(`src/pages/SettingsPage.tsx`), which calls the `delete-account` Edge Function
+(`supabase/functions/delete-account/index.ts`) with their own access token. That function:
+
+1. Verifies the caller's JWT with the anon key (never service_role for this step).
+2. Best-effort removes everything under the user's own `${uid}/` folder in the `avatars`,
+   `gear-images`, and `event-images` Storage buckets.
+3. Calls `supabase.auth.admin.deleteUser(uid)` using a service_role client that only ever
+   exists inside this Edge Function — **the service_role key is never present in the
+   frontend build**, only as a Supabase-managed Edge Function secret.
+
+Deleting the `auth.users` row cascades through every table that stores the user's own
+data (`profiles`, `registrations`, `partner_requests`, `gear_listings`, `gear_interests`,
+`comments`, `matches` and, via `matches`, `messages`, `blocks`,
+`parent_consent_requests`) via `ON DELETE CASCADE` foreign keys already in the schema — no
+manual per-table cleanup needed. Content the user didn't solely own is preserved and
+de-identified instead: `events.organizer_id`, `reports.reporter_id`/`reported_user_id`,
+`matches.requested_by`, and `admin_flags.reporter_id` are all `ON DELETE SET NULL`, so an
+event they created or a report involving them survives, just anonymized.
+
+**Deploying/updating this function** (only needed after editing
+`supabase/functions/delete-account/index.ts`):
+
+```
+supabase functions deploy delete-account
+```
+
+No new secrets to set — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and
+`SUPABASE_SERVICE_ROLE_KEY` are all provided automatically to every Edge Function by the
+Supabase runtime.
+
+**If a user can't access Settings themselves** (locked out, banned, etc.) and asks you to
+delete their account manually: Table Editor → Authentication → Users → find them by email
+→ delete. This performs the same cascade as the Edge Function above, since it's the same
+underlying `auth.users` deletion.
+
+## 9. Objectionable-content filter
+
+Chat messages, profile bios, gear listing titles/descriptions, court booking notes, and
+event descriptions/rules/FAQ are checked against a basic denylist of severe profanity,
+slurs, and explicit sexual solicitation terms before they can be saved — narrow and
+severity-focused on purpose, so normal tennis/community language is never affected.
+
+- **Client-side**: `src/lib/contentFilter.ts` — blocks the submission immediately with a
+  clear error message, before any network request is made.
+- **Server-side**: `supabase/migrations/20260814000001_021_content_filter.sql` — the same
+  category of terms, enforced as Postgres triggers on `messages`, `profiles.bio`,
+  `gear_listings`, `court_bookings.notes`, and `events`, so the check holds even if the
+  client-side one is bypassed (a direct API call, a modified build, etc.).
+
+This supplements, and does not replace, the existing report/block tools and the manual
+moderation workflow in sections 1–6 above — it catches obvious cases automatically, humans
+still handle everything else.

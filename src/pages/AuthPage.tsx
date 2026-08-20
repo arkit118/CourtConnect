@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
@@ -6,6 +6,7 @@ import { Mail, Lock, User, Eye, EyeOff, Calendar, Trophy, MapPin } from 'lucide-
 import { calculateAge, ageBandForAge, MIN_SIGNUP_AGE } from '../lib/legal';
 import { SKILL_LEVELS, UTR_MIN, UTR_MAX, isValidUtr } from '../lib/skillLevel';
 import { AuthLayout } from '../components/brand/AuthLayout';
+import { inAppLinkTarget } from '../lib/openExternal';
 
 const DEFAULT_SIGNUP_LOCATION = 'Livingston, NJ';
 
@@ -120,6 +121,24 @@ export function SignupPage() {
   const { signUp, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToastStore();
+
+  // Account creation doesn't navigate to a new route when email
+  // confirmation is required (the common case - Supabase's "Confirm
+  // email" setting is on for App Store builds) - it swaps this same
+  // /auth/signup screen from the long signup form to the "check your
+  // email" card in place. The router-level ScrollToTop (src/components/
+  // ScrollToTop.tsx) only fires on pathname/hash changes, so it never
+  // sees this transition, and a user who scrolled to the bottom of the
+  // form to hit "Create Account" was left staring at whatever was at that
+  // same scroll position - often blank space below the confirmation
+  // card - instead of the card itself. Scroll explicitly whenever this
+  // screen switches into the confirmation view, on both web and
+  // Capacitor iOS (same window.scrollTo the router-level version uses).
+  useEffect(() => {
+    if (confirmationPending) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [confirmationPending]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -362,16 +381,16 @@ export function SignupPage() {
               />
               <span className="text-sm text-secondary-600">
                 I agree to the{' '}
-                <Link to="/terms" target="_blank" className="text-primary-600 hover:underline">Terms of Service</Link>
+                <Link to="/terms" target={inAppLinkTarget} className="text-primary-600 hover:underline">Terms of Service</Link>
                 {' '}and{' '}
-                <Link to="/privacy" target="_blank" className="text-primary-600 hover:underline">Privacy Policy</Link>.
+                <Link to="/privacy" target={inAppLinkTarget} className="text-primary-600 hover:underline">Privacy Policy</Link>.
               </span>
             </label>
 
             <p className="text-xs text-secondary-500">
               CourtConnect is for community coordination only: it does not officially reserve courts or process
               gear payments. Minors should use CourtConnect with a parent or guardian's knowledge. See our{' '}
-              <Link to="/safety" target="_blank" className="text-primary-600 hover:underline">Safety page</Link>.
+              <Link to="/safety" target={inAppLinkTarget} className="text-primary-600 hover:underline">Safety page</Link>.
             </p>
 
             <button type="submit" className="btn-primary w-full" disabled={loading}>

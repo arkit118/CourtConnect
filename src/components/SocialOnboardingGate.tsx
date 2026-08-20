@@ -61,12 +61,17 @@ export function SocialOnboardingGate({ status }: Props) {
     return <AdultActivationStep />;
   }
 
-  if (status === 'needs_parent_email') {
-    return <ParentEmailStep />;
-  }
-
-  if (status === 'pending_consent') {
-    return <PendingConsentStep />;
+  // Both statuses render the same ParentConsentFlow component instance
+  // (see its header comment for why this matters): request_parent_consent
+  // flips profile.parent_consent_status to 'pending' server-side as soon
+  // as the request is saved, *before* the app knows whether the consent
+  // email itself sent - so a profile refresh can flip status from
+  // needs_parent_email to pending_consent while a send is still in
+  // flight or just failed. If these were two different component types,
+  // React would unmount/remount across that transition and silently
+  // discard any in-progress failure/retry state.
+  if (status === 'needs_parent_email' || status === 'pending_consent') {
+    return <ParentConsentFlow />;
   }
 
   if (status === 'consent_declined') {
@@ -277,7 +282,7 @@ function SkillLevelStep() {
       return;
     }
     if (utrRating.trim() && !isValidUtr(Number(utrRating))) {
-      setError(`UTR rating must be between ${UTR_MIN} and ${UTR_MAX}.`);
+      setError(`Self-reported UTR rating must be between ${UTR_MIN} and ${UTR_MAX}.`);
       return;
     }
     if (!user) return;
@@ -398,9 +403,9 @@ function AdultActivationStep() {
 }
 
 // Invokes the Edge Function and normalizes its outcome into a plain
-// ok/message result. Never throws. Shared by the initial request
-// (ParentEmailStep) and any later resend (also ParentEmailStep, reused by
-// PendingConsentStep) so both paths log and interpret failures identically.
+// ok/message result. Never throws. Shared by the initial request and any
+// later retry (both handled by ParentConsentFlow below) so both paths log
+// and interpret failures identically.
 async function invokeSendConsentEmail(
   token: string,
   parentEmail: string,
@@ -422,19 +427,46 @@ async function invokeSendConsentEmail(
         ok: false,
         message: notConfigured
           ? 'The consent email could not be sent because email sending is not configured yet on our end. Please contact support.'
-          : (emailResult?.error || 'We could not send the consent email. Please try again.'),
+          : 'We could not send the consent email. Please check the email address and try again.',
       };
     }
 
     return { ok: true };
   } catch (err: any) {
     console.error('send-parent-consent-email: invoke threw', { token, parentEmail, err });
-    return { ok: false, message: 'We could not send the consent email. Check your connection and try again.' };
+    return { ok: false, message: 'We could not send the consent email. Please check the email address and try again.' };
   }
 }
 
-function ParentEmailStep() {
-  const { profile, refreshProfile } = useAuth();
+// Exact copy required for the "we actually confirmed Resend accepted it"
+// case - distinct from the generic RPC-failure toast below, which covers
+// the (much rarer) case where request_parent_consent itself didn't even
+// save.
+const CONSENT_EMAIL_SENT_MESSAGE =
+  'Parent consent email sent. Ask your parent or guardian to check their inbox and spam folder.';
+
+// Handles the full parent/guardian consent lifecycle - the initial
+// request form, a failed-send with retry, and the "waiting for a
+// decision" card - as ONE component, rendered for both the
+// needs_parent_email and pending_consent eligibility statuses (see
+// SocialOnboardingGate's dispatch above). This used to be two separate
+// components (ParentEmailStep / PendingConsentStep) swapped based on
+// status, but request_parent_consent() sets profile.parent_consent_status
+// = 'pending' the moment the *request* is saved - before the app has any
+// idea whether the follow-up consent email actually sent. Any profile
+// refresh in that window (including the deliberately-non-blocking silent
+// background sync below) would flip status from needs_parent_email to
+// pending_consent while a send was still in flight or had just failed,
+// and with two separate component types React would unmount the one
+// showing the failure/retry UI and mount a fresh, blank one in its
+// place - silently discarding the exact error the user was looking at.
+// One component instance persisting across both statuses (same function
+// reference at the same position in SocialOnboardingGate's returned
+// tree) means React updates it in place instead, so local state
+// (emailFailure, retrying, the typed-in email) survives regardless of
+// when the background profile sync lands.
+function ParentConsentFlow() {
+  const { profile, setProfileFields, refreshProfile } = useAuth();
   const { addToast } = useToastStore();
   const [parentEmail, setParentEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -462,9 +494,22 @@ function ParentEmailStep() {
         throw new Error('Could not start the parent/guardian approval request.');
       }
 
+      // The RPC above is SECURITY DEFINER and already committed this
+      // server-side (see request_parent_consent in
+      // 20260802000001_017_parent_consent_email_tracking.sql) - reflect it
+      // in the local cache immediately rather than waiting on a follow-up
+      // network fetch just to unblock the UI. This is a local merge only,
+      // not a database write.
+      setProfileFields({
+        parent_consent_status: 'pending',
+        parent_consent_requested_at: new Date().toISOString(),
+        parent_consent_decided_at: null,
+        parent_consent_decision: null,
+        parent_consent_email_sent_at: null,
+      });
+
       const childName = profile?.name || 'Your child';
       const result = await invokeSendConsentEmail(data.token, parentEmail.trim(), childName);
-      await refreshProfile();
 
       // Only ever tell the user the email was sent when it actually was.
       // The request row itself is always saved by this point regardless
@@ -473,10 +518,20 @@ function ParentEmailStep() {
       // conflating them (showing a success toast even when the email
       // failed) is exactly the bug this fixes.
       if (result.ok) {
-        addToast({ type: 'success', message: 'Parent/guardian approval email sent.' });
+        setProfileFields({ parent_consent_email_sent_at: new Date().toISOString() });
+        addToast({ type: 'success', message: CONSENT_EMAIL_SENT_MESSAGE });
       } else {
         setEmailFailure({ token: data.token, parentEmail: parentEmail.trim(), message: result.message });
       }
+
+      // Best-effort background sync with the database, purely to catch up
+      // any field this component doesn't already know (or a mark_parent_
+      // consent_email_sent write that failed independently of the email
+      // send - see the Edge Function's comment on that). silent: true
+      // means a slow/failed refetch here is only ever logged, never shown
+      // as the app-wide "could not load your profile" banner - the whole
+      // point of this fix (see AuthContext.fetchProfile's comment).
+      void refreshProfile({ silent: true });
     } catch (err: any) {
       console.error('Error requesting parent consent:', err);
       setError(err.message || 'Something went wrong. Please try again.');
@@ -495,8 +550,9 @@ function ParentEmailStep() {
 
     if (result.ok) {
       setEmailFailure(null);
-      await refreshProfile();
-      addToast({ type: 'success', message: 'Parent/guardian approval email sent.' });
+      setProfileFields({ parent_consent_email_sent_at: new Date().toISOString() });
+      addToast({ type: 'success', message: CONSENT_EMAIL_SENT_MESSAGE });
+      void refreshProfile({ silent: true });
     } else {
       setEmailFailure({ ...emailFailure, message: result.message });
     }
@@ -527,6 +583,23 @@ function ParentEmailStep() {
           Use a different email address instead
         </button>
       </div>
+    );
+  }
+
+  // profile.parent_consent_email_sent_at (set only by the Edge Function,
+  // only after Resend confirms success - see the 017 migration) is the
+  // durable signal that the email genuinely went out, distinct from
+  // parent_consent_status = 'pending' alone (which only means the
+  // *request* was saved - see this component's header comment). Without
+  // this check, a failed/never-attempted send would still land here
+  // showing "we've sent your parent an email" with no way to retry.
+  if (profile?.parent_consent_email_sent_at) {
+    return (
+      <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
+        We've sent your parent or guardian an email asking them to approve player matching and chat for your
+        account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
+        CourtConnect - you can still browse courts, events, and the schedule.
+      </SafetyCard>
     );
   }
 
@@ -562,26 +635,3 @@ function ParentEmailStep() {
   );
 }
 
-// status === 'pending_consent' means the *request* was saved, not
-// necessarily that the email actually reached the parent/guardian -
-// profile.parent_consent_email_sent_at (set only by the Edge Function,
-// only after Resend confirms success - see the 017 migration) is the
-// durable signal that distinguishes them. Without this check, a failed
-// send left the user staring at "we've sent your parent an email" forever,
-// with no way to retry once they left the page (the real-world bug this
-// fixes).
-function PendingConsentStep() {
-  const { profile } = useAuth();
-
-  if (!profile?.parent_consent_email_sent_at) {
-    return <ParentEmailStep />;
-  }
-
-  return (
-    <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
-      We've sent your parent or guardian an email asking them to approve player matching and chat for your
-      account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
-      CourtConnect - you can still browse courts, events, and the schedule.
-    </SafetyCard>
-  );
-}

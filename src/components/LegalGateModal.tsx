@@ -6,6 +6,7 @@ import { useLegalGateStore } from '../hooks/useLegalGate';
 import { supabase } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
 import { CURRENT_TOS_VERSION, CURRENT_PRIVACY_VERSION } from '../lib/legal';
+import { inAppLinkTarget } from '../lib/openExternal';
 
 // Rendered once near the app root. Shown whenever a signed-in user with a
 // missing/outdated Terms or Privacy acceptance attempts an authenticated
@@ -69,13 +70,13 @@ export function LegalGateModal() {
         <h3 className="text-xl font-bold text-secondary-900 mb-2">Please review our Terms</h3>
         <p className="text-secondary-600 mb-4">
           Before continuing, please confirm you agree to our{' '}
-          <Link to="/terms" target="_blank" className="text-primary-600 hover:underline">Terms of Service</Link>{' '}
+          <Link to="/terms" target={inAppLinkTarget} className="text-primary-600 hover:underline">Terms of Service</Link>{' '}
           and{' '}
-          <Link to="/privacy" target="_blank" className="text-primary-600 hover:underline">Privacy Policy</Link>.
+          <Link to="/privacy" target={inAppLinkTarget} className="text-primary-600 hover:underline">Privacy Policy</Link>.
         </p>
         <p className="text-xs text-secondary-500 mb-6">
           Reminder: CourtConnect does not officially reserve courts or process gear payments. See our{' '}
-          <Link to="/safety" target="_blank" className="text-primary-600 hover:underline">Safety page</Link> for more.
+          <Link to="/safety" target={inAppLinkTarget} className="text-primary-600 hover:underline">Safety page</Link> for more.
         </p>
 
         {error && (

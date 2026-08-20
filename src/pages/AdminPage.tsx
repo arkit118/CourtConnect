@@ -360,7 +360,7 @@ export function AdminPage() {
             ) : (
               <div className="card p-6">
                 <h2 className="text-lg font-semibold text-secondary-900 mb-4">Settings</h2>
-                <p className="text-secondary-600">Admin settings functionality coming soon...</p>
+                <p className="text-secondary-600">No admin settings yet. Manage users, listings, and content from the tabs above.</p>
               </div>
             )}
           </div>

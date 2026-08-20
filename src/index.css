@@ -211,6 +211,23 @@
     text-wrap: balance;
   }
 
+  /* iPhone notch/Dynamic Island/home indicator insets. env(safe-area-inset-*)
+     resolves to 0 on desktop web and on devices without a notch/home
+     indicator (requires viewport-fit=cover, set in index.html), so these
+     never add unwanted padding outside the Capacitor iOS WebView. */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }

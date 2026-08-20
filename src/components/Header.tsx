@@ -44,7 +44,7 @@ export function Header() {
     location.pathname === path || (path === '/matches' && location.pathname.startsWith('/matches/'));
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100 shadow-nav">
+    <header className="safe-top safe-x sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-secondary-100 shadow-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-18">
           <div className="flex items-center gap-8">
@@ -115,6 +115,14 @@ export function Header() {
                         >
                           <User className="w-4 h-4" />
                           My Profile
+                        </Link>
+                        <Link
+                          to="/settings"
+                          className="flex items-center gap-3 px-4 py-2 text-sm font-semibold text-secondary-700 hover:bg-secondary-50"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          Settings
                         </Link>
                       </div>
                       <div className="border-t border-secondary-100 pt-2">
@@ -194,6 +202,13 @@ export function Header() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       My Profile
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="block px-4 py-3 rounded-xl text-[15px] font-semibold text-secondary-700 hover:text-secondary-900 hover:bg-secondary-50 active:bg-secondary-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Settings
                     </Link>
                     <button
                       onClick={() => {

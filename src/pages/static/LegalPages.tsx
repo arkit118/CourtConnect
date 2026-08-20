@@ -149,7 +149,13 @@ export function TermsPage() {
 
           <LegalSection number={18} title="Contact, Support, and Account Deletion">
             <p>
-              Questions about these Terms, general support, or requests to delete your account? Email{' '}
+              You can permanently delete your own account at any time, in-app: go to{' '}
+              <Link to="/settings" className="text-primary-600 hover:underline">Settings</Link> &rarr; Account &rarr;
+              Delete Account. This removes your profile, bookings, event registrations, gear listings, match
+              requests, and chat messages.
+            </p>
+            <p>
+              Questions about these Terms, general support, or help with account deletion? Email{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a>.
             </p>
           </LegalSection>
@@ -234,8 +240,17 @@ export function PrivacyPage() {
 
           <LegalSection number={8} title="Account Deletion">
             <p>
-              You can request account deletion by emailing{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a>.
+              You can permanently delete your own account at any time, directly in the app: go to{' '}
+              <Link to="/settings" className="text-primary-600 hover:underline">Settings</Link> &rarr; Account &rarr;
+              Delete Account, then type DELETE to confirm. This removes your profile and the data tied to it
+              (bookings, event registrations, gear listings, match requests, chat messages, and your profile photo).
+              A small amount of information tied to reports you were involved in may be retained in de-identified
+              form for safety and moderation records.
+            </p>
+            <p>
+              You can also request deletion by emailing{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a> if
+              you'd rather not do it in-app.
             </p>
           </LegalSection>
 
@@ -245,8 +260,10 @@ export function PrivacyPage() {
 
           <LegalSection number={10} title="Contact and Support">
             <p>
-              Questions about this Privacy Policy, general support, or account deletion requests? Email{' '}
+              Questions about this Privacy Policy or general support? Email{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary-600 hover:underline">{CONTACT_EMAIL}</a>.
+              To delete your account, see Section 8 above - it's available directly in{' '}
+              <Link to="/settings" className="text-primary-600 hover:underline">Settings</Link>, no email required.
             </p>
           </LegalSection>
         </div>
