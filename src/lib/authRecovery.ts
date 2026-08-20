@@ -41,7 +41,14 @@ export function installAuthRecovery(): () => void {
       window.location.reload();
     }, PROBE_TIMEOUT_MS);
 
-    supabase.auth.getSession().finally(() => {
+    // .catch() here is not optional: getSession() rejects (rather than
+    // resolving with an error) when the stored refresh token is stale -
+    // see installInvalidSessionRecovery() below for the full explanation.
+    // .finally() alone does not swallow a rejection, so without this catch
+    // a stale token would turn every tab-refocus into an unhandled promise
+    // rejection on top of whatever installInvalidSessionRecovery() already
+    // does for it.
+    supabase.auth.getSession().catch(() => {}).finally(() => {
       settled = true;
       window.clearTimeout(timer);
     });
@@ -50,3 +57,15 @@ export function installAuthRecovery(): () => void {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
 }
+
+// installInvalidSessionRecovery() - the fix for the native-iOS
+// "loads to the splash screen, then goes white/black and never recovers"
+// crash - lives in lib/supabase.ts, not here, and is installed once at
+// module load, immediately after the client is constructed. That failure
+// comes from @supabase/auth-js's own automatic startup session-recovery
+// attempt, which runs before React has mounted anything; a listener
+// installed later, from a React effect (as this file's installAuthRecovery
+// is), can miss it entirely if the rejection fires first. See
+// lib/supabase.ts for the full explanation and lib/authErrors.ts for the
+// error-matching logic shared by both that recovery path and
+// AuthContext's own fetchProfile/fetchOrCreateProfile error handling.

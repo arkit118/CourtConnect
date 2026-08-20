@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 import { withTimeout, isMissingColumnError, devLog } from '../lib/withTimeout';
+import { isInvalidSessionError } from '../lib/authErrors';
 import { installAuthRecovery } from '../lib/authRecovery';
 import { authRedirectOrigin } from '../lib/openExternal';
 
@@ -128,15 +129,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mountedRef.current) return;
       devLog('[AuthContext] auth state change:', event);
 
-      setSession(changedSession);
-      setUser(changedSession?.user ?? null);
-      setError(null);
+      try {
+        setSession(changedSession);
+        setUser(changedSession?.user ?? null);
+        setError(null);
 
-      if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
-        await fetchOrCreateProfile(changedSession.user);
-      } else if (event === 'SIGNED_OUT') {
-        setProfile(null);
-        setProfileError(null);
+        if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+          await fetchOrCreateProfile(changedSession.user);
+        } else if (event === 'SIGNED_OUT') {
+          setProfile(null);
+          setProfileError(null);
+        }
+      } catch (err) {
+        // fetchOrCreateProfile already catches everything itself and never
+        // throws - this is defense in depth for anything unexpected in
+        // this callback. A stale/invalid session specifically should never
+        // leave the app stuck: clear it locally (this re-enters this same
+        // listener with a SIGNED_OUT event, which the branch above
+        // handles) rather than surfacing the scary profile-load banner.
+        if (isInvalidSessionError(err)) {
+          console.error('[AuthContext] Invalid session during auth state change - signing out locally:', err);
+          void supabase.auth.signOut({ scope: 'local' });
+        } else {
+          console.error('[AuthContext] Unexpected error handling auth state change:', err);
+        }
       }
 
       if (!resolvedInitial && mountedRef.current) {
@@ -176,6 +192,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!silent) setProfileError(null);
       }
     } catch (err) {
+      // A stale/invalid session (see lib/authErrors.ts) is not a profile
+      // problem and retrying won't fix it - the session itself needs to go.
+      // Sign out locally rather than retrying or showing the scary
+      // "could not load your profile" banner; the resulting SIGNED_OUT
+      // event clears profile/profileError through the normal listener path.
+      if (isInvalidSessionError(err)) {
+        console.error('[AuthContext] Invalid session while fetching profile - signing out locally:', err);
+        void supabase.auth.signOut({ scope: 'local' });
+        return;
+      }
       // Most real-world failures here are transient (a slow/cold
       // connection, a dropped request) rather than a genuine problem the
       // user needs to act on. One silent retry absorbs that without ever
@@ -301,6 +327,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw fetchError;
       }
     } catch (err) {
+      // Same as fetchProfile above: a stale/invalid session isn't a
+      // profile problem, retrying won't fix it, and it should never show
+      // the scary banner - sign out locally and let the resulting
+      // SIGNED_OUT event clear state through the normal listener path.
+      if (isInvalidSessionError(err)) {
+        console.error('[AuthContext] Invalid session in fetchOrCreateProfile - signing out locally:', err);
+        void supabase.auth.signOut({ scope: 'local' });
+        return;
+      }
       // Same transient-blip tolerance as fetchProfile above - don't scare
       // the user over a single slow/dropped request.
       if (!isRetry) {
