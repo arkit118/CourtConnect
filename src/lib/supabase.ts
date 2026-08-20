@@ -1,4 +1,5 @@
 import { createClient, processLock } from '@supabase/supabase-js';
+import { isInvalidSessionError } from './authErrors';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -33,6 +34,55 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     lock: processLock,
   },
 });
+
+// Native-iOS boot crash fix: "app loads to the CourtConnect splash
+// screen, then goes white/black and never recovers," with an AuthApiError
+// (status 400, code refresh_token_not_found / invalid_refresh_token /
+// session_not_found) in the Xcode console. Root cause: the client above
+// automatically attempts to recover any previously-persisted session the
+// instant it's constructed - i.e. right now, synchronously, before this
+// module has even finished being imported by main.tsx, let alone before
+// React has mounted anything. Capacitor's WebView keeps localStorage
+// (including a stored refresh token) across full app relaunches far more
+// durably than a normal browser tab, so a token that's since been
+// rotated, revoked, or has simply expired is still sitting there the next
+// time the app boots - and that automatic recovery attempt then rejects.
+// That rejection happens completely outside any React lifecycle, so a
+// React error boundary (components/ErrorBoundary.tsx) can never catch it
+// - only a global unhandledrejection listener can, and it has to be
+// installed here, at module load, rather than from a React effect
+// (compare lib/authRecovery.ts's installAuthRecovery, which handles a
+// different, runtime-only failure mode and is safe to install later) -
+// anything later risks missing a rejection that fires first.
+//
+// On a match, this clears the stale session locally (scope: 'local' - no
+// network call, since the server has already rejected this exact token
+// and there's nothing meaningful left to revoke) and marks the rejection
+// handled. supabase.auth.signOut() synchronously notifies every
+// onAuthStateChange subscriber with a SIGNED_OUT event, so AuthContext's
+// listener (see contexts/AuthContext.tsx) picks this up through its
+// normal path - clearing profile/profileError and resolving `loading` to
+// false, landing the user cleanly on the sign-in page - without this file
+// needing any direct access to AuthContext's state. AuthContext's own
+// fetchProfile/fetchOrCreateProfile also check isInvalidSessionError
+// directly, for the same error class surfacing from a call this listener
+// can't see (an explicitly awaited getSession()/query elsewhere) rather
+// than the client's own background refresh timer.
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (!isInvalidSessionError(event.reason)) return;
+
+    console.error(
+      '[supabase] Clearing a stale/invalid session after a refresh-token error (this is expected and handled):',
+      event.reason
+    );
+    event.preventDefault();
+
+    void supabase.auth.signOut({ scope: 'local' }).catch((err) => {
+      console.error('[supabase] Local sign-out after invalid session failed:', err);
+    });
+  });
+}
 
 export type Profile = {
   id: string;
