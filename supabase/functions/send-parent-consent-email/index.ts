@@ -16,19 +16,27 @@
 // Required environment variables (set via `supabase secrets set` or the
 // Supabase dashboard's Edge Functions > Secrets page):
 //   RESEND_API_KEY           - a Resend API key
-//   PARENT_CONSENT_FROM_EMAIL - the verified "from" address in Resend
+//   PARENT_CONSENT_FROM_EMAIL - the verified "from" address in Resend.
+//                               Optional - falls back to
+//                               DEFAULT_FROM_EMAIL below (the verified
+//                               courtconnecttennis.com sender) if unset.
 //   APP_BASE_URL              - e.g. https://courtconnect.vercel.app
 //   SUPABASE_URL              - already present by default in the
 //                               Edge Function runtime
 //   SUPABASE_ANON_KEY         - already present by default
 //
-// If RESEND_API_KEY, PARENT_CONSENT_FROM_EMAIL, or APP_BASE_URL are not
-// set, this function returns a clear 503 with a `configured: false` body
-// instead of crashing. The frontend treats that as "email not sent yet"
-// and leaves the minor's account in parent_consent_status = 'pending' -
-// it never enables matching/chat just because the request was recorded.
+// If RESEND_API_KEY or APP_BASE_URL are not set, this function returns a
+// clear 503 with a `configured: false` body instead of crashing. The
+// frontend treats that as "email not sent yet" and leaves the minor's
+// account in parent_consent_status = 'pending' - it never enables
+// matching/chat just because the request was recorded.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
+
+// Verified Resend sending domain (courtconnecttennis.com) as of the
+// domain-verification rollout - used whenever PARENT_CONSENT_FROM_EMAIL
+// isn't set as an Edge Function secret.
+const DEFAULT_FROM_EMAIL = 'CourtConnect <parents@courtconnecttennis.com>';
 
 interface RequestBody {
   token: string;
@@ -115,19 +123,17 @@ Deno.serve(async (req) => {
     }
 
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    const fromEmail = Deno.env.get('PARENT_CONSENT_FROM_EMAIL');
+    const fromEmail = Deno.env.get('PARENT_CONSENT_FROM_EMAIL') || DEFAULT_FROM_EMAIL;
     const appBaseUrl = Deno.env.get('APP_BASE_URL');
 
-    if (!resendApiKey || !fromEmail || !appBaseUrl) {
-      console.error(
-        'send-parent-consent-email: missing one or more of RESEND_API_KEY, PARENT_CONSENT_FROM_EMAIL, APP_BASE_URL'
-      );
+    if (!resendApiKey || !appBaseUrl) {
+      console.error('send-parent-consent-email: missing one or more of RESEND_API_KEY, APP_BASE_URL');
       return new Response(
         JSON.stringify({
           ok: false,
           configured: false,
           error:
-            'Parent consent email is not configured yet. RESEND_API_KEY, PARENT_CONSENT_FROM_EMAIL, and APP_BASE_URL must be set as Edge Function secrets.',
+            'Parent consent email is not configured yet. RESEND_API_KEY and APP_BASE_URL must be set as Edge Function secrets.',
         }),
         { status: 503, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
