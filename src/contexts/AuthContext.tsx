@@ -134,8 +134,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(changedSession?.user ?? null);
         setError(null);
 
-        if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+        if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
           await fetchOrCreateProfile(changedSession.user);
+        } else if (changedSession?.user && event === 'TOKEN_REFRESHED') {
+          // Supabase silently rotates the access token in the background
+          // on a timer (roughly every ~50 minutes of active use), with no
+          // action from the user - they could be mid-navigation, or doing
+          // nothing at all. Treating this the same as a fresh sign-in
+          // (the old behavior) meant an ordinary transient blip on this
+          // one background refetch showed the scary "could not load your
+          // profile" banner for what the user experienced as "I was just
+          // clicking around and it randomly appeared." A profile that's
+          // already loaded doesn't need a loud refetch just because the
+          // token rotated - silent picks up any real change (e.g. an
+          // admin action from another session) without ever surfacing an
+          // error for a background operation the user can't even see.
+          await fetchProfile(changedSession.user.id, 0, true);
         } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setProfileError(null);
