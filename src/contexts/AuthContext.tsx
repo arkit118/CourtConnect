@@ -68,7 +68,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const MIGRATION_MISSING_MESSAGE =
   'A required database update has not been applied yet, so some profile fields are unavailable. Please contact support.';
 const PROFILE_LOAD_ERROR_MESSAGE = 'Could not load your profile. Please refresh or sign in again.';
-const EMAIL_NOT_CONFIRMED_MESSAGE =
+export const EMAIL_NOT_CONFIRMED_MESSAGE =
   'Please verify your email before using player matching or chat. Check your inbox for a verification link, or resend it below.';
 
 export function AuthProvider({ children }: { children: ReactNode }) {

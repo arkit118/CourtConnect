@@ -27,6 +27,7 @@ export const NJ_TOWNS = [
   'Verona',
   'Montclair',
   'Bloomfield',
+  'Cedar Grove',
   'Nutley',
   'Newark',
   'Summit',

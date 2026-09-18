@@ -4,6 +4,7 @@ import { Menu, X, User, LogOut, ChevronDown, Settings, Loader2 } from 'lucide-re
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { Logo } from './brand/Logo';
+import { NotificationBell } from './NotificationBell';
 
 const navLinks = [
   { to: '/events', label: 'Events' },
@@ -70,9 +71,11 @@ export function Header() {
 
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+              <div className="flex items-center gap-1">
+                <NotificationBell />
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-secondary-50 transition-colors"
                 >
                   {profile?.avatar_url ? (
@@ -145,6 +148,7 @@ export function Header() {
                     </div>
                   </>
                 )}
+              </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">

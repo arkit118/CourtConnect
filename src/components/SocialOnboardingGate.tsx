@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ShieldAlert, Clock, XCircle, Mail, AlertTriangle, Trophy } from 'lucide-react';
+import { ShieldAlert, XCircle, Mail, AlertTriangle, Trophy, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useLegalGateStore } from '../hooks/useLegalGate';
@@ -473,6 +473,18 @@ function ParentConsentFlow() {
   const [error, setError] = useState<string | null>(null);
   const [emailFailure, setEmailFailure] = useState<{ token: string; parentEmail: string; message: string } | null>(null);
   const [retrying, setRetrying] = useState(false);
+  // The email a *successful* send just went to, so the success card below
+  // can name it. Not persisted anywhere (parent_email lives in
+  // parent_consent_requests, which is intentionally unreadable by the
+  // client - see 014_parent_consent_requests.sql) - it only exists for
+  // this component instance, so a fresh page load shows the generic
+  // "your parent or guardian's email" copy instead, which is expected.
+  const [sentToEmail, setSentToEmail] = useState<string | null>(null);
+  // True only while the user has explicitly chosen "Send to a different
+  // email" from the success card - forces the form back on screen even
+  // though profile.parent_consent_email_sent_at is still set from the
+  // previous send, until a new request overwrites it.
+  const [editingEmail, setEditingEmail] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -519,6 +531,8 @@ function ParentConsentFlow() {
       // failed) is exactly the bug this fixes.
       if (result.ok) {
         setProfileFields({ parent_consent_email_sent_at: new Date().toISOString() });
+        setSentToEmail(parentEmail.trim());
+        setEditingEmail(false);
         addToast({ type: 'success', message: CONSENT_EMAIL_SENT_MESSAGE });
       } else {
         setEmailFailure({ token: data.token, parentEmail: parentEmail.trim(), message: result.message });
@@ -551,11 +565,20 @@ function ParentConsentFlow() {
     if (result.ok) {
       setEmailFailure(null);
       setProfileFields({ parent_consent_email_sent_at: new Date().toISOString() });
+      setSentToEmail(emailFailure.parentEmail);
+      setEditingEmail(false);
       addToast({ type: 'success', message: CONSENT_EMAIL_SENT_MESSAGE });
       void refreshProfile({ silent: true });
     } else {
       setEmailFailure({ ...emailFailure, message: result.message });
     }
+  };
+
+  const handleSendToDifferentEmail = () => {
+    setSentToEmail(null);
+    setEditingEmail(true);
+    setParentEmail('');
+    setError(null);
   };
 
   if (emailFailure) {
@@ -593,13 +616,37 @@ function ParentConsentFlow() {
   // *request* was saved - see this component's header comment). Without
   // this check, a failed/never-attempted send would still land here
   // showing "we've sent your parent an email" with no way to retry.
-  if (profile?.parent_consent_email_sent_at) {
+  //
+  // This success state fully replaces the email form (rather than leaving
+  // the input/button on screen next to a toast) so it's unambiguous that
+  // something happened - editingEmail is the only way back to the form,
+  // via "Send to a different email" below.
+  if (profile?.parent_consent_email_sent_at && !editingEmail) {
     return (
-      <SafetyCard icon={Clock} tone="warning" title="Waiting for parent/guardian approval">
-        We've sent your parent or guardian an email asking them to approve player matching and chat for your
-        account. You'll be able to see match candidates and chat once they respond. This doesn't affect the rest of
-        CourtConnect - you can still browse courts, events, and the schedule.
-      </SafetyCard>
+      <div className="card p-8 max-w-md mx-auto text-center">
+        <CheckCircle className="w-10 h-10 text-primary-600 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-secondary-900 mb-2">Parent email sent</h3>
+        <p className="text-sm text-secondary-600 mb-6">
+          {sentToEmail ? (
+            <>
+              We sent an approval link to <strong>{sentToEmail}</strong>. Your account will stay limited until a
+              parent or guardian approves it.
+            </>
+          ) : (
+            <>
+              We sent an approval link to your parent or guardian's email address. Your account will stay limited
+              until they approve it.
+            </>
+          )}
+        </p>
+        <p className="text-xs text-secondary-500 mb-6">
+          This doesn't affect the rest of CourtConnect - you can still browse courts, events, and the schedule while
+          you wait.
+        </p>
+        <button type="button" className="btn-outline w-full" onClick={handleSendToDifferentEmail}>
+          Send to a different email
+        </button>
+      </div>
     );
   }
 
@@ -621,15 +668,25 @@ function ParentConsentFlow() {
             type="email"
             value={parentEmail}
             onChange={(e) => setParentEmail(e.target.value)}
-            className="input"
+            className={`input ${error ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''}`}
             placeholder="parent@example.com"
+            aria-invalid={!!error}
             required
           />
+          {error && <p className="text-sm text-red-600 mt-1.5">{error}</p>}
         </div>
-        {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
         <button type="submit" className="btn-primary w-full" disabled={submitting}>
           {submitting ? 'Sending request...' : 'Request Parent/Guardian Approval'}
         </button>
+        {editingEmail && (
+          <button
+            type="button"
+            className="text-sm text-secondary-500 underline w-full text-center"
+            onClick={() => setEditingEmail(false)}
+          >
+            Cancel
+          </button>
+        )}
       </form>
     </div>
   );

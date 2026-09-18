@@ -303,3 +303,26 @@ export type MatchCandidate = {
   avatar_url: string | null;
   created_at: string;
 };
+
+// See supabase/migrations/20260918000002_023_notifications.sql. Rows are
+// only ever written by SECURITY DEFINER trigger functions (match/message/
+// comment/parent-consent events) - never inserted directly by the client,
+// only read/marked-read here.
+export type NotificationType =
+  | 'match_request'
+  | 'match_accepted'
+  | 'chat_message'
+  | 'comment'
+  | 'parent_consent_decided';
+
+export type Notification = {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  source_type: string | null;
+  source_id: string | null;
+  read_at: string | null;
+  created_at: string;
+};
