@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Info, Plus, X, AlertCircle, Loader2, User, Users, Trash2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
@@ -43,7 +43,109 @@ function formatTime(iso: string): string {
   return format(new Date(iso), 'h:mm a');
 }
 
+// upcomingBookings is already sorted by booking_date ascending (see the
+// query in fetchUpcomingBookings), so grouping consecutive same-date rows
+// is enough - no need to re-sort or bucket by a Map.
+function groupBookingsByDate(items: CourtBooking[]): { date: string; bookings: CourtBooking[] }[] {
+  const groups: { date: string; bookings: CourtBooking[] }[] = [];
+  for (const b of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.date === b.booking_date) {
+      last.bookings.push(b);
+    } else {
+      groups.push({ date: b.booking_date, bookings: [b] });
+    }
+  }
+  return groups;
+}
+
+function formatBookingDateHeading(dateStr: string, todayStr: string, tomorrowStr: string): string {
+  if (dateStr === todayStr) return 'Today';
+  if (dateStr === tomorrowStr) return 'Tomorrow';
+  return format(parseISO(dateStr), 'EEEE, MMMM d');
+}
+
 const MAX_BOOKING_DURATION_MS = 2 * 60 * 60 * 1000;
+
+// Shared by the "Upcoming" agenda (spans every court/date, so it needs
+// showCourt) and the single court+date browser below it (already scoped
+// to one court, so the court name would be redundant there).
+function BookingRow({
+  booking,
+  isOwn,
+  showCourt = false,
+  onCancel,
+}: {
+  booking: CourtBooking;
+  isOwn: boolean;
+  showCourt?: boolean;
+  onCancel: (id: string) => void;
+}) {
+  const Icon = matchTypeIcons[booking.match_type] || User;
+  return (
+    <div className={`card p-4 md:p-5 ${isOwn ? 'border-l-4 border-l-clay-500' : ''}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-11 h-11 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
+            <Icon className="w-5 h-5 text-primary-600" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold text-secondary-900">{booking.player_name}</span>
+              <span className="text-secondary-400">vs</span>
+              <span className="font-semibold text-secondary-900">{booking.opponent_name}</span>
+              {isOwn && (
+                <span className="badge bg-clay-100 text-clay-700 border border-clay-200 text-[11px]">Your booking</span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-secondary-500">
+              <span className="inline-flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {formatTime(booking.start_time)} – {formatTime(booking.end_time)}
+              </span>
+              <span className="badge-primary">{booking.match_type}</span>
+              {showCourt && booking.court && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {booking.court.name}
+                </span>
+              )}
+              {booking.court_number && (
+                <span className="inline-flex items-center gap-1">
+                  {!showCourt && <MapPin className="w-4 h-4" />}
+                  Court {booking.court_number}
+                </span>
+              )}
+            </div>
+            {booking.notes && (
+              <p className="text-sm text-secondary-600 mt-2 bg-secondary-50 rounded-lg p-2">
+                {booking.notes}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`badge px-2 py-0.5 rounded-full text-xs font-medium border ${statusColors[booking.status]}`}>
+            {booking.status}
+          </span>
+          {isOwn && booking.status === 'Scheduled' && (
+            <button
+              onClick={() => onCancel(booking.id)}
+              className="btn-ghost btn-sm text-red-600"
+              title="Cancel my booking"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Cancel</span>
+            </button>
+          )}
+          {!isOwn && (
+            <ReportButton reportType="court_booking" targetId={booking.id} reportedUserId={booking.user_id} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function SchedulingPage() {
   const { user, profile, isAuthenticated } = useAuth();
@@ -53,8 +155,10 @@ export function SchedulingPage() {
 
   const [courts, setCourts] = useState<Court[]>([]);
   const [bookings, setBookings] = useState<CourtBooking[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<CourtBooking[]>([]);
   const [loadingCourts, setLoadingCourts] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -98,9 +202,40 @@ export function SchedulingPage() {
     }
   };
 
+  // Requiring a court + date pick before showing anything (the section
+  // below) meant an existing booking on a different court/date was
+  // effectively invisible - nothing looked "wrong," there was just no cue
+  // that changing the filters would reveal it. This surfaces every
+  // upcoming booking across every court up front, so "is anything
+  // scheduled" never depends on guessing the right filters first.
+  const fetchUpcomingBookings = async () => {
+    setLoadingUpcoming(true);
+    try {
+      const { data, error: err } = await withTimeout(
+        supabase
+          .from('court_bookings')
+          .select('*, court:courts(*)')
+          .eq('status', 'Scheduled')
+          .gte('booking_date', todayStr)
+          .order('booking_date', { ascending: true })
+          .order('start_time', { ascending: true })
+          .limit(50),
+        15000,
+        'Loading upcoming bookings timed out. Please try refreshing.'
+      );
+      if (err) throw err;
+      setUpcomingBookings(data || []);
+    } catch (e: any) {
+      console.error('Error fetching upcoming bookings:', e);
+    } finally {
+      setLoadingUpcoming(false);
+    }
+  };
+
   // Fetch courts directly in useEffect — no dependency on auth/profile
   useEffect(() => {
     fetchCourts();
+    fetchUpcomingBookings();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchCourts = async () => {
@@ -288,6 +423,7 @@ export function SchedulingPage() {
       } catch (refreshErr) {
         console.error('Error refreshing bookings after save:', refreshErr);
       }
+      void fetchUpcomingBookings();
     } catch (e: any) {
       const message = e?.message || 'Failed to create booking';
       console.error('Error creating booking:', e);
@@ -308,6 +444,7 @@ export function SchedulingPage() {
       if (err) throw err;
       addToast({ type: 'info', message: 'Booking cancelled' });
       fetchBookings();
+      void fetchUpcomingBookings();
     } catch (e: any) {
       console.error('Error cancelling booking:', e);
       addToast({ type: 'error', message: e.message || 'Failed to cancel booking' });
@@ -316,6 +453,8 @@ export function SchedulingPage() {
 
   const selectedCourt = courts.find((c) => c.id === selectedCourtId);
   const activeBookings = bookings.filter((b) => b.status === 'Scheduled');
+  const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+  const upcomingGroups = groupBookingsByDate(upcomingBookings);
 
   // Loading state — courts load independently of auth state
   if (loadingCourts) {
@@ -371,8 +510,42 @@ export function SchedulingPage() {
       <div className="container-custom max-w-5xl py-8">
         <NoticeBanner />
 
+        {/* Upcoming across every court - see fetchUpcomingBookings for why
+            this exists: picking a court + date before seeing anything made
+            an existing booking on a different court/date invisible. */}
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold text-secondary-900 mb-3">Upcoming Court Times</h2>
+          {loadingUpcoming ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+            </div>
+          ) : upcomingBookings.length === 0 ? (
+            <div className="card p-8 text-center">
+              <Calendar className="w-10 h-10 text-secondary-300 mx-auto mb-3" />
+              <p className="text-secondary-600">Nothing scheduled yet on any court. Be the first to add a time below.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {upcomingGroups.map((group) => (
+                <div key={group.date}>
+                  <h3 className="text-sm font-semibold text-secondary-500 uppercase tracking-wide mb-2">
+                    {formatBookingDateHeading(group.date, todayStr, tomorrowStr)}
+                  </h3>
+                  <div className="space-y-3">
+                    {group.bookings.map((b) => (
+                      <BookingRow key={b.id} booking={b} isOwn={user?.id === b.user_id} showCourt onCancel={handleCancel} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Selectors */}
-        <div className="card p-4 md:p-6 mt-6">
+        <h2 className="text-lg font-semibold text-secondary-900 mt-8 mb-1">Add or Look Up a Specific Time</h2>
+        <p className="text-sm text-secondary-500 mb-3">Pick a court and date to add a new time, or check a specific slot.</p>
+        <div className="card p-4 md:p-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="label flex items-center gap-2">
@@ -466,70 +639,9 @@ export function SchedulingPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {activeBookings.map((b) => {
-                const Icon = matchTypeIcons[b.match_type] || User;
-                const isOwn = user?.id === b.user_id;
-                return (
-                  <div
-                    key={b.id}
-                    className={`card p-4 md:p-5 ${isOwn ? 'border-l-4 border-l-clay-500' : ''}`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-11 h-11 rounded-xl bg-primary-100 flex items-center justify-center shrink-0">
-                          <Icon className="w-5 h-5 text-primary-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold text-secondary-900">{b.player_name}</span>
-                            <span className="text-secondary-400">vs</span>
-                            <span className="font-semibold text-secondary-900">{b.opponent_name}</span>
-                            {isOwn && (
-                              <span className="badge bg-clay-100 text-clay-700 border border-clay-200 text-[11px]">Your booking</span>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-secondary-500">
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {formatTime(b.start_time)} – {formatTime(b.end_time)}
-                            </span>
-                            <span className="badge-primary">{b.match_type}</span>
-                            {b.court_number && (
-                              <span className="inline-flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
-                                Court {b.court_number}
-                              </span>
-                            )}
-                          </div>
-                          {b.notes && (
-                            <p className="text-sm text-secondary-600 mt-2 bg-secondary-50 rounded-lg p-2">
-                              {b.notes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`badge px-2 py-0.5 rounded-full text-xs font-medium border ${statusColors[b.status]}`}>
-                          {b.status}
-                        </span>
-                        {isOwn && b.status === 'Scheduled' && (
-                          <button
-                            onClick={() => handleCancel(b.id)}
-                            className="btn-ghost btn-sm text-red-600"
-                            title="Cancel my booking"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Cancel</span>
-                          </button>
-                        )}
-                        {!isOwn && (
-                          <ReportButton reportType="court_booking" targetId={b.id} reportedUserId={b.user_id} />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {activeBookings.map((b) => (
+                <BookingRow key={b.id} booking={b} isOwn={user?.id === b.user_id} onCancel={handleCancel} />
+              ))}
             </div>
           )}
         </div>
