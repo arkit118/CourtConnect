@@ -89,7 +89,7 @@ export function DashboardPage() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">
-            Welcome back{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}!
+            Welcome{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}!
           </h1>
           <p className="text-secondary-600">Here's what's happening in your tennis community</p>
         </div>
