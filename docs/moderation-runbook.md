@@ -189,44 +189,41 @@ This supplements, and does not replace, the existing report/block tools and the 
 moderation workflow in sections 1–6 above — it catches obvious cases automatically, humans
 still handle everything else.
 
-## 10. Parent consent email only reaching one address (URGENT — do this first)
+## 10. Parent consent email domain (RESOLVED — courtconnecttennis.com is verified)
 
-**Symptom**: the parent/guardian consent email sends successfully to one specific address
-(usually whichever email the Resend account itself was signed up with) but fails for every
-other recipient, with the app showing a "could not send" error and the parent never
-receiving anything.
+**Background (historical)**: the parent/guardian consent email used to send successfully
+only to whichever email the Resend account itself was signed up with, and failed for every
+other recipient. That was a Resend **sandbox mode** restriction — with no verified sending
+domain, Resend only delivers to the account owner's own email and rejects everyone else
+with a 403 ("You can only send testing emails to your own email address... to send emails
+to other recipients, please verify a domain").
 
-**Root cause**: this is a Resend account restriction, not a CourtConnect bug. Until a
-sending domain is verified in Resend, the account is in **sandbox mode** and Resend will
-only actually deliver to the email address that owns the Resend account itself — every
-other recipient is rejected outright with a 403 ("You can only send testing emails to your
-own email address... to send emails to other recipients, please verify a domain"). This
-exactly matches "works for my own email, fails for my friends' emails."
+**Current state**: the sending domain **`courtconnecttennis.com` is now verified in
+Resend**, which lifts the sandbox restriction entirely. Parent consent emails send from:
 
-**The fix — verify a sending domain in Resend:**
+```
+CourtConnect <parents@courtconnecttennis.com>
+```
 
-1. Go to [resend.com/domains](https://resend.com/domains) → **Add Domain**.
-2. Enter a domain you control (e.g. `courtconnect.app`, or a domain you already own). You
-   do not need a live website on it — it only needs to exist and let you add DNS records.
-   If you don't own a domain yet, buy one cheaply (Namecheap, Google Domains, etc.) — this
-   is the only real fix; there is no way to lift the sandbox restriction without it.
-3. Resend shows 3 DNS records (SPF, DKIM, and usually a DMARC or MX record) — add these
-   exactly as shown in your domain registrar's DNS settings.
-4. Wait for DNS to propagate (usually minutes, sometimes up to ~1 hour), then click
-   **Verify** in Resend. Once verified, sandbox mode is lifted for that domain entirely.
-5. Update the `PARENT_CONSENT_FROM_EMAIL` secret to an address on that now-verified domain
-   (e.g. `parentconsent@courtconnect.app` — it does not need to be a real inbox, just a
-   valid address at the verified domain):
-   ```
-   supabase secrets set PARENT_CONSENT_FROM_EMAIL=parentconsent@yourdomain.com
-   ```
-6. No redeploy needed for a secrets change alone, but if
-   `supabase/functions/send-parent-consent-email/index.ts` has also changed, redeploy it:
-   ```
-   supabase functions deploy send-parent-consent-email
-   ```
-7. Test by requesting parent consent to an email address that isn't your own Resend account
-   email — it should now go through.
+This is set via the `PARENT_CONSENT_FROM_EMAIL` Edge Function secret:
+
+```
+supabase secrets set PARENT_CONSENT_FROM_EMAIL="CourtConnect <parents@courtconnecttennis.com>" --project-ref yycbaqkmxljuxwfjtifb
+```
+
+`supabase/functions/send-parent-consent-email/index.ts` also falls back to this exact
+sender if the secret is ever unset, so a missing secret degrades safely instead of
+crashing or reintroducing the sandbox restriction. After changing the secret, redeploy:
+
+```
+supabase functions deploy send-parent-consent-email --project-ref yycbaqkmxljuxwfjtifb
+```
+
+If parent consent emails ever stop reaching real recipients again, re-check whether the
+domain verification lapsed (Resend re-checks DNS periodically) at
+[resend.com/domains](https://resend.com/domains) before assuming it's a CourtConnect bug —
+the same 403 "own email address... verify a domain" signature described above is the
+tell.
 
 **Checking what's actually happening right now**, before or instead of the fix above:
 
