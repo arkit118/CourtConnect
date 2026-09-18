@@ -13,12 +13,10 @@ import { supabase, Profile, MatchCandidate } from '../lib/supabase';
 import { withTimeout } from '../lib/withTimeout';
 import { PageHero } from '../components/brand/PageHero';
 import { CourtCorner } from '../components/brand/CourtMotif';
+import { NJ_TOWNS } from '../lib/towns';
 import { skillLevelLabels, skillLevelOrder, skillLevelColors } from '../lib/skillLevel';
 
-// Pilot launch - one town today, matching Courts/Events/Schedule (see
-// PRODUCT.md: don't imply Essex-County-wide reach the product doesn't
-// have yet).
-const towns = ['Livingston, NJ'];
+const towns = NJ_TOWNS;
 
 const ageBandLabels: Record<'minor' | 'adult', string> = {
   minor: 'Under 18',
@@ -73,9 +71,9 @@ function PageChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHero
-        eyebrow="Livingston, NJ"
+        eyebrow="Livingston & Nearby NJ"
         title="Players"
-        description="Find local Livingston, NJ players, filter by skill level or self-reported UTR, and send a match request."
+        description="Find local players across Livingston and nearby NJ towns, filter by skill level or self-reported UTR, and send a match request."
       />
       <div className="container-custom py-8">{children}</div>
     </div>
@@ -669,8 +667,8 @@ function EligibleCandidateList() {
           <CourtCorner className="w-12 h-12 text-clay-400 mx-auto mb-4" />
           <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No eligible players yet</h3>
           <p className="text-secondary-600">
-            Invite local players or check back as more Livingston, NJ players join. Matching always keeps adults and
-            minors separate, so you'll only ever see players in your own age group.
+            Invite local players or check back as more players from Livingston and nearby NJ towns join. Matching
+            always keeps adults and minors separate, so you'll only ever see players in your own age group.
           </p>
         </div>
       ) : filteredCandidates.length === 0 ? (

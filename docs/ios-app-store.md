@@ -117,13 +117,14 @@ Then fill in:
 
 **App name:** CourtConnect
 
-**Subtitle:** Livingston tennis, connected
+**Subtitle:** Livingston & nearby NJ tennis
 
 **Category:** Sports (primary); Social Networking is a reasonable secondary if offered.
 
 **Description:**
 ```
-CourtConnect is a local tennis community platform built for Livingston, NJ players.
+CourtConnect is a local tennis community platform based in Livingston, NJ, serving
+Livingston and nearby towns.
 
 Use CourtConnect to find local players, send match requests, chat after a match is
 accepted, coordinate court time with the community, join local tennis events, and
@@ -138,13 +139,15 @@ Features:
 - Court-time coordination
 - Tennis gear exchange
 
-CourtConnect is currently launching as a Livingston, NJ pilot.
+CourtConnect started in Livingston, NJ and has grown to nearby towns including West
+Orange, Millburn, Maplewood, South Orange, Montclair, Newark, Summit, Chatham, Florham
+Park, East Hanover, and Parsippany.
 
 Important: CourtConnect does not officially reserve public courts. Scheduling is for
 community coordination only.
 ```
 
-**Keywords:** `tennis,local tennis,tennis partner,tennis match,courts,sports,Livingston,gear exchange`
+**Keywords:** `tennis,local tennis,tennis partner,tennis match,courts,sports,Livingston,New Jersey,gear exchange`
 
 **Support URL:** https://court-connect-three.vercel.app/about
 
@@ -164,7 +167,7 @@ this directly if App Store Connect asks for it separately from what's in the bin
 ### Review notes (paste into the "Notes" field for the reviewer)
 
 ```
-CourtConnect is a local tennis community platform for Livingston, NJ players.
+CourtConnect is a local tennis community platform for Livingston and nearby NJ towns.
 
 The app includes user accounts, player discovery, match requests, accepted-match chat,
 gear listings, events, court-time coordination, reporting, and blocking.

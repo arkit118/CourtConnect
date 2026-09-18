@@ -88,7 +88,7 @@ iOS-specific was added.
   up (not required for a v1 pilot submission, see `docs/ios-app-store.md`).
 - **Minor/parent-consent flows in review.** Apple reviewers will interact with the app as
   an anonymous tester. Confirm the sign-up and parent-consent screens behave sanely for a
-  reviewer who isn't a real Livingston tennis player (this app was already built with that
+  reviewer who isn't a real Livingston-area tennis player (this app was already built with that
   in mind on the web side; calling it out because App Store review is a new audience for
   it).
 - **Privacy manifest / data collection disclosures.** Apple requires an App Privacy
