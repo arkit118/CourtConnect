@@ -6,6 +6,7 @@ import { withTimeout } from '../lib/withTimeout';
 import { handleExternalLinkClick } from '../lib/openExternal';
 import { PageHero } from '../components/brand/PageHero';
 import { CourtCorner, BallArc } from '../components/brand/CourtMotif';
+import { NJ_TOWNS } from '../lib/towns';
 
 const surfaceLabels: Record<string, string> = {
   hard: 'Hard',
@@ -25,7 +26,7 @@ const surfaceColors: Record<string, string> = {
   other: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-const towns = ['Livingston, NJ']; // Pilot launch - Livingston, NJ only
+const towns = NJ_TOWNS;
 const surfaces = ['hard', 'clay', 'grass', 'synthetic', 'carpet', 'other'];
 
 // Same visual pattern as GearPage's notice banner. Added because user
@@ -95,7 +96,7 @@ export function CourtsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHero
-        eyebrow="Livingston, NJ"
+        eyebrow="Livingston & Nearby NJ"
         title="Tennis Courts"
         description="Known court locations in the CourtConnect community. Not a live availability tracker."
       />

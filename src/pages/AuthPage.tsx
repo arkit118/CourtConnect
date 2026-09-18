@@ -37,7 +37,7 @@ export function LoginPage() {
   };
 
   return (
-    <AuthLayout backTo="/" backLabel="Back to home" tagline="Your local court for Livingston, NJ tennis.">
+    <AuthLayout backTo="/" backLabel="Back to home" tagline="Your local court for Livingston & nearby NJ tennis.">
       <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Welcome back</h1>
       <p className="text-secondary-600 mb-8">Sign in to your CourtConnect account</p>
 
@@ -233,7 +233,7 @@ export function SignupPage() {
   }
 
   return (
-    <AuthLayout backTo="/" backLabel="Back to home" tagline="Find hitting partners, events, and gear in Livingston, NJ.">
+    <AuthLayout backTo="/" backLabel="Back to home" tagline="Find hitting partners, events, and gear across Livingston and nearby NJ towns.">
       <h1 className="font-display text-2xl font-bold text-secondary-900 mb-2">Create your account</h1>
       <p className="text-secondary-600 mb-8">Join the CourtConnect community</p>
 

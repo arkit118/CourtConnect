@@ -7,8 +7,9 @@ import { useActionGate } from '../hooks/useActionGate';
 import { supabase } from '../lib/supabase';
 import { uploadImage, validateImageFile } from '../lib/storage';
 import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
+import { NJ_TOWNS } from '../lib/towns';
 
-const towns = ['Bloomfield', 'Caldwell', 'Livingston', 'Maplewood', 'Millburn', 'Montclair', 'Nutley', 'South Orange', 'West Orange'];
+const towns = NJ_TOWNS;
 
 export function EventCreatePage() {
   const navigate = useNavigate();

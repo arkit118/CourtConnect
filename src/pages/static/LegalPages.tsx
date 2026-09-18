@@ -25,9 +25,10 @@ export function TermsPage() {
         <div className="card p-6 md:p-8">
           <LegalSection number={1} title="What CourtConnect Is">
             <p>
-              CourtConnect is a local tennis community platform, starting in Livingston, NJ. It helps players find
-              local tennis courts, view and register for events, coordinate community court time, use gear exchange,
-              and use optional player matching and in-app chat to connect with other members.
+              CourtConnect is a local tennis community platform, based in Livingston, NJ and serving Livingston and
+              nearby New Jersey towns. It helps players find local tennis courts, view and register for events,
+              coordinate community court time, use gear exchange, and use optional player matching and in-app chat
+              to connect with other members.
             </p>
           </LegalSection>
 

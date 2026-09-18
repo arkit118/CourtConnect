@@ -24,8 +24,8 @@ export function MaintenancePage() {
           We're restringing the racquets
         </h1>
         <p className="text-navy-100 leading-relaxed mb-8">
-          CourtConnect is offline for a short while as we roll out improvements for the Livingston, NJ community.
-          We'll be back shortly. Thanks for your patience.
+          CourtConnect is offline for a short while as we roll out improvements for the Livingston &amp; nearby NJ
+          tennis community. We'll be back shortly. Thanks for your patience.
         </p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}

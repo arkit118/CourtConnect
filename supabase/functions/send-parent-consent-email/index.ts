@@ -193,6 +193,37 @@ Deno.serve(async (req) => {
         token,
         parentEmail,
       });
+
+      // Resend's sandbox restriction (no verified sending domain yet):
+      // it accepts sends to the Resend account's own verified email only,
+      // and rejects every other recipient with a 403 whose message says
+      // "you can only send testing emails to your own email address... to
+      // send emails to other recipients, please verify a domain". This is
+      // a backend configuration issue, not anything wrong with the parent
+      // email address the user typed - telling them to "check the email
+      // address and try again" (the generic error below) would be actively
+      // wrong and just waste their time re-typing a correct address. Treat
+      // it the same as the missing-secrets case instead: same
+      // configured: false flag, same "not configured yet, contact
+      // support" copy the frontend already shows for that.
+      const isSandboxRestriction =
+        resendResponse.status === 403 && /own email address|verify a domain/i.test(errText);
+      if (isSandboxRestriction) {
+        console.error(
+          'send-parent-consent-email: Resend sending domain is not verified yet - only the Resend account owner\'s ' +
+          'own email can receive mail until a domain is verified at resend.com/domains. See docs/moderation-runbook.md.'
+        );
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            configured: false,
+            error:
+              'Parent consent email is not fully configured yet (sending domain not verified). Please contact support.',
+          }),
+          { status: 503, headers: { ...cors, 'Content-Type': 'application/json' } }
+        );
+      }
+
       return new Response(
         JSON.stringify({ ok: false, error: 'Failed to send the consent email. Please try again.' }),
         { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } }

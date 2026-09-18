@@ -278,7 +278,7 @@ export function DashboardPage() {
               </div>
               <div className="mt-4 pt-4 border-t border-secondary-100">
                 <p className="text-xs text-secondary-500 text-center">
-                  Livingston, NJ tennis community
+                  Livingston &amp; nearby NJ tennis community
                 </p>
               </div>
             </div>
@@ -303,15 +303,15 @@ export function ImpactDashboardPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-secondary-900 mb-2">Community Impact</h1>
-          <p className="text-secondary-600">Building tennis community in Livingston, NJ</p>
+          <p className="text-secondary-600">Building tennis community across Livingston and nearby NJ towns</p>
         </div>
 
         <div className="text-center py-12 mb-12">
           <div className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-primary-50 border border-primary-100">
             <span className="w-3 h-3 rounded-full bg-primary-400 animate-pulse" />
-            <span className="text-lg font-medium text-primary-700">Livingston, NJ pilot</span>
+            <span className="text-lg font-medium text-primary-700">Livingston &amp; Nearby NJ pilot</span>
           </div>
-          <p className="text-secondary-600 mt-4">Impact metrics will appear as our Livingston, NJ community grows.</p>
+          <p className="text-secondary-600 mt-4">Impact metrics will appear as our community grows.</p>
         </div>
 
         {/* Mission */}
@@ -320,7 +320,8 @@ export function ImpactDashboardPage() {
             <h2 className="text-2xl md:text-3xl font-bold mb-4">Our Mission</h2>
             <p className="text-primary-100 mb-6 text-lg">
               CourtConnect makes competitive tennis accessible and affordable.
-              Starting in Livingston, NJ, we're building a community where everyone can play.
+              Started in Livingston, NJ, we're building a community where everyone can play, across Livingston and
+              nearby NJ towns.
             </p>
             <div className="flex items-center justify-center gap-4">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">

@@ -51,14 +51,14 @@ function HeroSection() {
       <div className="relative z-10 container-custom py-20 md:py-28 lg:py-36">
         <div className="max-w-2xl">
           <p className="font-display text-sm font-bold tracking-[0.14em] text-primary-300 uppercase mb-5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <span>Livingston, NJ</span>
+            <span>Livingston &amp; Nearby NJ</span>
             <span className="text-primary-300/40 normal-case font-normal">/</span>
             <span>Community Pilot</span>
           </p>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.03] tracking-tight mb-6">
             The local court for
             <span className="relative inline-block ml-3">
-              Livingston, NJ tennis
+              Livingston &amp; nearby NJ tennis
               <svg
                 viewBox="0 0 320 14"
                 className="absolute left-0 -bottom-2 w-full h-3 text-clay-500"
@@ -71,8 +71,9 @@ function HeroSection() {
             .
           </h1>
           <p className="text-lg sm:text-xl text-navy-100 leading-relaxed mb-10 max-w-xl">
-            CourtConnect helps Livingston, NJ players find hitting partners, join community events, coordinate court
-            time, and pass along gear. One local pilot, built for the community, not a business.
+            CourtConnect helps players across Livingston and nearby NJ towns find hitting partners, join community
+            events, coordinate court time, and pass along gear. Based in Livingston, NJ - built for the community,
+            not a business.
           </p>
 
           <div className="flex flex-wrap gap-4">
@@ -118,8 +119,8 @@ function WhatItIsSection() {
             What CourtConnect actually is
           </h2>
           <p className="text-lg text-secondary-600 leading-relaxed">
-            A Livingston, NJ tennis community pilot, not a booking platform, not a coaching marketplace. Four
-            things it does, today, for local players.
+            A tennis community platform for Livingston and nearby NJ towns, not a booking platform, not a coaching
+            marketplace. Four things it does, today, for local players.
           </p>
         </div>
 
@@ -220,7 +221,7 @@ function FlowSection() {
   const steps = [
     { title: 'Create your profile', description: 'Skill level, availability, and what you\'re looking for.' },
     { title: 'Find your people', description: 'Match with players, register for events, or list your gear.' },
-    { title: 'Play more tennis', description: 'Chat, coordinate court time, and build the Livingston, NJ community.' },
+    { title: 'Play more tennis', description: 'Chat, coordinate court time, and build the local tennis community.' },
   ];
 
   return (
@@ -300,7 +301,7 @@ function EventsPreviewSection() {
             <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">
               No events posted yet
             </h3>
-            <p className="text-secondary-600">Livingston, NJ events will show up here once they're posted.</p>
+            <p className="text-secondary-600">Local events will show up here once they're posted.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">
@@ -394,7 +395,8 @@ function CTASection() {
           <div className="relative z-10 max-w-xl">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-5">Ready to join the community?</h2>
             <p className="text-lg text-primary-100 mb-8 leading-relaxed">
-              Create your free profile and start connecting with Livingston, NJ tennis players.
+              Create your free profile and start connecting with tennis players across Livingston and nearby NJ
+              towns.
             </p>
             <Link to="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
               Get Started Free

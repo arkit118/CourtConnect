@@ -43,8 +43,8 @@ export function Footer() {
               <Logo variant="lockup" className="h-7" />
             </Link>
             <p className="text-navy-200 text-sm mb-6">
-              A Livingston, NJ tennis community pilot for finding hitting partners, joining local events, coordinating
-              court time, and trading gear.
+              A tennis community platform for Livingston and nearby NJ towns - finding hitting partners, joining
+              local events, coordinating court time, and trading gear.
             </p>
             <div className="flex gap-3">
               <a
@@ -119,7 +119,7 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-2 text-sm text-navy-300">
             <span className="w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
-            Piloting in Livingston, New Jersey
+            Based in Livingston, New Jersey
           </div>
         </div>
       </div>

@@ -29,7 +29,7 @@ export function AuthLayout({
         </Link>
         <p className="relative z-10 font-display text-3xl font-bold leading-snug max-w-sm">{tagline}</p>
         <p className="relative z-10 text-sm text-navy-300 leading-snug">
-          Livingston, NJ
+          Livingston &amp; Nearby NJ
           <br />
           Community pilot
         </p>
