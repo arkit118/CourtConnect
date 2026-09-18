@@ -200,7 +200,7 @@ function PlayerFilters({
                 max="10"
                 step="0.5"
                 value={utrRange[0]}
-                onChange={(e) => setUtrRange([parseFloat(e.target.value), utrRange[1]])}
+                onChange={(e) => setUtrRange([Math.min(parseFloat(e.target.value), utrRange[1]), utrRange[1]])}
                 className="flex-1"
               />
               <input
@@ -209,7 +209,7 @@ function PlayerFilters({
                 max="10"
                 step="0.5"
                 value={utrRange[1]}
-                onChange={(e) => setUtrRange([utrRange[0], parseFloat(e.target.value)])}
+                onChange={(e) => setUtrRange([utrRange[0], Math.max(parseFloat(e.target.value), utrRange[0])])}
                 className="flex-1"
               />
             </div>

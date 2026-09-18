@@ -134,8 +134,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(changedSession?.user ?? null);
         setError(null);
 
-        if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+        if (changedSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
           await fetchOrCreateProfile(changedSession.user);
+        } else if (changedSession?.user && event === 'TOKEN_REFRESHED') {
+          // Supabase silently rotates the access token in the background
+          // on a timer (roughly every ~50 minutes of active use), with no
+          // action from the user - they could be mid-navigation, or doing
+          // nothing at all. Treating this the same as a fresh sign-in
+          // (the old behavior) meant an ordinary transient blip on this
+          // one background refetch showed the scary "could not load your
+          // profile" banner for what the user experienced as "I was just
+          // clicking around and it randomly appeared." A profile that's
+          // already loaded doesn't need a loud refetch just because the
+          // token rotated - silent picks up any real change (e.g. an
+          // admin action from another session) without ever surfacing an
+          // error for a background operation the user can't even see.
+          await fetchProfile(changedSession.user.id, 0, true);
         } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setProfileError(null);
@@ -178,7 +192,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // app-wide orange banner - see App.tsx's ProfileErrorBanner) for that
   // case; only log it. Non-silent callers (initial auth load, the banner's
   // own Retry button) keep the original behavior unchanged.
-  const fetchProfile = async (userId: string, isRetry = false, silent = false) => {
+  //
+  // attempt counts retries (0 = first try). Up to 2 retries (3 attempts
+  // total) before giving up and showing the banner - bumped from a single
+  // retry after reports of the banner appearing for what turned out to be
+  // ordinary network/cold-start latency, not a real failure. This only
+  // costs extra time in the failure case (each individual attempt still
+  // has to actually time out first); a normal successful fetch is
+  // unaffected.
+  const fetchProfile = async (userId: string, attempt = 0, silent = false) => {
     try {
       const { data, error: fetchError } = await withTimeout(
         supabase.from('profiles').select('*').eq('id', userId).single(),
@@ -204,12 +226,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // Most real-world failures here are transient (a slow/cold
       // connection, a dropped request) rather than a genuine problem the
-      // user needs to act on. One silent retry absorbs that without ever
-      // showing the "could not load your profile" message for what was
-      // really just a blip - only a second consecutive failure surfaces it.
-      if (!isRetry) {
-        devLog('[AuthContext] Profile fetch failed, retrying once:', err);
-        return fetchProfile(userId, true, silent);
+      // user needs to act on. A couple of silent retries absorb that
+      // without ever showing the "could not load your profile" message for
+      // what was really just a blip - only a failure on every attempt
+      // surfaces it.
+      if (attempt < 2) {
+        devLog(`[AuthContext] Profile fetch failed (attempt ${attempt + 1}/3), retrying:`, err);
+        return fetchProfile(userId, attempt + 1, silent);
       }
       if (silent) {
         console.error('[AuthContext] Silent profile refresh failed (not shown to user):', err);
@@ -222,7 +245,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchOrCreateProfile = async (sessionUser: User, isRetry = false) => {
+  // attempt counts retries (0 = first try) - see fetchProfile's comment
+  // above for why this allows 2 retries (3 attempts total) rather than 1.
+  const fetchOrCreateProfile = async (sessionUser: User, attempt = 0) => {
     try {
       // Try to fetch existing profile
       const { data: existingProfile, error: fetchError } = await withTimeout(
@@ -338,9 +363,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // Same transient-blip tolerance as fetchProfile above - don't scare
       // the user over a single slow/dropped request.
-      if (!isRetry) {
-        devLog('[AuthContext] fetchOrCreateProfile failed, retrying once:', err);
-        return fetchOrCreateProfile(sessionUser, true);
+      if (attempt < 2) {
+        devLog(`[AuthContext] fetchOrCreateProfile failed (attempt ${attempt + 1}/3), retrying:`, err);
+        return fetchOrCreateProfile(sessionUser, attempt + 1);
       }
       console.error('[AuthContext] Error in fetchOrCreateProfile:', err);
       if (mountedRef.current) {
@@ -608,7 +633,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async (opts?: { silent?: boolean }) => {
     if (user) {
-      await fetchProfile(user.id, false, opts?.silent ?? false);
+      await fetchProfile(user.id, 0, opts?.silent ?? false);
     }
   };
 
