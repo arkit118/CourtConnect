@@ -646,14 +646,18 @@ function EligibleCandidateList() {
         activeFilterCount={filters.activeFilterCount}
       />
 
-      <div className="mb-6 flex items-center gap-2 text-secondary-600">
+      <div className="mb-2 flex items-center gap-2 text-secondary-600">
         <Shield className="w-4 h-4 text-primary-500" />
         <p>
           {filters.hasActiveFilters
-            ? `Showing ${filteredCandidates.length} of ${candidates.length} eligible players for your age group and safety settings`
-            : `${candidates.length} eligible player${candidates.length === 1 ? '' : 's'} found`}
+            ? `Showing ${filteredCandidates.length} of ${candidates.length} players available to connect`
+            : `${candidates.length} player${candidates.length === 1 ? '' : 's'} available to connect`}
         </p>
       </div>
+      <p className="mb-6 text-sm text-secondary-500">
+        Players with pending or accepted requests appear under{' '}
+        <Link to="/matches" className="text-primary-600 font-medium underline underline-offset-2">Matches</Link>.
+      </p>
 
       {loading ? (
         <LoadingGrid />
@@ -665,10 +669,12 @@ function EligibleCandidateList() {
       ) : candidates.length === 0 ? (
         <div className="rounded-3xl bg-white border border-secondary-200 p-12 text-center">
           <CourtCorner className="w-12 h-12 text-clay-400 mx-auto mb-4" />
-          <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No eligible players yet</h3>
+          <h3 className="font-display text-lg font-bold text-secondary-900 mb-2">No players available to connect yet</h3>
           <p className="text-secondary-600">
             Invite local players or check back as more players from Livingston and nearby NJ towns join. Matching
-            always keeps adults and minors separate, so you'll only ever see players in your own age group.
+            always keeps adults and minors separate, so you'll only ever see players in your own age group. Already
+            sent or received a request? Check{' '}
+            <Link to="/matches" className="text-primary-600 font-semibold underline underline-offset-2">Matches</Link>.
           </p>
         </div>
       ) : filteredCandidates.length === 0 ? (
