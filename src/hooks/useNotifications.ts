@@ -2,14 +2,29 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase, Notification } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-const NOTIFICATIONS_MISSING_TABLE_CODE = '42P01';
 const RECENT_NOTIFICATIONS_LIMIT = 30;
+// Fallback when realtime isn't delivering (e.g. the publication change in
+// 025 not applied yet, or a dropped socket on a suspended iOS WebView).
+const POLL_INTERVAL_MS = 60_000;
 
-// Backs the notification bell in Header.tsx. Degrades to "no
-// notifications" rather than throwing whenever the notifications table
-// doesn't exist yet (a fresh environment the 023_notifications.sql
-// migration hasn't been applied to) - the rest of the app must keep
-// working either way, per the task's explicit "should not crash" rule.
+// Missing-table signals across PostgREST versions: older ones pass through
+// Postgres' 42P01; newer ones (what hosted Supabase runs now) return
+// PGRST205 "Could not find the table ... in the schema cache".
+function isMissingTableError(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === '42P01' ||
+    error.code === 'PGRST205' ||
+    /could not find the table/i.test(error.message ?? '')
+  );
+}
+
+function sortNewestFirst(list: Notification[]): Notification[] {
+  return [...list].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, RECENT_NOTIFICATIONS_LIMIT);
+}
+
+// Backs the notification bell in Header.tsx. Degrades to "unavailable"
+// (bell hidden) rather than throwing when the notifications table doesn't
+// exist yet in an environment, so the rest of the app keeps working.
 export function useNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -40,10 +55,12 @@ export function useNotifications() {
     if (!mountedRef.current) return;
 
     if (error) {
-      if (error.code === NOTIFICATIONS_MISSING_TABLE_CODE) {
+      if (isMissingTableError(error)) {
         setUnavailable(true);
         setNotifications([]);
       } else {
+        // Transient failure - keep whatever is already shown; the next
+        // poll/foreground refetch will catch up.
         console.error('useNotifications: failed to load notifications', error);
       }
       setLoading(false);
@@ -59,11 +76,33 @@ export function useNotifications() {
     void fetchNotifications();
   }, [fetchNotifications]);
 
-  // Realtime subscription, same pattern as ChatPage.tsx's message feed -
-  // new notification rows only ever arrive by insert (see
-  // 023_notifications.sql's triggers), never updated by another party.
+  // Catch up whenever the app returns to the foreground or reconnects, and
+  // on a slow poll while visible. The header (and this hook) stays mounted
+  // for the app's whole lifetime - on iOS that can be days - so without
+  // this a fetch-on-mount alone would never show anything new.
   useEffect(() => {
     if (!user) return;
+
+    const refetchIfVisible = () => {
+      if (document.visibilityState === 'visible') void fetchNotifications();
+    };
+    const interval = window.setInterval(refetchIfVisible, POLL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', refetchIfVisible);
+    window.addEventListener('focus', refetchIfVisible);
+    window.addEventListener('online', refetchIfVisible);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refetchIfVisible);
+      window.removeEventListener('focus', refetchIfVisible);
+      window.removeEventListener('online', refetchIfVisible);
+    };
+  }, [user, fetchNotifications]);
+
+  // Realtime push of new rows (INSERT) and collapsed chat notifications
+  // being refreshed in place (UPDATE - see 025's notify_chat_message).
+  useEffect(() => {
+    if (!user || unavailable) return;
 
     const channel = supabase
       .channel(`notifications-${user.id}`)
@@ -71,11 +110,18 @@ export function useNotifications() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
         (payload) => {
-          setNotifications((prev) => {
-            const incoming = payload.new as Notification;
-            if (prev.some((n) => n.id === incoming.id)) return prev;
-            return [incoming, ...prev].slice(0, RECENT_NOTIFICATIONS_LIMIT);
-          });
+          const incoming = payload.new as Notification;
+          setNotifications((prev) =>
+            prev.some((n) => n.id === incoming.id) ? prev : sortNewestFirst([incoming, ...prev])
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const updated = payload.new as Notification;
+          setNotifications((prev) => sortNewestFirst([updated, ...prev.filter((n) => n.id !== updated.id)]));
         }
       )
       .subscribe();
@@ -83,7 +129,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, unavailable]);
 
   const markAsRead = useCallback(async (id: string) => {
     const readAt = new Date().toISOString();
@@ -106,5 +152,13 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
-  return { notifications, unreadCount, loading, unavailable, markAsRead, markAllAsRead };
+  return {
+    notifications,
+    unreadCount,
+    loading,
+    unavailable,
+    markAsRead,
+    markAllAsRead,
+    refresh: fetchNotifications,
+  };
 }

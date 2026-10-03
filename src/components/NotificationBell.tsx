@@ -16,20 +16,31 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-// source_type/source_id are a loose pointer (see 023_notifications.sql) -
-// map the ones the app actually has detail pages for; anything else (e.g.
-// 'profile' for a parent-consent decision) just has no destination.
+// Where tapping a notification goes. A new play request opens /matches
+// (where Accept/Decline live) rather than the chat, which isn't usable
+// until the request is accepted.
 function notificationLink(n: Notification): string | null {
-  if (!n.source_id) return null;
-  if (n.source_type === 'match') return `/matches/${n.source_id}`;
-  if (n.source_type === 'event') return `/events/${n.source_id}`;
-  if (n.source_type === 'listing') return `/gear/${n.source_id}`;
-  return null;
+  switch (n.type) {
+    case 'match_request':
+      return '/matches';
+    case 'match_accepted':
+    case 'chat_message':
+      return n.source_id ? `/matches/${n.source_id}` : '/matches';
+    case 'parent_consent_decided':
+      return '/players';
+    case 'comment':
+      if (!n.source_id) return null;
+      if (n.source_type === 'event') return `/events/${n.source_id}`;
+      if (n.source_type === 'listing') return `/gear/${n.source_id}`;
+      return null;
+    default:
+      return null;
+  }
 }
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, unreadCount, unavailable, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, unavailable, markAsRead, markAllAsRead, refresh } = useNotifications();
   const navigate = useNavigate();
 
   // Degrades to nothing rather than an empty/broken bell when the
@@ -44,11 +55,17 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative">
+    // Not `relative` below sm: the panel then anchors to the sticky header
+    // (full width) instead of the bell, which sits left of the avatar/menu
+    // buttons and would push a bell-anchored panel off the left edge.
+    <div className="sm:relative">
       <button
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => {
+          if (!isOpen) void refresh();
+          setIsOpen((v) => !v);
+        }}
         className="relative p-2 rounded-xl hover:bg-secondary-50 transition-colors"
-        aria-label="Notifications"
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
       >
         <Bell className="w-5 h-5 text-secondary-600" />
         {unreadCount > 0 && (
@@ -61,7 +78,7 @@ export function NotificationBell() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white rounded-xl shadow-elevated border border-secondary-100 z-50 max-h-[28rem] flex flex-col">
+          <div className="absolute left-4 right-4 top-full mt-2 sm:left-auto sm:right-0 sm:w-80 bg-white rounded-xl shadow-elevated border border-secondary-100 z-50 max-h-[28rem] flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-secondary-100">
               <p className="font-semibold text-secondary-900">Notifications</p>
               {unreadCount > 0 && (

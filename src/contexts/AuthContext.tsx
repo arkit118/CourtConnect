@@ -67,7 +67,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const MIGRATION_MISSING_MESSAGE =
   'A required database update has not been applied yet, so some profile fields are unavailable. Please contact support.';
-const PROFILE_LOAD_ERROR_MESSAGE = 'Could not load your profile. Please refresh or sign in again.';
+const PROFILE_LOAD_ERROR_MESSAGE = "We're having trouble loading your profile. We'll keep trying automatically.";
+// Backoff for automatic background recovery when the profile couldn't be
+// loaded at all. Also retried immediately on reconnect / app foreground.
+const PROFILE_RETRY_DELAYS_MS = [3000, 10000, 30000, 60000];
 export const EMAIL_NOT_CONFIRMED_MESSAGE =
   'Please verify your email before using player matching or chat. Check your inbox for a verification link, or resend it below.';
 
@@ -83,6 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // touching state, so a slow/hung request can never call setState after
   // unmount (e.g. after a fast navigation away during initial load).
   const mountedRef = useRef(true);
+  // Mirrors `profile` for async code that needs the latest value without a
+  // stale closure - used to tell "a background re-fetch failed but the app
+  // already has a usable profile" (not worth telling the user about) apart
+  // from "we have no profile at all" (worth a notice + auto-recovery).
+  const profileRef = useRef<Profile | null>(null);
+  const recoveryInFlightRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -90,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
 
   useEffect(() => {
     // QA fix: this used to also call supabase.auth.getSession() directly
@@ -200,6 +213,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // costs extra time in the failure case (each individual attempt still
   // has to actually time out first); a normal successful fetch is
   // unaffected.
+  // Final-failure handler shared by fetchProfile/fetchOrCreateProfile once
+  // their own retries are exhausted. Only surfaces the app-wide notice when
+  // the app genuinely has no profile to work with - if one is already
+  // loaded, the app keeps running off it and a failed re-fetch is just a
+  // missed cache sync, so it's logged, never shown. A missing-column error
+  // is the one non-transient case and is always surfaced.
+  const reportProfileLoadFailure = (err: unknown) => {
+    if (!mountedRef.current) return;
+    if (isMissingColumnError(err)) {
+      setProfileError(MIGRATION_MISSING_MESSAGE);
+      return;
+    }
+    if (profileRef.current) {
+      console.error('[AuthContext] Profile re-fetch failed; keeping the already-loaded profile:', err);
+      return;
+    }
+    setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
+  };
+
   const fetchProfile = async (userId: string, attempt = 0, silent = false) => {
     try {
       const { data, error: fetchError } = await withTimeout(
@@ -211,7 +243,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fetchError) throw fetchError;
       if (mountedRef.current && data) {
         setProfile(data);
-        if (!silent) setProfileError(null);
+        // Any successful load clears a previous failure, including a
+        // silent background one - otherwise an error from an earlier
+        // attempt would linger even though the profile is now fine.
+        setProfileError(null);
       }
     } catch (err) {
       // A stale/invalid session (see lib/authErrors.ts) is not a profile
@@ -239,9 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       console.error('[AuthContext] Error fetching profile:', err);
-      if (mountedRef.current) {
-        setProfileError(isMissingColumnError(err) ? MIGRATION_MISSING_MESSAGE : PROFILE_LOAD_ERROR_MESSAGE);
-      }
+      reportProfileLoadFailure(err);
     }
   };
 
@@ -368,11 +401,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return fetchOrCreateProfile(sessionUser, attempt + 1);
       }
       console.error('[AuthContext] Error in fetchOrCreateProfile:', err);
-      if (mountedRef.current) {
-        setProfileError(isMissingColumnError(err) ? MIGRATION_MISSING_MESSAGE : PROFILE_LOAD_ERROR_MESSAGE);
-      }
+      reportProfileLoadFailure(err);
     }
   };
+
+  // Automatic recovery for the one case the notice is shown for: signed in,
+  // but no profile could be loaded at all. Retries on a backoff, and
+  // immediately when the device reconnects or the app returns to the
+  // foreground (the most common moment a cold/suspended iOS WebView's
+  // first request fails). Success clears profileError and this effect
+  // tears itself down - the user never has to refresh by hand.
+  useEffect(() => {
+    if (!user || profile || !profileError || profileError === MIGRATION_MISSING_MESSAGE) return;
+
+    let cancelled = false;
+    let attempt = 0;
+    let timer: number | undefined;
+
+    const retry = async () => {
+      if (cancelled || recoveryInFlightRef.current) return;
+      recoveryInFlightRef.current = true;
+      try {
+        await fetchOrCreateProfile(user);
+      } finally {
+        recoveryInFlightRef.current = false;
+      }
+      if (!cancelled && !profileRef.current) schedule();
+    };
+
+    const schedule = () => {
+      const delay = PROFILE_RETRY_DELAYS_MS[Math.min(attempt, PROFILE_RETRY_DELAYS_MS.length - 1)];
+      attempt += 1;
+      timer = window.setTimeout(() => void retry(), delay);
+    };
+
+    const retryNow = () => {
+      if (document.visibilityState !== 'visible') return;
+      window.clearTimeout(timer);
+      void retry();
+    };
+
+    window.addEventListener('online', retryNow);
+    document.addEventListener('visibilitychange', retryNow);
+    schedule();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      window.removeEventListener('online', retryNow);
+      document.removeEventListener('visibilitychange', retryNow);
+    };
+  }, [user, profile, profileError]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const signUp = async (email: string, password: string, name: string, info: SignUpProfileInfo) => {
     setError(null);

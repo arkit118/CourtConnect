@@ -358,39 +358,55 @@ function SkillLevelStep() {
 
 function AdultActivationStep() {
   const { profile, refreshProfile } = useAuth();
-  const { addToast } = useToastStore();
   const [error, setError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
   const attempted = useRef(false);
+
+  const activate = async (dateOfBirth: string) => {
+    setRunning(true);
+    setError(null);
+    try {
+      const { data, error: rpcError } = await withTimeout(
+        supabase.rpc('set_social_age_band', { p_date_of_birth: dateOfBirth }),
+        15000,
+        'Setting up matching took too long.'
+      );
+      if (rpcError) throw rpcError;
+      if (data?.ok) {
+        await refreshProfile({ silent: true });
+      }
+    } catch (err: any) {
+      console.error('Error activating adult social access:', err);
+      setError(err.message || 'Something went wrong setting up matching for your account.');
+    } finally {
+      setRunning(false);
+    }
+  };
 
   useEffect(() => {
     if (attempted.current || !profile?.date_of_birth) return;
     attempted.current = true;
+    void activate(profile.date_of_birth);
+  }, [profile?.date_of_birth]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    (async () => {
-      try {
-        const { data, error: rpcError } = await withTimeout(
-          supabase.rpc('set_social_age_band', { p_date_of_birth: profile.date_of_birth }),
-          15000,
-          'Enabling matching for your account timed out. Please refresh and try again.'
-        );
-        if (rpcError) throw rpcError;
-        if (data?.ok) {
-          await refreshProfile();
-        }
-      } catch (err: any) {
-        console.error('Error activating adult social access:', err);
-        setError(err.message || 'Something went wrong enabling matching for your account.');
-        addToast({ type: 'error', message: err.message || 'Failed to enable matching' });
-      }
-    })();
-  }, [profile?.date_of_birth, refreshProfile, addToast]);
-
-  if (error) {
+  if (error && !running) {
     return (
-      <SafetyCard icon={AlertTriangle} tone="danger" title="Couldn't enable matching">
-        {error} Please refresh the page to try again, or contact{' '}
-        <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-medium">{CONTACT_EMAIL}</a>.
-      </SafetyCard>
+      <div className="card p-8 max-w-md mx-auto text-center">
+        <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-secondary-900 mb-2">Couldn't set up matching</h3>
+        <p className="text-sm text-secondary-600 mb-6">{error}</p>
+        <button
+          type="button"
+          className="btn-primary w-full"
+          onClick={() => profile?.date_of_birth && void activate(profile.date_of_birth)}
+        >
+          Try again
+        </button>
+        <p className="text-xs text-secondary-500 mt-4">
+          Still stuck? Contact{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="underline font-medium">{CONTACT_EMAIL}</a>.
+        </p>
+      </div>
     );
   }
 

@@ -33,6 +33,21 @@ export function ChatPage() {
   const [showSafetyCard, setShowSafetyCard] = useState(false);
   const messagesPaneRef = useRef<HTMLDivElement>(null);
 
+  // Clears this conversation's chat notification while the user is looking
+  // at it, so the header badge doesn't count messages already on screen.
+  // Fire-and-forget: RLS scopes it to the user's own rows, and if the
+  // notifications table isn't deployed yet the error is simply ignored.
+  const markChatNotificationsRead = useCallback(() => {
+    if (!id) return;
+    void supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('type', 'chat_message')
+      .eq('source_id', id)
+      .is('read_at', null)
+      .then(() => undefined);
+  }, [id]);
+
   const fetchMatchAndMessages = useCallback(async () => {
     if (!id || !user) return;
     setLoading(true);
@@ -67,6 +82,7 @@ export function ChatPage() {
         );
         if (msgError) throw msgError;
         setMessages(msgData || []);
+        markChatNotificationsRead();
       }
     } catch (err: any) {
       console.error('Error loading chat:', err);
@@ -74,7 +90,7 @@ export function ChatPage() {
     } finally {
       setLoading(false);
     }
-  }, [id, user]);
+  }, [id, user, markChatNotificationsRead]);
 
   useEffect(() => {
     if (eligibility === 'eligible') {
@@ -96,10 +112,12 @@ export function ChatPage() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${id}` },
         (payload) => {
+          const incoming = payload.new as Message;
           setMessages((prev) => {
-            if (prev.some((m) => m.id === (payload.new as Message).id)) return prev;
-            return [...prev, payload.new as Message];
+            if (prev.some((m) => m.id === incoming.id)) return prev;
+            return [...prev, incoming];
           });
+          if (incoming.sender_id !== user?.id) markChatNotificationsRead();
         }
       )
       .subscribe();
