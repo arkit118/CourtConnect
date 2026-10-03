@@ -161,10 +161,14 @@ function BannedBanner() {
   );
 }
 
+// Only shown when a signed-in user has no profile loaded at all - if one is
+// already loaded, the app keeps working and background re-fetch failures
+// are never surfaced (see AuthContext's reportProfileLoadFailure).
+// AuthContext also retries automatically and clears this on success.
 function ProfileErrorBanner() {
-  const { profileError, refreshProfile } = useAuth();
+  const { profileError, profile, refreshProfile } = useAuth();
   const [retrying, setRetrying] = useState(false);
-  if (!profileError) return null;
+  if (!profileError || profile) return null;
 
   const handleRetry = async () => {
     setRetrying(true);
@@ -176,19 +180,19 @@ function ProfileErrorBanner() {
   };
 
   return (
-    <div className="bg-amber-500 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-start justify-between gap-3 text-sm">
-        <div className="flex items-start gap-3">
-          <AlertOctagon className="w-5 h-5 shrink-0 mt-0.5" />
+    <div className="bg-secondary-50 border-b border-secondary-200 text-secondary-700" role="status">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3 text-sm">
+        <div className="flex items-center gap-2.5">
+          <AlertOctagon className="w-4 h-4 shrink-0 text-secondary-500" />
           <p>{profileError}</p>
         </div>
         <button
           type="button"
           onClick={handleRetry}
           disabled={retrying}
-          className="shrink-0 underline font-medium disabled:opacity-60"
+          className="shrink-0 font-semibold text-primary-600 hover:text-primary-700 disabled:opacity-60"
         >
-          {retrying ? 'Retrying...' : 'Retry'}
+          {retrying ? 'Trying...' : 'Try now'}
         </button>
       </div>
     </div>
