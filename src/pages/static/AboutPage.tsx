@@ -3,6 +3,7 @@ import { ShieldCheck, Users2, MessageCircleWarning } from 'lucide-react';
 import { CONTACT_EMAIL } from '../../lib/legal';
 import { PageHero } from '../../components/brand/PageHero';
 import { CourtCorner } from '../../components/brand/CourtMotif';
+import { ProfileCtaLink } from '../../components/ProfileCta';
 
 export function AboutPage() {
   return (
@@ -68,9 +69,10 @@ export function AboutPage() {
             Whether you're looking for a hitting partner, a community event, or just more time on the court,
             CourtConnect is built for players across Livingston and nearby NJ towns.
           </p>
-          <Link to="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
-            Get Started Free
-          </Link>
+          <ProfileCtaLink
+            signedOutLabel="Get Started Free"
+            className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold"
+          />
         </section>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { ReportButton } from '../components/ReportButton';
 import { BlockButton } from '../components/BlockButton';
 import { CourtCorner } from '../components/brand/CourtMotif';
 import { SKILL_LEVELS, skillLevelLabels, skillLevelColors } from '../lib/skillLevel';
+import { PUBLIC_PROFILE_COLUMNS, isMissingFunctionError } from '../lib/profileColumns';
 
 export function ProfilePage() {
   const { id } = useParams();
@@ -51,26 +52,50 @@ export function ProfilePage() {
       setError(null);
 
       try {
-        const { data, error: fetchError } = await withTimeout(
-          supabase.from('profiles').select('*').eq('id', targetId).single(),
-          15000,
-          'Loading this profile timed out. Please try refreshing.'
-        );
-
-        if (fetchError) {
-          if (fetchError.code === 'PGRST116') {
-            setError('Profile not found');
-          } else {
-            throw fetchError;
-          }
-        } else {
+        // Own profile: full row (needed for editing; RLS allows it).
+        if (!id || id === currentUser?.id) {
+          const { data, error: fetchError } = await withTimeout(
+            supabase.from('profiles').select('*').eq('id', targetId).single(),
+            15000,
+            'Loading this profile timed out.'
+          );
+          if (fetchError) throw fetchError;
           setProfile(data);
           setEditForm(data || {});
+          return;
         }
-      } catch (err: any) {
+
+        // Someone else's profile: only the public-facing columns, and only
+        // if they're in your age band and neither of you has blocked the
+        // other - enforced server-side by get_player_profile() (026).
+        const { data, error: rpcError } = await withTimeout(
+          supabase.rpc('get_player_profile', { p_profile_id: targetId }),
+          15000,
+          'Loading this profile timed out.'
+        );
+        let row = Array.isArray(data) ? data[0] : null;
+        if (rpcError) {
+          if (!isMissingFunctionError(rpcError)) throw rpcError;
+          // 026 not applied yet in this environment - read only the public
+          // columns directly rather than the whole row.
+          const { data: fallback, error: fallbackError } = await supabase
+            .from('profiles')
+            .select(PUBLIC_PROFILE_COLUMNS)
+            .eq('id', targetId)
+            .eq('is_banned', false)
+            .maybeSingle();
+          if (fallbackError) throw fallbackError;
+          row = fallback;
+        }
+        if (!row) {
+          setError("This profile isn't available.");
+          return;
+        }
+        setProfile(row as Profile);
+        setEditForm(row as Profile);
+      } catch (err) {
         console.error('Error fetching profile:', err);
-        setError(err.message || 'Failed to load profile');
-        addToast({ type: 'error', message: 'Failed to load profile' });
+        setError("We couldn't load this profile. Please try again.");
       } finally {
         setLoading(false);
       }

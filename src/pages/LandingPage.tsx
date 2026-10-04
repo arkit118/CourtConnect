@@ -25,6 +25,7 @@ import { supabase, Event } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { withTimeout } from '../lib/withTimeout';
 import { CourtLines, CourtCorner, CourtDivider, BallArc } from '../components/brand/CourtMotif';
+import { ProfileCtaLink, useProfileCta } from '../components/ProfileCta';
 
 export function LandingPage() {
   return (
@@ -77,10 +78,11 @@ function HeroSection() {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <Link to="/auth/signup" className="btn-primary btn-lg inline-flex items-center gap-2">
-              Create Your Profile
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+            <ProfileCtaLink
+              signedOutLabel="Create Account"
+              className="btn-primary btn-lg inline-flex items-center gap-2"
+              icon={<ArrowRight className="w-5 h-5" />}
+            />
             <Link
               to="/players"
               className="btn-lg inline-flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 border border-white/25 backdrop-blur-sm"
@@ -386,6 +388,7 @@ function TrustSection() {
 }
 
 function CTASection() {
+  const cta = useProfileCta('Get Started Free');
   return (
     <section className="section bg-cream">
       <div className="container-custom">
@@ -393,13 +396,16 @@ function CTASection() {
           <CourtLines className="absolute -left-16 -bottom-20 h-80 w-80 text-white" strokeOpacity={0.1} />
           <BallArc className="absolute right-8 top-8 h-20 w-20 text-clay-300" />
           <div className="relative z-10 max-w-xl">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-5">Ready to join the community?</h2>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-5">
+              {cta.signedIn ? "You're part of the community" : 'Ready to join the community?'}
+            </h2>
             <p className="text-lg text-primary-100 mb-8 leading-relaxed">
-              Create your free profile and start connecting with tennis players across Livingston and nearby NJ
-              towns.
+              {cta.signedIn
+                ? 'Keep your profile up to date so local players know your level and when you like to play.'
+                : 'Create your free account and start connecting with tennis players across Livingston and nearby NJ towns.'}
             </p>
-            <Link to="/auth/signup" className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
-              Get Started Free
+            <Link to={cta.to} className="btn btn-lg bg-white text-primary-700 hover:bg-primary-50 font-semibold">
+              {cta.label}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>

@@ -22,6 +22,51 @@ const INVALID_SESSION_CODES = new Set([
 
 const INVALID_SESSION_MESSAGE_PATTERN = /refresh_token_not_found|invalid_refresh_token|session_not_found|refresh token/i;
 
+// Maps any Supabase auth failure (AuthApiError, AuthSessionMissingError,
+// withTimeout's timeout Error, a network TypeError) to a small set of
+// kinds each screen turns into its own friendly, field-placed copy - so a
+// raw API message never reaches the user. Matches on `code` first (stable
+// across auth-js versions), falling back to message text for older
+// responses that don't carry one.
+export type AuthFailureKind =
+  | 'invalid_credentials'
+  | 'email_not_confirmed'
+  | 'account_exists'
+  | 'weak_password'
+  | 'same_password'
+  | 'reauthentication_needed'
+  | 'invalid_reauthentication_code'
+  | 'session_missing'
+  | 'rate_limited'
+  | 'network'
+  | 'unknown';
+
+export function classifyAuthError(err: unknown): AuthFailureKind {
+  if (!err || typeof err !== 'object') return 'unknown';
+  const e = err as { name?: string; code?: string; status?: number; message?: string };
+  const code = e.code ?? '';
+  const msg = (e.message ?? '').toLowerCase();
+
+  if (code === 'invalid_credentials' || msg.includes('invalid login credentials')) return 'invalid_credentials';
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) return 'email_not_confirmed';
+  if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered')) return 'account_exists';
+  if (code === 'weak_password' || msg.includes('password should')) return 'weak_password';
+  if (code === 'same_password' || msg.includes('different from the old password')) return 'same_password';
+  if (code === 'reauthentication_needed') return 'reauthentication_needed';
+  if (code === 'reauthentication_not_valid') return 'invalid_reauthentication_code';
+  if (code === 'session_not_found' || e.name === 'AuthSessionMissingError' || msg.includes('session missing')) {
+    return 'session_missing';
+  }
+  if (e.status === 429 || code.startsWith('over_')) return 'rate_limited';
+  if (e.status === 0 || msg.includes('failed to fetch') || msg.includes('timed out') || msg.includes('network')) {
+    return 'network';
+  }
+  return 'unknown';
+}
+
+export const NETWORK_ERROR_MESSAGE = "We couldn't reach CourtConnect. Check your connection and try again.";
+export const RATE_LIMITED_MESSAGE = 'Too many attempts. Please wait a minute and try again.';
+
 export function isInvalidSessionError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
   const e = err as { name?: string; code?: string; status?: number; message?: string };

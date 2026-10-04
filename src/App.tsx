@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
-import { AlertTriangle, AlertOctagon, ShieldAlert } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation, useParams } from 'react-router-dom';
+import { AlertTriangle, AlertOctagon, ShieldAlert, Users, Compass } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -13,7 +13,7 @@ import { useLegalGateStore } from './hooks/useLegalGate';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
-import { LoginPage, SignupPage, ForgotPasswordPage } from './pages/AuthPage';
+import { LoginPage, SignupPage, ForgotPasswordPage, ResetPasswordPage } from './pages/AuthPage';
 import { ProfilePage, ProfileEditPage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { PlayersPage } from './pages/PlayersPage';
@@ -39,7 +39,7 @@ import { TermsPage, PrivacyPage, SafetyPage, CommunityGuidelinesPage } from './p
 // "immediately after login, before protected pages" half of the legal
 // gate; useActionGate (see hooks/useActionGate.ts) covers the "before a
 // specific write action" half on pages that stay reachable while signed
-// out (Players, Schedule, Gear, Events).
+// out (Schedule, Gear, Events).
 function NeedsLegalGate() {
   const requestLegalAcceptance = useLegalGateStore((s) => s.request);
   const [submitting, setSubmitting] = useState(false);
@@ -113,6 +113,74 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+// For pages built on other members' real profile data (the player
+// directory and player profiles). Signed-out visitors get an explanation
+// with Sign in / Create account instead of a bare redirect, and never any
+// player data; signed-in users still pass the current Terms gate.
+function MembersOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { user, profile, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center bg-gray-50 px-4 py-16">
+        <div className="card p-8 text-center max-w-md w-full">
+          <div className="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-7 h-7 text-primary-600" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-secondary-900 mb-2">Sign in to find players</h1>
+          <p className="text-sm text-secondary-600 mb-6">
+            To protect members' privacy, player profiles are only visible to signed-in CourtConnect members.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link to="/auth/login" state={{ from: location }} className="btn-primary flex-1">Sign in</Link>
+            <Link to="/auth/signup" className="btn-outline flex-1">Create account</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile && !hasAcceptedCurrentTerms(profile)) {
+    return <NeedsLegalGate />;
+  }
+
+  return <>{children}</>;
+}
+
+// A session opened from a password-reset email belongs on the Reset
+// Password screen until a new password is set, wherever the link landed
+// (Supabase falls back to the Site URL if the reset URL isn't allow-listed).
+function PasswordRecoveryRedirect() {
+  const { passwordRecovery, user } = useAuth();
+  const location = useLocation();
+  if (passwordRecovery && user && location.pathname !== '/auth/reset-password') {
+    return <Navigate to="/auth/reset-password" replace />;
+  }
+  return null;
+}
+
+function NotFoundPage() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center bg-gray-50 px-4 py-16">
+      <div className="card p-8 text-center max-w-md w-full">
+        <Compass className="w-10 h-10 text-primary-500 mx-auto mb-4" />
+        <h1 className="font-display text-xl font-bold text-secondary-900 mb-2">Page not found</h1>
+        <p className="text-sm text-secondary-600 mb-6">That link doesn't go anywhere on CourtConnect.</p>
+        <Link to="/" className="btn-primary">Go to home</Link>
+      </div>
+    </div>
+  );
 }
 
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
@@ -203,6 +271,7 @@ function AppRoutes() {
   return (
     <>
       <ScrollToTop />
+      <PasswordRecoveryRedirect />
       <Header />
       <ProfileErrorBanner />
       <BannedBanner />
@@ -221,10 +290,13 @@ function AppRoutes() {
           <Route path="/auth/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
           <Route path="/auth/signup" element={<PublicOnlyRoute><SignupPage /></PublicOnlyRoute>} />
           <Route path="/auth/forgot-password" element={<PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>} />
+          {/* Not PublicOnlyRoute: the reset link signs the user in with a
+              recovery session, and the page must stay reachable with it. */}
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Player Routes */}
-          <Route path="/players" element={<PlayersPage />} />
-          <Route path="/players/:id" element={<ProfilePage />} />
+          {/* Player Routes - members only (real profile data) */}
+          <Route path="/players" element={<MembersOnlyRoute><PlayersPage /></MembersOnlyRoute>} />
+          <Route path="/players/:id" element={<MembersOnlyRoute><ProfilePage /></MembersOnlyRoute>} />
 
           {/* Event Routes */}
           <Route path="/events" element={<EventsPage />} />
@@ -276,6 +348,9 @@ function AppRoutes() {
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+
+          {/* Unknown URLs get a real page instead of an empty <main> */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       <Footer />

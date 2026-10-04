@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { supabase, GearListing, Profile } from '../lib/supabase';
+import { EMBEDDED_PROFILE_COLUMNS } from '../lib/profileColumns';
 import { uploadImage, validateImageFile } from '../lib/storage';
 import { containsBlockedContent, CONTENT_BLOCKED_MESSAGE } from '../lib/contentFilter';
 import { ReportButton } from '../components/ReportButton';
@@ -66,7 +67,7 @@ export function GearPage() {
     try {
       const { data, error } = await supabase
         .from('gear_listings')
-        .select('*, seller:profiles(*)')
+        .select(`*, seller:profiles(${EMBEDDED_PROFILE_COLUMNS})`)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -250,7 +251,7 @@ export function GearDetailPage() {
     try {
       const { data, error } = await supabase
         .from('gear_listings')
-        .select('*, seller:profiles!gear_listings_seller_id_fkey(*)')
+        .select(`*, seller:profiles!gear_listings_seller_id_fkey(${EMBEDDED_PROFILE_COLUMNS})`)
         .eq('id', id)
         .single();
 

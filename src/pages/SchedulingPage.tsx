@@ -546,7 +546,9 @@ export function SchedulingPage() {
         <h2 className="text-lg font-semibold text-secondary-900 mt-8 mb-1">Add or Look Up a Specific Time</h2>
         <p className="text-sm text-secondary-500 mb-3">Pick a court and date to add a new time, or check a specific slot.</p>
         <div className="card p-4 md:p-6">
-          <div className="grid md:grid-cols-2 gap-4">
+          {/* Side by side only from lg: at iPad-portrait widths the two
+              columns were too narrow for iOS's native date control. */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>*]:min-w-0">
             <div>
               <label className="label flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-secondary-400" />
@@ -581,9 +583,9 @@ export function SchedulingPage() {
 
           {selectedCourt && (
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-secondary-500">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {selectedCourt.address}, {selectedCourt.town}
+              <span className="inline-flex items-start gap-1 min-w-0 break-words">
+                <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="min-w-0">{selectedCourt.address}, {selectedCourt.town}</span>
               </span>
               <span className="inline-flex items-center gap-1">
                 <Users className="w-4 h-4" />
@@ -681,7 +683,7 @@ export function SchedulingPage() {
                 </div>
               )}
 
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&>*]:min-w-0">
                 <div>
                   <label className="label">Your Name</label>
                   <input
@@ -706,7 +708,7 @@ export function SchedulingPage() {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&>*]:min-w-0">
                 <div>
                   <label className="label">Match Type</label>
                   <select
@@ -731,7 +733,7 @@ export function SchedulingPage() {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 [&>*]:min-w-0">
                 <div>
                   <label className="label">Start Time</label>
                   <input

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Filter, Clock, User, Info, Check, Heart, Loader2, Shield } from 'lucide-react';
+import { Search, MapPin, Filter, Clock, User, Check, Heart, Loader2, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
@@ -40,31 +40,25 @@ type PlayerCardData = {
   availability: string[];
 };
 
-// Merged Players/Partners page. Players and Partners used to be two
-// separate nav concepts (a public directory with no request action, and
-// an entirely-gated matching queue) - confusing, since both ultimately
-// show "other players you might want to play with." Now:
-//   - Eligible users (useSocialEligibility() === 'eligible') see the same
-//     safety-filtered candidate list Partners always used
-//     (get_match_candidates() RPC - self-limits to the caller's own
-//     age_band, excludes banned/blocked/already-matched people, and never
-//     returns date_of_birth/parent_email) with a real "Send match
-//     request" button, wired to the exact same matches-table insert
-//     Partners used.
-//   - Everyone else (signed out, or signed in but not yet eligible) still
-//     gets to browse - the original public profiles-table directory - so
-//     this page stays true to "public pages remain viewable." Their
-//     "Send match request" button doesn't touch the matches table at
-//     all; it either prompts sign-in or reveals the same onboarding steps
-//     Partners used to gate its entire page behind, inline on this page
-//     instead.
-// The real safety boundary either way is server-side and untouched: the
-// enforce_match_safety trigger on public.matches re-verifies age_band,
-// ban status, Terms/Privacy, and blocks on every insert, regardless of
-// which branch below produced the candidate list.
+// Members-only (App.tsx wraps this route in MembersOnlyRoute, so signed-out
+// visitors never reach it). Player discovery only ever comes from
+// get_match_candidates() - which self-limits to the caller's own age band,
+// excludes banned/blocked/already-matched people, and returns a safe column
+// allowlist - so a signed-in user who isn't yet eligible (e.g. a minor
+// awaiting parent approval, or an account without a date of birth) sees
+// the steps to become eligible instead of a directory. This used to fall
+// back to reading the whole profiles table for those users, which showed
+// every member across both age bands. The real safety boundary is still
+// server-side: enforce_match_safety on public.matches re-verifies age band,
+// bans, Terms/Privacy, and blocks on every request.
 export function PlayersPage() {
   const eligibility = useSocialEligibility();
-  return eligibility === 'eligible' ? <EligibleCandidateList /> : <PublicPlayerDirectory eligibility={eligibility} />;
+  if (eligibility === 'eligible') return <EligibleCandidateList />;
+  return (
+    <PageChrome>
+      <SocialOnboardingGate status={eligibility} />
+    </PageChrome>
+  );
 }
 
 function PageChrome({ children }: { children: React.ReactNode }) {
@@ -407,139 +401,6 @@ function LoadingGrid() {
         </div>
       ))}
     </div>
-  );
-}
-
-// Not-yet-eligible / signed-out branch - the original public Players
-// directory, unchanged in data source (public profiles table, is_banned
-// filtered) and filters, now with a "Send match request" button added.
-// That button never touches the matches table directly from here: for a
-// signed-out visitor it prompts sign-in, and for a signed-in-but-not-
-// eligible user it reveals the same onboarding steps Partners used to
-// gate its whole page behind, right on this page.
-function PublicPlayerDirectory({ eligibility }: { eligibility: ReturnType<typeof useSocialEligibility> }) {
-  const { user } = useAuth();
-  const { addToast } = useToastStore();
-  const [players, setPlayers] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const onboardingRef = useRef<HTMLDivElement>(null);
-  const filters = usePlayerFilters(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data, error: fetchError } = await withTimeout(
-          supabase.from('profiles').select('*').eq('is_banned', false).order('created_at', { ascending: false }),
-          15000,
-          'Loading players timed out. Please try refreshing.'
-        );
-        if (fetchError) throw fetchError;
-        // The signed-in viewer is never someone to send themselves a match
-        // request - exclude their own row from the directory they're
-        // browsing (get_match_candidates() already does this server-side
-        // for the eligible branch below; the public directory queries
-        // the profiles table directly with no such filter, so it needs
-        // its own here).
-        if (!cancelled) setPlayers((data || []).filter((p) => p.id !== user?.id));
-      } catch (err: any) {
-        console.error('Error fetching players:', err);
-        if (!cancelled) setError(err.message || 'Failed to load players');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  const filteredPlayers = filters.filterPlayers(players);
-
-  const handleRequestClick = () => {
-    if (eligibility === 'signed_out') {
-      addToast({ type: 'error', message: 'Please sign in to send match requests.' });
-      return;
-    }
-    setShowOnboarding(true);
-    requestAnimationFrame(() => onboardingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-  };
-
-  return (
-    <PageChrome>
-      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-sm text-amber-800">
-          Meet at public courts and use good judgment. Minors should involve a parent or guardian.
-        </p>
-      </div>
-
-      {showOnboarding && eligibility !== 'signed_out' && (
-        <div ref={onboardingRef} className="mb-6">
-          <SocialOnboardingGate status={eligibility} />
-        </div>
-      )}
-
-      <PlayerFilters
-        search={filters.search}
-        setSearch={filters.setSearch}
-        selectedSkillLevels={filters.selectedSkillLevels}
-        toggleSkill={filters.toggleSkill}
-        selectedTowns={filters.selectedTowns}
-        toggleTown={filters.toggleTown}
-        utrRange={filters.utrRange}
-        setUtrRange={filters.setUtrRange}
-        selectedAgeBands={filters.selectedAgeBands}
-        toggleAgeBand={filters.toggleAgeBand}
-        showAgeBandFilter
-        showFilters={filters.showFilters}
-        setShowFilters={filters.setShowFilters}
-        hasActiveFilters={filters.hasActiveFilters}
-        clearFilters={filters.clearFilters}
-        activeFilterCount={filters.activeFilterCount}
-      />
-
-      <div className="mb-6">
-        <p className="text-secondary-600">
-          Showing {filteredPlayers.length} of {players.length} players
-        </p>
-      </div>
-
-      {loading ? (
-        <LoadingGrid />
-      ) : error ? (
-        <div className="card p-12 text-center">
-          <p className="text-secondary-900 font-semibold mb-1">Couldn't load players</p>
-          <p className="text-secondary-600 text-sm">{error}</p>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlayers.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              linkToProfile
-              requestSlot={
-                <button
-                  type="button"
-                  onClick={handleRequestClick}
-                  className="btn-outline w-full mt-4"
-                >
-                  <Heart className="w-4 h-4" />
-                  Send match request
-                </button>
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      {filteredPlayers.length === 0 && !loading && !error && <EmptyState onClear={filters.clearFilters} />}
-    </PageChrome>
   );
 }
 
