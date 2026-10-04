@@ -8,6 +8,28 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// Read the auth-email redirect parameters BEFORE createClient(): during its
+// own initialization supabase-js consumes a recovery link's URL hash
+// (#access_token=...&type=recovery), clears it, and announces it with a
+// one-shot PASSWORD_RECOVERY event that only reaches listeners already
+// subscribed at that moment - which can be before React has mounted.
+// Capturing it here lets the app reliably open the Reset Password screen
+// no matter which page the link landed on (including Supabase's Site URL
+// fallback when the reset URL isn't in the project's redirect allow-list).
+// Expired/invalid links arrive as #error=...&error_code=otp_expired.
+function readAuthRedirectParams(): { isPasswordRecovery: boolean; linkError: string | null } {
+  if (typeof window === 'undefined') return { isPasswordRecovery: false, linkError: null };
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const query = new URLSearchParams(window.location.search);
+  const get = (key: string) => hash.get(key) ?? query.get(key);
+  return {
+    isPasswordRecovery: get('type') === 'recovery',
+    linkError: get('error_code') || get('error'),
+  };
+}
+
+export const initialAuthRedirect = readAuthRedirectParams();
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,

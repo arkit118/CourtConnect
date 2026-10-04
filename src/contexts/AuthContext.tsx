@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, Profile } from '../lib/supabase';
+import { supabase, Profile, initialAuthRedirect } from '../lib/supabase';
 import { withTimeout, isMissingColumnError, devLog } from '../lib/withTimeout';
 import { isInvalidSessionError } from '../lib/authErrors';
 import { installAuthRecovery } from '../lib/authRecovery';
@@ -61,6 +61,19 @@ interface AuthContextType {
   // two steps stay visibly sequential (delete, then sign out, then
   // navigate away) rather than hidden inside one context method.
   deleteAccount: () => Promise<void>;
+  // True while the current session came from a password-reset email link
+  // (set from the URL at startup, or by the PASSWORD_RECOVERY event) and
+  // the user hasn't set a new password yet. App.tsx routes to
+  // /auth/reset-password whenever this is true.
+  passwordRecovery: boolean;
+  clearPasswordRecovery: () => void;
+  // supabase.auth.updateUser({ password }). Throws the raw auth error for
+  // the caller to classify (see classifyAuthError) - never logs the
+  // password. `nonce` is the emailed reauthentication code, only needed
+  // when the project's "Secure password change" setting requires it.
+  updatePassword: (newPassword: string, nonce?: string) => Promise<void>;
+  // Emails a one-time reauthentication code to the signed-in user.
+  requestReauthentication: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,7 +85,7 @@ const PROFILE_LOAD_ERROR_MESSAGE = "We're having trouble loading your profile. W
 // loaded at all. Also retried immediately on reconnect / app foreground.
 const PROFILE_RETRY_DELAYS_MS = [3000, 10000, 30000, 60000];
 export const EMAIL_NOT_CONFIRMED_MESSAGE =
-  'Please verify your email before using player matching or chat. Check your inbox for a verification link, or resend it below.';
+  'Please verify your email to sign in. Check your inbox (and spam folder) for the verification link, or resend it below.';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -81,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(initialAuthRedirect.isPasswordRecovery);
 
   // Lets in-flight async work know the provider is still mounted before
   // touching state, so a slow/hung request can never call setState after
@@ -163,9 +177,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // admin action from another session) without ever surfacing an
           // error for a background operation the user can't even see.
           await fetchProfile(changedSession.user.id, 0, true);
+        } else if (event === 'PASSWORD_RECOVERY') {
+          // The session itself was already delivered via INITIAL_SESSION /
+          // SIGNED_IN above; this only marks it as a reset-link session.
+          setPasswordRecovery(true);
         } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setProfileError(null);
+          setPasswordRecovery(false);
         }
       } catch (err) {
         // fetchOrCreateProfile already catches everything itself and never
@@ -455,166 +474,171 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string, info: SignUpProfileInfo) => {
     setError(null);
-    setLoading(true);
+    // No context-wide setLoading() here - see signIn() below for why.
 
-    try {
-      const { data, error: signUpError } = await withTimeout(
-        supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            // Carried in user_metadata (available even before email
-            // confirmation) specifically so fetchOrCreateProfile's
-            // PGRST116 branch can finish the upsert_signup_profile call
-            // later, from the first real SIGNED_IN event, if this signUp()
-            // call itself doesn't get an active session back (see the
-            // data.session check below).
-            data: {
-              name,
-              date_of_birth: info.date_of_birth,
-              skill_level: info.skill_level,
-              utr_rating: info.utr_rating,
-              home_town: info.home_town,
-            },
-            emailRedirectTo: `${authRedirectOrigin()}/dashboard`,
+    const { data, error: signUpError } = await withTimeout(
+      supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          // Carried in user_metadata (available even before email
+          // confirmation) specifically so fetchOrCreateProfile's
+          // PGRST116 branch can finish the upsert_signup_profile call
+          // later, from the first real SIGNED_IN event, if this signUp()
+          // call itself doesn't get an active session back (see the
+          // data.session check below).
+          data: {
+            name,
+            date_of_birth: info.date_of_birth,
+            skill_level: info.skill_level,
+            utr_rating: info.utr_rating,
+            home_town: info.home_town,
           },
+          emailRedirectTo: `${authRedirectOrigin()}/dashboard`,
+        },
+      }),
+      AUTH_TIMEOUT_MS,
+      'Sign up timed out. Please try again.'
+    );
+
+    if (signUpError) {
+      console.error('[AuthContext] Sign up error:', signUpError.code ?? signUpError.status);
+      setError(signUpError.message);
+      throw signUpError;
+    }
+
+    // With "Confirm email" on, Supabase deliberately doesn't error for an
+    // email that already has an account (to resist account enumeration):
+    // it returns an obfuscated user with no identities and sends nothing.
+    // Left alone, the user would be told to check an inbox for an email
+    // that never arrives. Surface it the same way as the explicit
+    // user_already_exists error so the signup form can point them to
+    // Sign in / Reset password instead.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      throw Object.assign(new Error('An account already exists with this email.'), { code: 'user_already_exists' });
+    }
+
+    // Supabase's "Confirm email" setting controls whether signUp()
+    // returns an active session immediately. When it's on, data.session
+    // is null until the user clicks the confirmation link - there is no
+    // authenticated request context yet, and upsert_signup_profile
+    // (SECURITY DEFINER, requires auth.uid()) would just fail with "Not
+    // authenticated" if called here. So: skip it entirely in that case
+    // and let fetchOrCreateProfile finish the job later (see above) once
+    // a real session exists. When confirmation is off (or already
+    // satisfied), data.session is present immediately and today's exact
+    // behavior below is unchanged.
+    if (!data.session) {
+      return { confirmationRequired: true };
+    }
+
+    // QA fix: this used to be a plain .insert() with the full legal/age
+    // fields, silently ignoring a 23505 conflict. That conflict happens
+    // reliably (not just occasionally) because supabase.auth.signUp()
+    // also fires onAuthStateChange('SIGNED_IN'/'INITIAL_SESSION'),
+    // whose handler (fetchOrCreateProfile above) races to create its
+    // own *minimal* profile - and whichever insert lost the race had
+    // its data silently discarded, so date_of_birth/age_band/
+    // tos_version/tos_accepted_at/privacy_version/privacy_accepted_at
+    // ended up NULL on essentially every signup. upsert_signup_profile
+    // is a SECURITY DEFINER RPC that does a single INSERT ... ON
+    // CONFLICT (id) DO UPDATE for exactly these fields, so no matter
+    // which side's row-creation attempt reaches Postgres first, this
+    // call is guaranteed to end with the full legal/age data in place.
+    // (A plain client-side upsert can't do this: protect_sensitive_
+    // profile_columns pins age_band/date_of_birth back to their prior
+    // value on a normal authenticated self-UPDATE, which is exactly
+    // what upsert-on-conflict would be here without the RPC's bypass.)
+    //
+    // skill_level/utr_rating/home_town ride along in the same RPC call
+    // for the same reason, not a separate .update() afterward - see
+    // 20260807000001_019_signup_skill_utr_location.sql's header
+    // comment for why those three are also in the ON CONFLICT DO
+    // UPDATE branch now (the same race could otherwise silently
+    // discard the user's actual signup-form choices, not just default
+    // them to 'beginner' - the original bug this whole RPC exists to
+    // prevent).
+    if (data.user) {
+      const avatarUrl = data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null;
+
+      const { data: rpcResult, error: rpcError } = await withTimeout(
+        supabase.rpc('upsert_signup_profile', {
+          p_name: name,
+          p_avatar_url: avatarUrl,
+          p_date_of_birth: info.date_of_birth,
+          p_skill_level: info.skill_level,
+          p_utr_rating: info.utr_rating,
+          p_home_town: info.home_town,
         }),
         AUTH_TIMEOUT_MS,
-        'Sign up timed out. Please try again.'
+        'Saving your profile timed out. Please try again.'
       );
 
-      if (signUpError) {
-        console.error('[AuthContext] Sign up error:', signUpError);
-        setError(signUpError.message);
-        throw signUpError;
+      if (rpcError) {
+        console.error('[AuthContext] Error upserting signup profile:', rpcError);
+        setError(rpcError.message);
+        throw rpcError;
       }
 
-      // Supabase's "Confirm email" setting controls whether signUp()
-      // returns an active session immediately. When it's on, data.session
-      // is null until the user clicks the confirmation link - there is no
-      // authenticated request context yet, and upsert_signup_profile
-      // (SECURITY DEFINER, requires auth.uid()) would just fail with "Not
-      // authenticated" if called here. So: skip it entirely in that case
-      // and let fetchOrCreateProfile finish the job later (see above) once
-      // a real session exists. When confirmation is off (or already
-      // satisfied), data.session is present immediately and today's exact
-      // behavior below is unchanged.
-      if (!data.session) {
-        return { confirmationRequired: true };
-      }
+      const resultProfile = (rpcResult as { ok?: boolean; profile?: Profile } | null)?.profile ?? null;
 
-      // QA fix: this used to be a plain .insert() with the full legal/age
-      // fields, silently ignoring a 23505 conflict. That conflict happens
-      // reliably (not just occasionally) because supabase.auth.signUp()
-      // also fires onAuthStateChange('SIGNED_IN'/'INITIAL_SESSION'),
-      // whose handler (fetchOrCreateProfile above) races to create its
-      // own *minimal* profile - and whichever insert lost the race had
-      // its data silently discarded, so date_of_birth/age_band/
-      // tos_version/tos_accepted_at/privacy_version/privacy_accepted_at
-      // ended up NULL on essentially every signup. upsert_signup_profile
-      // is a SECURITY DEFINER RPC that does a single INSERT ... ON
-      // CONFLICT (id) DO UPDATE for exactly these fields, so no matter
-      // which side's row-creation attempt reaches Postgres first, this
-      // call is guaranteed to end with the full legal/age data in place.
-      // (A plain client-side upsert can't do this: protect_sensitive_
-      // profile_columns pins age_band/date_of_birth back to their prior
-      // value on a normal authenticated self-UPDATE, which is exactly
-      // what upsert-on-conflict would be here without the RPC's bypass.)
-      //
-      // skill_level/utr_rating/home_town ride along in the same RPC call
-      // for the same reason, not a separate .update() afterward - see
-      // 20260807000001_019_signup_skill_utr_location.sql's header
-      // comment for why those three are also in the ON CONFLICT DO
-      // UPDATE branch now (the same race could otherwise silently
-      // discard the user's actual signup-form choices, not just default
-      // them to 'beginner' - the original bug this whole RPC exists to
-      // prevent).
-      if (data.user) {
-        const avatarUrl = data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null;
-
-        const { data: rpcResult, error: rpcError } = await withTimeout(
-          supabase.rpc('upsert_signup_profile', {
-            p_name: name,
-            p_avatar_url: avatarUrl,
-            p_date_of_birth: info.date_of_birth,
-            p_skill_level: info.skill_level,
-            p_utr_rating: info.utr_rating,
-            p_home_town: info.home_town,
-          }),
-          AUTH_TIMEOUT_MS,
-          'Saving your profile timed out. Please try again.'
-        );
-
-        if (rpcError) {
-          console.error('[AuthContext] Error upserting signup profile:', rpcError);
-          setError(rpcError.message);
-          throw rpcError;
+      if (resultProfile) {
+        // Verify the fields this whole fix exists to guarantee actually
+        // landed, rather than silently trusting the RPC's own success
+        // flag - if something unexpected happened, surface it visibly
+        // instead of leaving the user looking "signed up" with a
+        // profile that will fail every legal/matching check later.
+        if (!resultProfile.tos_version || !resultProfile.age_band) {
+          console.error('[AuthContext] upsert_signup_profile returned an incomplete profile:', resultProfile);
+          setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
         }
-
-        const resultProfile = (rpcResult as { ok?: boolean; profile?: Profile } | null)?.profile ?? null;
-
-        if (resultProfile) {
-          // Verify the fields this whole fix exists to guarantee actually
-          // landed, rather than silently trusting the RPC's own success
-          // flag - if something unexpected happened, surface it visibly
-          // instead of leaving the user looking "signed up" with a
-          // profile that will fail every legal/matching check later.
-          if (!resultProfile.tos_version || !resultProfile.age_band) {
-            console.error('[AuthContext] upsert_signup_profile returned an incomplete profile:', resultProfile);
-            setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
-          }
-          if (mountedRef.current) {
-            setProfile(resultProfile);
-            setProfileError((prev) => (resultProfile.tos_version && resultProfile.age_band ? null : prev));
-          }
-        } else {
-          console.error('[AuthContext] upsert_signup_profile returned no profile:', rpcResult);
-          if (mountedRef.current) setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
+        if (mountedRef.current) {
+          setProfile(resultProfile);
+          setProfileError((prev) => (resultProfile.tos_version && resultProfile.age_band ? null : prev));
         }
+      } else {
+        console.error('[AuthContext] upsert_signup_profile returned no profile:', rpcResult);
+        if (mountedRef.current) setProfileError(PROFILE_LOAD_ERROR_MESSAGE);
       }
-
-      return { confirmationRequired: false };
-    } finally {
-      if (mountedRef.current) setLoading(false);
     }
+
+    return { confirmationRequired: false };
   };
 
+  // Deliberately does NOT toggle the context-wide `loading` flag (that flag
+  // means "initial session not resolved yet"). PublicOnlyRoute swaps the
+  // login page for a spinner while `loading` is true, so toggling it here
+  // unmounted LoginPage mid-request and remounted a blank one - silently
+  // discarding the inline error for a wrong password. LoginPage tracks
+  // its own submitting state. signInWithPassword() resolves only after
+  // the SIGNED_IN listener (and its profile load) has run, so `user` is
+  // already set by the time the caller navigates.
   const signIn = async (email: string, password: string) => {
     setError(null);
-    setLoading(true);
+    const { error: signInError } = await withTimeout(
+      supabase.auth.signInWithPassword({ email: email.trim(), password }),
+      AUTH_TIMEOUT_MS,
+      'Sign in timed out. Please try again.'
+    );
 
-    try {
-      const { error: signInError } = await withTimeout(
-        supabase.auth.signInWithPassword({ email, password }),
-        AUTH_TIMEOUT_MS,
-        'Sign in timed out. Please try again.'
-      );
-
-      if (signInError) {
-        console.error('[AuthContext] Sign in error:', signInError);
-        // Standard Supabase behavior when "Confirm email" is on: sign-in
-        // is refused outright for an account that hasn't clicked its
-        // verification link yet. Surface the task's specific gating copy
-        // here instead of the raw API message ("Email not confirmed"),
-        // since this is the primary moment an unverified user actually
-        // encounters this state.
-        const message = signInError.code === 'email_not_confirmed' ? EMAIL_NOT_CONFIRMED_MESSAGE : signInError.message;
-        setError(message);
-        throw new Error(message);
-      }
-    } finally {
-      if (mountedRef.current) setLoading(false);
+    if (signInError) {
+      // Code/status only - never the submitted credentials.
+      console.error('[AuthContext] Sign in failed:', signInError.code ?? signInError.status);
+      setError(signInError.code === 'email_not_confirmed' ? EMAIL_NOT_CONFIRMED_MESSAGE : null);
+      // Rethrown as-is (not re-wrapped) so callers can classify it via
+      // classifyAuthError() and show their own field-placed copy.
+      throw signInError;
     }
   };
 
   const resendVerificationEmail = async (email: string) => {
     const { error: resendError } = await supabase.auth.resend({
       type: 'signup',
-      email,
+      email: email.trim(),
       options: { emailRedirectTo: `${authRedirectOrigin()}/dashboard` },
     });
     if (resendError) {
-      console.error('[AuthContext] Resend verification email error:', resendError);
+      console.error('[AuthContext] Resend verification email failed:', resendError.code ?? resendError.status);
       throw resendError;
     }
   };
@@ -681,16 +705,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Supabase returns success for unknown emails too (no account
+  // enumeration), so callers must never phrase success as "we found your
+  // account". On native, the link points at the deployed web app - see
+  // authRedirectOrigin() - since a capacitor:// URL can't be opened from Mail.
   const resetPassword = async (email: string) => {
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: authRedirectOrigin() + '/auth/reset-password',
-    });
+    const { error: resetError } = await withTimeout(
+      supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: authRedirectOrigin() + '/auth/reset-password',
+      }),
+      AUTH_TIMEOUT_MS,
+      'Sending the reset email timed out.'
+    );
     if (resetError) {
-      console.error('[AuthContext] Reset password error:', resetError);
-      setError(resetError.message);
+      console.error('[AuthContext] Password reset request failed:', resetError.code ?? resetError.status);
       throw resetError;
     }
   };
+
+  const updatePassword = async (newPassword: string, nonce?: string) => {
+    const { error: updateError } = await withTimeout(
+      supabase.auth.updateUser(nonce ? { password: newPassword, nonce } : { password: newPassword }),
+      AUTH_TIMEOUT_MS,
+      'Updating your password timed out.'
+    );
+    if (updateError) {
+      console.error('[AuthContext] Password update failed:', updateError.code ?? updateError.status);
+      throw updateError;
+    }
+    if (mountedRef.current) setPasswordRecovery(false);
+  };
+
+  const requestReauthentication = async () => {
+    const { error: reauthError } = await withTimeout(
+      supabase.auth.reauthenticate(),
+      AUTH_TIMEOUT_MS,
+      'Sending the verification code timed out.'
+    );
+    if (reauthError) {
+      console.error('[AuthContext] Reauthentication request failed:', reauthError.code ?? reauthError.status);
+      throw reauthError;
+    }
+  };
+
+  const clearPasswordRecovery = () => setPasswordRecovery(false);
 
   const updateProfile = async (updates: Partial<Profile>): Promise<Profile> => {
     if (!user) throw new Error('Not authenticated');
@@ -748,6 +806,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfileFields,
         resendVerificationEmail,
         deleteAccount,
+        passwordRecovery,
+        clearPasswordRecovery,
+        updatePassword,
+        requestReauthentication,
       }}
     >
       {children}

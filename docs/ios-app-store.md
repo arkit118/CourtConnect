@@ -17,7 +17,7 @@ Connect listing itself.
 | App name | CourtConnect |
 | Bundle ID | `com.arkitshah.courtconnect` |
 | Version (marketing) | 1.0.0 |
-| Build number | 7 |
+| Build number | 8 |
 | Platform | iOS first (Android not set up) |
 
 **Do not change the Bundle ID after the first App Store Connect upload.** Once a bundle ID
@@ -249,7 +249,14 @@ native app:
 
 - `AuthContext.signUp` (`emailRedirectTo`)
 - `AuthContext.resendVerificationEmail` (`emailRedirectTo`)
-- `AuthContext.resetPassword` (`redirectTo`)
+- `AuthContext.resetPassword` (`redirectTo` → `/auth/reset-password`)
+
+**Supabase setting this depends on:** Authentication → URL Configuration → Redirect URLs
+must include `https://court-connect-three.vercel.app/**` (or at least `/dashboard` and
+`/auth/reset-password`). If a reset URL isn't allow-listed, Supabase sends the user to the
+Site URL instead; the app still detects the recovery session there and routes to the Reset
+Password screen (see `PasswordRecoveryRedirect` in `src/App.tsx`), but allow-listing keeps
+the flow direct.
 
 **What this means in practice:** a user who signs up in the iOS app gets a verification
 email whose link opens in Safari (the website), not back inside the native app. They

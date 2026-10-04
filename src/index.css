@@ -106,7 +106,28 @@
   }
 
   .input {
-    @apply w-full px-4 py-2.5 rounded-xl border border-secondary-300 bg-white text-secondary-900 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+    @apply w-full min-w-0 px-4 py-2.5 rounded-xl border border-secondary-300 bg-white text-secondary-900 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+  }
+
+  /* iOS/iPadOS WebKit renders native date/time inputs at their own
+     intrinsic width, ignoring width: 100% - inside a grid/flex column
+     that pushed the control past its cell and over the neighbouring field
+     (the Schedule page's Date input running under the Court select on
+     iPad). Resetting the native appearance lets them size to the column
+     like every other .input. Scoped to iOS only (-webkit-touch-callout
+     is iOS-specific), so desktop browsers keep their native pickers. */
+  @supports (-webkit-touch-callout: none) {
+    input.input[type='date'],
+    input.input[type='time'] {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      min-height: 2.75rem;
+    }
+    input.input[type='date']::-webkit-date-and-time-value,
+    input.input[type='time']::-webkit-date-and-time-value {
+      text-align: left;
+    }
   }
 
   .input-error {

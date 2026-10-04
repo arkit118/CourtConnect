@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToastStore } from '../hooks/useToast';
 import { useActionGate } from '../hooks/useActionGate';
 import { supabase, Event, Profile, Registration } from '../lib/supabase';
+import { EMBEDDED_PROFILE_COLUMNS } from '../lib/profileColumns';
 import { ReportButton } from '../components/ReportButton';
 import { withTimeout } from '../lib/withTimeout';
 import { PageHero } from '../components/brand/PageHero';
@@ -50,7 +51,7 @@ export function EventsPage() {
       const { data, error } = await withTimeout(
         supabase
           .from('events')
-          .select('*, organizer:profiles!events_organizer_id_fkey(*)')
+          .select(`*, organizer:profiles!events_organizer_id_fkey(${EMBEDDED_PROFILE_COLUMNS})`)
           .order('date', { ascending: true }),
         15000,
         'Loading events timed out. Please check your connection and try again.'
@@ -247,16 +248,16 @@ export function EventDetailPage() {
       if (eventData.organizer_id) {
         const { data: orgData } = await supabase
           .from('profiles')
-          .select('*')
+          .select(EMBEDDED_PROFILE_COLUMNS)
           .eq('id', eventData.organizer_id)
           .single();
-        setOrganizer(orgData);
+        setOrganizer(orgData as Profile | null);
       }
 
       // Fetch registrations
       const { data: regData } = await supabase
         .from('registrations')
-        .select('*, profile:profiles(*)')
+        .select(`*, profile:profiles(${EMBEDDED_PROFILE_COLUMNS})`)
         .eq('event_id', id);
 
       setRegistrations(regData || []);
